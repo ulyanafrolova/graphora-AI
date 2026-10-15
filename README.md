@@ -13,9 +13,10 @@ Via MCP, Claude Code, Cursor and others get transitive dependency answers in one
 
 > AI agents generate answers. Graphora gives them — and you — facts.
 
-## Demo
+<details>
+<summary><b>Demo</b> (UI concept, click to expand)</summary>
 
-UI concept. More screens in [docs/demo](docs/demo).
+<br>
 
 ![Import](docs/demo/01-import.png)
 
@@ -32,6 +33,10 @@ Zoom into a component to see what a change to one file would affect.
 ![Hotspots](docs/demo/07-hotspots.png)
 
 Risky files: frequently changed and heavily depended on.
+
+More screens in [docs/demo](docs/demo).
+
+</details>
 
 ## Authors
 
