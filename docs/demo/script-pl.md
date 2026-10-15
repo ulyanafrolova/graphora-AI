@@ -2,16 +2,16 @@
 
 ## Problem
 
-Agenci AI piszą dziś coraz więcej kodu, i to szybciej, niż ludzie są w stanie go zrozumieć. W efekcie programiści spędzają coraz więcej czasu na przeglądaniu kodu, którego sami nie napisali. Najważniejsze pytanie brzmi wtedy: co się zepsuje, jeśli zmienię ten fragment? Dzisiejsi asystenci odpowiadają na nie tekstem, który bywa błędny i za każdym razem trzeba go sprawdzać od nowa.
+Coraz więcej kodu piszą agenci AI, a człowiek musi go przejrzeć i zatwierdzić. Przed każdą zmianą trzeba wiedzieć, które moduły od niej zależą, a w projekcie z tysiącami plików nie da się tego sprawdzić ręcznie. Cursor czy Claude Code odpowiadają na takie pytanie tekstem bez dowodów: odpowiedź może być błędna, a przy kolejnym pytaniu inna.
 
-## Jak to rozwiązujemy i dlaczego potrzebne jest AI
+## Rozwiązanie i rola AI
 
-Łączymy dwie rzeczy: dokładną mapę zależności w kodzie i agentów AI, którzy z tej mapy korzystają. Sama mapa jest precyzyjna, ale w dużym projekcie ma tysiące plików i człowiek się w niej gubi. Nie odpowie też na pytanie zadane zwykłym językiem ani nie wyjaśni, dlaczego dana zmiana jest ryzykowna. To robi AI: rozumie pytanie, wybiera właściwe fragmenty mapy i tłumaczy wynik po ludzku. Samo AI potrafi jednak zmyślać, dlatego każde jego twierdzenie sprawdzamy na mapie, a to, czego nie da się potwierdzić, oznaczamy jako hipotezę.
+Graphora buduje graf zależności kodu algorytmicznie, bez AI, a każda krawędź wskazuje plik, linię i commit, z którego pochodzi. Graf jest dokładny, ale nie rozumie pytań w języku naturalnym i nie wie, które z tysięcy węzłów są ważne dla danego pytania. AI zamienia pytanie na zapytania do grafu, wybiera istotne wyniki i wyjaśnia je. Każdą odpowiedź AI sprawdzamy na grafie, więc model nie może podać zależności, której nie ma w kodzie.
 
-## Co robi nasz system
+## Co robi system
 
-Użytkownik podaje link do repozytorium na GitHubie. Graphora analizuje kod i rysuje interaktywną mapę: które pliki od siebie zależą, gdzie są cykle i które miejsca są najbardziej ryzykowne. Potem można zadać pytanie, na przykład „Co się zepsuje, jeśli zmienię AuthService?”, i dostać odpowiedź ze wskazaniem konkretnych plików i linii, podświetlonych na mapie. Z tej samej mapy mogą korzystać zewnętrzni agenci, tacy jak Claude Code czy Cursor, żeby oni też pracowali na faktach. Wszystko może działać lokalnie, bez wysyłania kodu do chmury.
+Wejście to link do repozytorium GitHub lub plik ZIP. Wyjście to interaktywna mapa zależności z zaznaczonymi cyklami i plikami najbardziej ryzykownymi przy zmianach. Na pytanie „Co się zepsuje, jeśli zmienię AuthService?” system zwraca listę zależnych plików z numerami linii i podświetla je na mapie. Te same zapytania udostępniamy przez MCP, więc Claude Code i Cursor mogą korzystać z grafu zamiast przeszukiwać repozytorium. Całość działa lokalnie na otwartym modelu, kod nie trafia do chmury.
 
 ## Agenci
 
-W systemie pracuje trzech agentów, którzy przekazują sobie zadanie. Eksplorator szuka w repozytorium plików i fragmentów kodu związanych z pytaniem. Analityk odpytuje mapę zależności i na tej podstawie formułuje wnioski razem z dowodami. Recenzent sprawdza każdy wniosek: czy plik istnieje, czy wskazana linia naprawdę zawiera ten kod i czy zależność jest na mapie. Jeśli dowodów brakuje, odsyła zadanie do Eksploratora, a gdy nadal się nie da, oznacza wniosek jako hipotezę. Dzięki temu użytkownik dostaje tylko sprawdzone odpowiedzi i widzi, jak agenci doszli do wyniku.
+Mamy trzech agentów. Eksplorator znajduje pliki i symbole, których dotyczy pytanie. Analityk uruchamia zapytania do grafu (kto zależy od pliku, zasięg zmiany, cykle) i formułuje wnioski z dowodami. Recenzent sprawdza każdy wniosek kodem, nie modelem: czy plik istnieje, czy linia zawiera symbol i czy krawędź jest w grafie. Niepotwierdzony wniosek wraca do Eksploratora, a jeśli dowodów nadal brak, trafia do odpowiedzi jako hipoteza.
