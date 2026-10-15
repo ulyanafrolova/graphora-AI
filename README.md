@@ -13,6 +13,26 @@ Via MCP, Claude Code, Cursor and others get transitive dependency answers in one
 
 > AI agents generate answers. Graphora gives them — and you — facts.
 
+## Demo
+
+UI concept. More screens in [docs/demo](docs/demo).
+
+![Import](docs/demo/01-import.png)
+
+Import a public GitHub repository or ZIP, pinned to one commit. Code is never executed.
+
+![Large graph overview](docs/demo/11-large-graph-overview.png)
+
+The whole repository as one map: files grouped into components, edges bundled, hotspots highlighted.
+
+![Large graph zoom](docs/demo/12-large-graph-zoom.png)
+
+Zoom into a component to see what a change to one file would affect.
+
+![Hotspots](docs/demo/07-hotspots.png)
+
+Risky files: frequently changed and heavily depended on.
+
 ## Authors
 
 This project was completed as part of the AI Agents class at Warsaw University of Technology.
