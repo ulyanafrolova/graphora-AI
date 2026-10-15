@@ -12,9 +12,11 @@ We don't compete with coding agents — we give them a map.
 Via MCP, Claude Code, Cursor and others get transitive dependency answers in one tool call instead of grepping through the repo.
 
 > AI agents generate answers. Graphora gives them — and you — facts.
-
+  
+<br>
 <details>
-<summary><b>Demo</b> (UI concept, click to expand)</summary>
+
+<summary><b>Demo</b></summary>
 
 <br>
 
