@@ -108,7 +108,9 @@ absolute paths, and compare the output files byte by byte.
 - **`from pkg import name` where `name` is both a submodule and could be an attribute**: resolves to the
   submodule file if it exists. Otherwise it resolves to `pkg/__init__.py`, with `name` recorded as the
   symbol.
-- **`import a.b.c`**: one edge to the most specific existing module (`a/b/c.py` or `a/b/c/__init__.py`).
+- **`import a.b.c`**: one edge to `a/b/c.py` or `a/b/c/__init__.py` when the full dotted name exists. If it
+  does not exist but `a` is local, the edge is `unresolved` with reason `not_found`. There is no fallback to
+  a parent module.
 - **Folders without `__init__.py`** (namespace packages): treated as packages for resolution.
 - **Same name exists locally and as an external package**: the local module wins.
 - **Dynamic import with a literal string argument** (`importlib.import_module("pkg.mod")`,
@@ -122,8 +124,13 @@ absolute paths, and compare the output files byte by byte.
   success.
 - **Path that does not exist or is not a folder**: a clear error message, a failure exit status, and no
   output file written.
-- **Folder over the size or file-count limit**: refused with a clear message naming the limit that was
-  exceeded.
+- **Folder over the size, file-count or time limit**: refused with a clear message naming the limit that
+  was exceeded.
+- **Nested git repositories** (a folder below the root that contains `.git`): skipped with reason
+  `nested_repository`.
+- **Minified files** (`*.min.js`, `*.min.css`): skipped with reason `minified`.
+- **A `.git` that is a symlink, or a git repository whose objects live outside the folder** (alternates,
+  `commondir`): the snapshot falls back to `content:<hash>`, and nothing outside the folder is read.
 
 ## Requirements *(mandatory)*
 
@@ -143,8 +150,12 @@ absolute paths, and compare the output files byte by byte.
 - **FR-004**: The analyzed project MUST be read only as text. No file from it is executed, imported, built
   or installed, and no tool configured by it is invoked.
 - **FR-005**: Symbolic links MUST NOT be followed, and nothing outside the analyzed folder may be read.
-- **FR-006**: The command MUST enforce default limits of 5,000 files and 50 MB of total analyzed content.
-  Users MUST be able to override both limits.
+- **FR-006**: The command MUST enforce three default limits, as constitution Principle I requires:
+  - 5,000 non-skipped files;
+  - 50 MB total size of non-skipped files;
+  - 300 seconds of wall-clock time for the analysis.
+
+  Users MUST be able to override all three. Exceeding any limit aborts the run with no output.
 
 **Coverage**
 
@@ -242,8 +253,10 @@ absolute paths, and compare the output files byte by byte.
   be determined. It is shared by all edges with the same reference (FR-014a).
 - **Import edge**: one import statement (and imported name) from a file node to a target, with full
   provenance and a confidence level.
-- **Coverage entry**: a file or skipped folder with its language, status and, where relevant, a reason
-  (`skipped`, `symlink`, `unreadable`, `parse_error`).
+- **Coverage file**: a walked, non-skipped file with its language, status and flags (`parse_error`,
+  `unreadable`).
+- **Skipped entry**: a skipped folder or file with its reason (`excluded_dir`, `nested_repository`,
+  `symlink`, `minified`).
 - **Graph document**: the schema version, snapshot id, extractor versions, nodes, edges and coverage
   report, as one file.
 

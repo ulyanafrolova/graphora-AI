@@ -1,7 +1,7 @@
 # CLI Contract: `graphora analyze`
 
 ```
-graphora analyze <dir> [--out <file>] [--max-files N] [--max-bytes N]
+graphora analyze <dir> [--out <file>] [--max-files N] [--max-bytes N] [--max-seconds N]
 ```
 
 | Argument | Default | Meaning |
@@ -10,6 +10,7 @@ graphora analyze <dir> [--out <file>] [--max-files N] [--max-bytes N]
 | `--out <file>` | standard output | Where to write the graph document. The path must not be inside `<dir>` |
 | `--max-files N` | `5000` | Maximum number of files that are not skipped |
 | `--max-bytes N` | `52428800` (50 MB) | Maximum total size, in bytes, of the files that are not skipped |
+| `--max-seconds N` | `300` | Maximum wall-clock time for the whole analysis |
 
 ## Behaviour
 

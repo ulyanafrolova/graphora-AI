@@ -46,7 +46,7 @@ only: `pytest==9.1.1` and `jsonschema==4.26.0`. Research: [R1–R9](research.md)
 
 - byte-identical output;
 - no execution of analyzed content and no `git` subprocess;
-- default limits of 5,000 files and 50 MB;
+- default limits of 5,000 files, 50 MB and 300 s;
 - nothing written inside the analyzed folder.
 
 **Scale/Scope**: fixtures have 10–25 files each, and real targets have up to 5,000 files
@@ -59,9 +59,9 @@ No open questions remain.
 
 | Principle | How this plan complies | Status |
 |---|---|---|
-| I. Never execute analyzed code | Files are read as bytes and parsed by Tree-sitter. Nothing is imported or built. Git is read by dulwich with no subprocess, so filters, hooks and fsmonitor never run (R3). Symlinks are never followed. Limits are enforced before parsing. A safety integration test checks all of this | ✅ |
+| I. Never execute analyzed code | Files are read as bytes and parsed by Tree-sitter. Nothing is imported or built. Git is read by dulwich with no subprocess, so filters, hooks and fsmonitor never run (R3). Symlinks are never followed, and a symlinked `.git` or a repository with alternates or `commondir` falls back to `content:<hash>`. File and byte limits are enforced before parsing, and the 300 s time limit is checked during the run. A safety integration test checks all of this | ✅ |
 | II. Deterministic output | Every list is sorted explicitly, keys are sorted, and output is LF with a trailing newline. There are no timestamps or absolute paths. The stdlib list is fixed (R5). Hashes depend only on paths and bytes (R4). Tests run 10 times and on a copied path | ✅ |
-| III. Provenance on every edge | The schema requires source, target, type, line, column, snapshot, confidence, extractor@version and snippet_hash on every edge, and the contract test rejects edges without them. The `content:<hash>` id form is added by a PATCH amendment in this PR (FR-016a) | ✅ (after amendment) |
+| III. Provenance on every edge | The schema requires source, target, type, line, column, snapshot, confidence, extractor@version and snippet_hash on every edge, and the contract test rejects edges without them. The `content:<hash>` id form is added by a PATCH amendment in this PR (FR-016a). **Node provenance:** a file node is located by its `path` plus the document `snapshot`, and a definition by its `line` plus its file's `path`. External and unresolved nodes exist only as targets of edges that carry full provenance. No node is emitted without at least one of these anchors | ✅ (after amendment) |
 | IV. Honest confidence | Only the three levels exist. Unresolved edges carry a `reason`. The resolver has no fallback guessing. `.py` and `.pyi` are `analyzed`, other languages are `detected_only` | ✅ |
 | V. Facts by code | There is no LLM in this slice | ✅ (n/a) |
 | VI. Analyzed content is data | No model reads content in this slice. The snippet text is not copied into the output, only its hash | ✅ (n/a) |
@@ -115,6 +115,7 @@ backend/
 │   │   ├── python.py                 # module index, namespace packages, resolution table
 │   │   └── data/stdlib_modules.txt
 │   └── graph/
+│       ├── build.py                  # walk → snapshot → extract → resolve → GraphDocument
 │       ├── model.py                  # Node, Edge, Coverage, GraphDocument dataclasses
 │       └── serialize.py              # sorting, ids, canonical JSON
 └── tests/
