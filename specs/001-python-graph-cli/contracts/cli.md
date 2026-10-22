@@ -37,12 +37,12 @@ graphora analyze <dir> [--out <file>] [--max-files N] [--max-bytes N] [--max-sec
 
 ```
 $ graphora analyze fixtures/repos/py-flat/repo --out /tmp/flat.json
-graphora: info: analyzed 9 files, 14 edges (3 unresolved), snapshot content:5e1c…
+graphora: info: analyzed 8 files, 17 edges (4 unresolved), snapshot content:…
 
 $ graphora analyze ./proj --max-files 10
-graphora: error: file limit exceeded: 42 files > --max-files 10
+graphora: error: file limit exceeded: at least 11 files > --max-files 10
 $ echo $?
 3
 ```
 
-The counts in the first example are illustrative.
+The walk stops at the first file over the limit, so the observed count is a lower bound.

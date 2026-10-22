@@ -40,6 +40,19 @@ More screens in [docs/demo](docs/demo).
 
 </details>
 
+## Quick start
+
+Requires [uv](https://docs.astral.sh/uv/). Python projects only for now.
+
+```
+cd backend && uv sync
+uv run graphora analyze path/to/project --out graph.json
+```
+
+The output is a deterministic JSON graph: one node per file and external package, one edge per import
+with `file:line@snapshot`, a confidence level and a snippet hash, plus a coverage report. The format is
+defined by [schema/graph.schema.json](schema/graph.schema.json). Analyzed code is never executed.
+
 ## Authors
 
 This project was completed as part of the AI Agents class at Warsaw University of Technology.

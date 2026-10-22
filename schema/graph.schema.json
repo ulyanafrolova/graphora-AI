@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://graphora.dev/schema/graph.schema.json",
+  "title": "Graphora graph document",
+  "description": "Schema version 1. Commit-pinned dependency graph with provenance on every edge.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "snapshot", "extractors", "nodes", "edges", "coverage"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "snapshot": { "$ref": "#/$defs/snapshot" },
+    "extractors": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+    },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "coverage": { "$ref": "#/$defs/coverage" }
+  },
+  "$defs": {
+    "snapshot": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{40}(\\+dirty:[0-9a-f]{16})?|content:[0-9a-f]{16})$"
+    },
+    "relpath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!\\./)(?!.*(^|/)\\.\\.(/|$)).+$"
+    },
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/fileNode" },
+        { "$ref": "#/$defs/externalNode" },
+        { "$ref": "#/$defs/unresolvedNode" }
+      ]
+    },
+    "fileNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "language", "definitions"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^file:.+$" },
+        "kind": { "const": "file" },
+        "path": { "$ref": "#/$defs/relpath" },
+        "language": { "const": "python" },
+        "definitions": { "type": "array", "items": { "$ref": "#/$defs/definition" } }
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "line"],
+      "properties": {
+        "kind": { "enum": ["class", "function", "method"] },
+        "name": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "externalNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "name", "category"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^ext:.+$" },
+        "kind": { "const": "external" },
+        "name": { "type": "string", "minLength": 1 },
+        "category": { "enum": ["stdlib", "third_party"] }
+      }
+    },
+    "unresolvedNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "reference"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^unresolved:.+$" },
+        "kind": { "const": "unresolved" },
+        "reference": { "type": "string", "minLength": 1 }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "source", "target", "type", "symbol", "line", "column",
+        "snapshot", "confidence", "extractor", "snippet_hash"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^e:[0-9a-f]{16}$" },
+        "source": { "type": "string", "pattern": "^file:.+$" },
+        "target": { "type": "string", "pattern": "^(file|ext|unresolved):.+$" },
+        "type": { "const": "imports" },
+        "symbol": { "type": ["string", "null"], "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "snapshot": { "$ref": "#/$defs/snapshot" },
+        "confidence": { "enum": ["resolved", "heuristic", "unresolved"] },
+        "reason": { "enum": ["not_found", "relative_beyond_top", "namespace_package", "dynamic"] },
+        "extractor": { "type": "string", "pattern": "^[a-z0-9-]+@[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "snippet_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{16}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "confidence": { "const": "unresolved" } } },
+          "then": { "required": ["reason"], "properties": { "target": { "pattern": "^unresolved:" } } },
+          "else": { "not": { "required": ["reason"] }, "properties": { "target": { "pattern": "^(file|ext):" } } }
+        }
+      ]
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "skipped", "summary"],
+      "properties": {
+        "files": { "type": "array", "items": { "$ref": "#/$defs/coverageFile" } },
+        "skipped": { "type": "array", "items": { "$ref": "#/$defs/skipped" } },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["analyzed", "detected_only", "not_code", "skipped", "by_language"],
+          "properties": {
+            "analyzed": { "type": "integer", "minimum": 0 },
+            "detected_only": { "type": "integer", "minimum": 0 },
+            "not_code": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 },
+            "by_language": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 } }
+          }
+        }
+      }
+    },
+    "coverageFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "language", "status", "flags"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relpath" },
+        "language": { "type": ["string", "null"] },
+        "status": { "enum": ["analyzed", "detected_only", "not_code"] },
+        "flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["parse_error", "unreadable"] }
+        }
+      }
+    },
+    "skipped": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "reason"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relpath" },
+        "reason": { "enum": ["excluded_dir", "nested_repository", "symlink", "minified"] }
+      }
+    }
+  }
+}

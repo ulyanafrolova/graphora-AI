@@ -1,2 +1,12 @@
 .claude/settings.local.json
 .DS_Store
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Fixture repos must keep their skipped folders: they are test input.
+!fixtures/repos/*/repo/.venv/
+!fixtures/repos/*/repo/__pycache__/
+!fixtures/repos/**/*.pyc

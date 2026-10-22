@@ -1,0 +1,2 @@
+def hook():
+    return "nsp"

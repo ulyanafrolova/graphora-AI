@@ -26,8 +26,9 @@ Rationale: reproducibility is the product's core claim against chat agents.
 
 ### III. Provenance on Every Edge
 
-- Every edge MUST carry: source, target, type, line, snapshot id (commit SHA, or
-  `<sha>+dirty:<content-hash>` for uncommitted trees), confidence, extractor name@version and a
+- Every edge MUST carry: source, target, type, line, snapshot id (commit SHA,
+  `<sha>+dirty:<content-hash>` for uncommitted trees, or `content:<content-hash>` for folders that
+  are not a git working-tree root), confidence, extractor name@version and a
   snippet hash.
 - A node or edge without provenance MUST NOT enter the graph.
 
@@ -106,4 +107,4 @@ Rationale: every fact must be traceable to `file:line@commit` and verifiable lat
 - Runtime guidance for coding agents lives in `CLAUDE.md`; product context lives in
   `docs/product/`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-10-19
+**Version**: 1.0.1 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-10-22
