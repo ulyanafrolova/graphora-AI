@@ -37,8 +37,11 @@ Every decision below resolves an open point from the plan's Technical Context. V
 
 - **Decision**:
   - Do not run the `git` binary. Read `.git/` with `dulwich==1.2.19`, a pure-Python git implementation.
-  - The folder counts as a git working-tree root only if `<dir>/.git` is a directory. A `.git` *file* (a
-    worktree or a submodule) is treated as not git, so the snapshot id is `content:<hash>`.
+  - The folder counts as a git working-tree root only if `<dir>/.git` is a real directory, checked with
+    `lstat` so a symlink does not count, and it has no `objects/info/alternates` or `commondir`. Each of
+    these exclusions would make the snapshot depend on data outside the folder. A `.git` *file* (a
+    worktree or a submodule) is also treated as not git. In all these cases the snapshot id is
+    `content:<hash>`.
   - Clean versus dirty is decided by comparing git blob ids, not by `git status`:
     - The working map is `{relative path → sha1("blob <len>\0" + bytes)}` over the included files.
     - The HEAD map is `{path → blob id}` from the HEAD tree, filtered by the same skip rules. Symlinks
