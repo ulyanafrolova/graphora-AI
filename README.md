@@ -58,3 +58,7 @@ defined by [schema/graph.schema.json](schema/graph.schema.json). Analyzed code i
 This project was completed as part of the AI Agents class at Warsaw University of Technology.
 
 © Anna Granos, Ulyana Frolova, 2026
+
+## License
+
+Released under the [MIT License](LICENSE).

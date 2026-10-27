@@ -242,4 +242,3 @@ Answers to hard questions are in vision.md.
 - Mockup data (repository names, files, numbers) is illustrative. The numbers on the MCP screen are benchmark targets, not results.
 - Check that the name Graphora is not taken by a similar product.
 - Do not publish the images of other student projects from the original specification without checking rights.
-- Add a LICENSE file (for example MIT).
