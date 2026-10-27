@@ -2,6 +2,7 @@
 name = "graphora"
 version = "0.1.0"
 description = "Static, commit-pinned dependency graph with provenance on every edge"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
     "tree-sitter==0.26.0",
