@@ -85,8 +85,8 @@ coverage.
 uv run pytest tests/golden -k py
 ```
 
-The v1-equivalence test maps the v2 ids back to the v1 form and compares the edge sets with the v1
-`expected.json` from git history (research R9).
+The v1-equivalence test maps the v2 ids back to the v1 form and compares the nodes and edges with the
+frozen v1 files in `backend/tests/golden/v1/` (research R9).
 
 ## 7. Determinism and safety
 

@@ -110,7 +110,8 @@ All outputs validate against schema version 2 and match their (updated) `expecte
 - **Bare specifier that matches a `paths` alias but no file**: `unresolved`, reason `not_found`. It is not
   turned into an npm package.
 - **Scoped and deep package imports** (`@scope/pkg/sub/path`, `lodash/fp`): resolved to the package node
-  `@scope/pkg` / `lodash`, with the full specifier kept in the snippet.
+  `@scope/pkg` / `lodash`. The subpath is not stored in the graph; it is covered by the edge's snippet
+  hash and can be read at the cited line.
 - **`node:` prefix** (`node:fs`) and plain built-in names (`fs`): both resolve to the same built-in node `fs`.
 - **Type-only imports** (`import type { T } from "./t"`, `export type { T } from "./t"`): recorded as edges
   and marked type-only.
@@ -129,8 +130,10 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   parts are kept.
 - **`tsconfig.json` with `extends`**: followed only to files inside the analyzed folder. An `extends` to a
   package or to a path outside the folder is ignored, and the file's own settings still apply.
-- **`tsconfig.json` or `jsconfig.json` that is not valid JSON-with-comments**: ignored for resolution, and the
-  config file is listed in coverage with a `parse_error` flag.
+- **`tsconfig.json` or `jsconfig.json` that is not valid JSON-with-comments** (including a file reached
+  through `extends`): it counts as absent, so files fall back to the next valid ancestor config and a broken
+  `extends` entry is skipped. The config file is listed in coverage with a `parse_error` flag, whether or not
+  any file uses it.
 - **Several `tsconfig.json` files**: each TS/JS file uses the nearest one in its folder or a parent folder
   inside the analyzed root.
 - **Declaration files** (`*.d.ts`): analyzed like other TS files.
@@ -169,7 +172,7 @@ All outputs validate against schema version 2 and match their (updated) `expecte
 - **FR-007a**: Each TS/JS definition MUST record whether it is exported (by `export` on the declaration, by a
   local `export { name }` / `export { name as alias }`, or as `export default`). Each TS/JS file node MUST
   also list its exported names that are not definitions in that file (for example `export { x }` of an
-  imported binding), sorted by name. Python definitions do not carry this flag.
+  imported binding), sorted by name, then line. Python definitions do not carry this flag.
 - **FR-007b**: The analysis MUST NOT add derived edges by following re-export chains. Only statements written
   in the code become edges; chain-following is left to the graph-query layer.
 
@@ -204,7 +207,8 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   a built-in or an npm package) and `unresolved` otherwise. No edge in this slice is `heuristic`.
 - **FR-014**: An unresolved TS/JS edge MUST point to a shared placeholder node. Its reference is the
   repository-relative path that was tried for relative specifiers, and the specifier or expression as written
-  otherwise. Placeholders from different languages MUST NOT merge.
+  otherwise. Placeholders from different ecosystems (`python` and `npm`) MUST NOT merge. TypeScript and
+  JavaScript share the `npm` ecosystem, so their identical references share one placeholder.
 
 **Schema v2**
 
@@ -263,7 +267,7 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   category (`stdlib`/`third_party` for Python, `builtin`/`third_party` for npm).
 - **Asset node**: an imported non-code file inside the analyzed folder (stylesheet, JSON, image).
 - **Unresolved node**: a placeholder for an import whose target could not be determined, scoped to its
-  language.
+  ecosystem (`python` or `npm`).
 - **Import / re-export edge**: one statement and imported name, from a file node to a target, with provenance,
   confidence, form and type-only flag.
 - **Resolution config**: the `tsconfig.json`/`jsconfig.json` settings (`baseUrl`, `paths`, `extends`) that
@@ -299,6 +303,8 @@ All outputs validate against schema version 2 and match their (updated) `expecte
 - `package.json` `exports`/`imports` field resolution for local packages, project references, and custom
   module resolvers (webpack, Vite aliases) are out of scope. Imports that need them stay `unresolved`.
 - Mapping npm package names to versions or lockfile entries is out of scope; packages are identified by name.
-- Cross-language edges (frontend HTTP call ↔ Python route) are a later heuristic feature; this slice adds none.
+- Heuristic cross-language edges (frontend HTTP call ↔ Python route) are a later feature; this slice adds
+  none. A written import of an analyzed file in another language (for example `import "../backend/app.py"`)
+  is still a normal resolved edge, because it is a fact in the code.
 - Symbol-level nodes and edges stay deferred, as in feature 001. Definitions are listed on file nodes only.
 - No database, HTTP API, UI, MCP server, graph queries or language model are part of this slice.

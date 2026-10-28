@@ -128,7 +128,9 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
 - [ ] T010 Create `backend/src/graphora/adapters/js/__init__.py` with only the constants
   `NAME = "js-adapter"`, `VERSION = "0.1.0"` and `EXTRACTOR`, and add `RESOLVER_VERSION = "0.1.0"` plus
   `BUILTINS_VERSION = "24.0.0"` constants in a new `backend/src/graphora/resolve/js.py`, which holds only
-  these constants for now. Bump `backend/src/graphora/adapters/python/__init__.py` to `VERSION = "0.2.0"`.
+  these constants for now. Bump `backend/src/graphora/adapters/python/__init__.py` to `VERSION = "0.2.0"`
+  and `RESOLVER_VERSION` in `backend/src/graphora/resolve/python.py` to `"0.2.0"`, because its node ids
+  change.
 - [ ] T011 Update `backend/src/graphora/graph/build.py` for the v2 model with Python only:
   - construct `FileNode(path, "python", definitions)`, `ExternalNode(name, "python", category)` and
     `UnresolvedNode(reference, "python")` from the `ext:python:` / `unresolved:python:` target ids;
@@ -155,9 +157,13 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
 - [ ] T014 In `backend/tests/golden/test_fixtures.py`:
   - change `test_provenance_consistent` to expect `python-adapter@0.2.0` for edges from `.py` / `.pyi`
     sources and `js-adapter@0.1.0` for all others;
-  - add `test_python_fixtures_match_v1`, for `py-flat`, `py-src-layout` and `py-dynamic`. It loads the v1
-    `expected.json` with `git show 732e98c:fixtures/repos/<name>/expected.json` (via `subprocess` in the
-    test only, never in the product). It maps the v2 projection back to v1:
+  - before editing anything in T013, copy the three v1 files once with
+    `git show 732e98c:fixtures/repos/<name>/expected.json > backend/tests/golden/v1/<name>.json`, and commit
+    them as frozen test data. Add a README line in `backend/tests/golden/v1/` saying they are the v1 ground
+    truth from feature 001 and must never be edited. The test reads these files, with no git access at test
+    time, so it survives a squash merge of 001 and shallow CI clones;
+  - add `test_python_fixtures_match_v1`, for `py-flat`, `py-src-layout` and `py-dynamic`. It loads
+    `backend/tests/golden/v1/<name>.json` and maps the v2 projection back to v1:
     - strip the `python:` part of the ids;
     - drop `type`, `form`, `ecosystem` and `language`;
     - keep only Python-language file nodes and edges with Python sources.
@@ -231,7 +237,12 @@ validate against v2 (quickstart § 2, § 3).
     - a cycle stops at the first repeat;
   - **Anchoring**: `baseUrl` is relative to the defining config; `paths` are relative to the effective
     `baseUrl`, or to the folder of the config that defines `paths` when there is no `baseUrl`;
-  - an unreadable config is reported (for the `parse_error` flag) and ignored for resolution.
+  - **Broken configs** (data-model.md § Coverage):
+    - every loaded config that cannot be read as JSONC is reported in `Configs.invalid`, whether or not
+      any file uses it;
+    - a file whose nearest config is broken uses the next valid ancestor config, as if the broken one were
+      absent;
+    - a broken `extends` target is skipped, and the remaining chain still applies.
 - [ ] T020 [P] [US1] Write `backend/tests/unit/test_js_resolve.py`, one test per row of the
   data-model.md resolution table, using in-memory file sets:
   - **`try()` order**: exact file, then the extensions in the order "`.ts`, `.tsx`, `.d.ts`, `.mts`,
@@ -255,8 +266,8 @@ validate against v2 (quickstart § 2, § 3).
   `skipped`). The fixture must contain (plan.md § Source Code):
   - `tsconfig.json` with comments, extending `./tsconfig.base` (no `.json`). The base sets
     `"baseUrl": "."` and paths `{"@app/*": ["src/*"], "@lib": ["src/lib/index.ts"]}`;
-  - relative imports, a folder import resolving to `index.ts`, `./util.js` resolving to `util.ts`, and a
-    `.d.ts` file;
+  - an entry file `src/main.ts` (quickstart § 2 queries it), with relative imports, a folder import
+    resolving to `index.ts`, `./util.js` resolving to `util.ts`, and a `.d.ts` file;
   - default, named, namespace, side-effect, `import type` and inline-`type` imports;
   - `import fs = require("fs")`, `node:fs`, `fs/promises`, `@scope/pkg/deep` and `react`;
   - existing `./styles.css` and `./data.json` imports (asset nodes), and a missing `./logo.svg`;
@@ -302,8 +313,9 @@ validate against v2 (quickstart § 2, § 3).
   exported declarations that are not definitions (`export const x = 1`). Make T018 pass.
 - [ ] T027 [P] [US1] Implement `backend/src/graphora/resolve/tsconfig.py`:
   - `parse_jsonc(text) -> dict | None`;
-  - `load_configs(files: set[str], read: Callable[[str], bytes]) -> Configs`, which reads only
-    `tsconfig.json` and `jsconfig.json` paths from `files`;
+  - `load_configs(files: set[str], read: Callable[[str], bytes]) -> Configs`, which loads every
+    `tsconfig.json` and `jsconfig.json` in `files`, plus every file reached through their `extends` chains
+    inside the root (for example `tsconfig.base.json`). It reads nothing else;
   - `Configs.for_file(path) -> Effective(base_url: str | None, paths: tuple[tuple[str, tuple[str, ...]], ...])`,
     with `paths` already ordered "an exact pattern first, then the longest prefix before `*`";
   - `Configs.invalid: tuple[str, ...]`, sorted.
@@ -336,14 +348,15 @@ validate against v2 (quickstart § 2, § 3).
   broken `tsconfig.json` gives exit `0`, the warning line on stderr, and `parse_error` in coverage.
 - [ ] T031 [US1] Extend `backend/tests/integration/test_safety.py` with a TS case, built in `tmp_path`:
   - a `tsconfig.json` that `extends` `../outside.json`, where `outside.json` exists next to the repository
-    and sets a `paths` alias the test imports;
+    and sets `"paths": {"@out/*": ["src/*"]}`, and a file `src/x.ts` imported as `@out/x`;
   - a `node_modules/pkg/index.js` that writes a marker file if executed;
   - a `package.json` with `"scripts": {"postinstall": "touch MARKER"}`.
 
   Monkeypatch `subprocess.Popen`, `os.system` and `os.posix_spawn` to fail the test if called. Assert:
   - exit `0`;
   - no marker file;
-  - the alias import is `unresolved` (the outside config was not read);
+  - the `@out/x` edge targets `ext:npm:@out/x` and not `file:src/x.ts`. The outside config was not read,
+    so the specifier falls through to npm (data-model.md § Resolution);
   - the repository tree is unchanged.
 - [ ] T032 [US1] Run the golden tests for `ts-app` and `js-commonjs`. Fix the implementation, never
   `expected.json`, unless a hand-check against data-model.md shows that the expected file is wrong. Record
@@ -391,7 +404,8 @@ JSON (quickstart § 4, SC-006).
   - the root `package.json` name is not a workspace name;
   - two packages declaring the same name are still workspace names;
   - a `paths` alias for the same name still wins (it comes first);
-  - a `package.json` that is not valid JSON contributes no name.
+  - a `package.json` that is not valid JSON contributes no name and gets no coverage flag (data-model.md
+    § Resolution).
 - [ ] T036 [P] [US2] Create the fixture `fixtures/repos/ts-monorepo/repo/` and hand-write its
   `expected.json`. The fixture must contain:
   - a root `package.json` with `workspaces`;

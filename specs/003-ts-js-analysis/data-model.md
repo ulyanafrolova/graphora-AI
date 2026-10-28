@@ -10,7 +10,7 @@ here (snapshot, coverage structure, path rules, Python resolution) is unchanged.
 | Field | Change |
 |---|---|
 | `schema_version` | Always `2` |
-| `extractors` | Adds `js-adapter`, `js-resolver` and `node-builtins`, for example `{"js-adapter": "0.1.0", "js-resolver": "0.1.0", "node-builtins": "24.0.0", "python-adapter": "0.2.0", "python-resolver": "0.1.0", "python-stdlib": "3.14.0"}`. All six are always present, even when a repository has no files of one language |
+| `extractors` | Adds `js-adapter`, `js-resolver` and `node-builtins`, for example `{"js-adapter": "0.1.0", "js-resolver": "0.1.0", "node-builtins": "24.0.0", "python-adapter": "0.2.0", "python-resolver": "0.2.0", "python-stdlib": "3.14.0"}`. Both Python versions are bumped because their output changes (new edge fields, ecosystem ids). All six are always present, even when a repository has no files of one language |
 | `edges` | Sorted by `(source, line, column, target, symbol ?? "", alias ?? "", type)` |
 
 ## Node
@@ -128,7 +128,7 @@ Edge examples for TS/JS:
 | Analyzed extensions | `.py`, `.pyi`, `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`. A `.d.ts` file is `typescript` |
 | New `detected_only` extensions | `.vue` → `vue`, `.svelte` → `svelte`, `.astro` → `astro` |
 | Marker files | `jsconfig.json` → `javascript` is added. `package.json`, `tsconfig.json` and `jsconfig.json` stay `not_code` |
-| `parse_error` on config files | A `tsconfig.json` or `jsconfig.json` that is used for resolution but cannot be read as JSONC gets this flag. Coverage keeps status `not_code` |
+| `parse_error` on config files | Every loaded config (each `tsconfig.json` and `jsconfig.json`, and every file reached through `extends`) that cannot be read as a JSONC object gets this flag, whether or not any file uses it. Coverage keeps status `not_code`. A broken config counts as absent: files fall back to the next valid ancestor config, and a broken `extends` entry is skipped while the rest of the chain applies |
 | `unreadable` on TS/JS | A TS/JS file that is not valid UTF-8 (a UTF-8 BOM is allowed and stripped) |
 | Skipped folder names | Add `.next`, `.nuxt`, `.turbo`, `.svelte-kit`, `coverage`, `out`, `bower_components` to the 001 list |
 
@@ -140,7 +140,9 @@ Edge examples for TS/JS:
 - `A`: the subset of `F` with status `analyzed`.
 - The parsed configs (see research R4).
 - `W`: workspace names, the `name` field of every `package.json` in `F` except `package.json` at the root.
-  If two package files declare the same name, the name is still in `W`.
+  If two package files declare the same name, the name is still in `W`. A `package.json` that is not
+  valid JSON, or has no string `name`, contributes nothing and gets no coverage flag: only its `name` is
+  used, and nothing else depends on it.
 
 **Trying a path.** `try(p)` returns the first of these that exists in `F`:
 
@@ -150,7 +152,9 @@ Edge examples for TS/JS:
    `.tsx`, `.mts` or `.cts`, in that order;
 4. `p/index` + each extension of step 2.
 
-If the result is in `A`, the target is `file:<result>`. Otherwise it is `asset:<result>`.
+If the result is in `A`, the target is `file:<result>`. Otherwise it is `asset:<result>`. A written import
+of an analyzed file in another language (for example `import "../backend/app.py"`) is therefore a normal
+resolved `file:` edge: it is a fact in the code. Only heuristic cross-language links are out of scope.
 
 **Normalizing a path.** Join the parts and resolve `.` and `..`. A path that goes above the root is
 `outside`.

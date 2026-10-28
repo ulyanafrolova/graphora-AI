@@ -89,8 +89,9 @@ against a probe file covering every import form in the spec.
 
 - **Decision**:
   - Parse with a small in-house JSONC reader: strip `//` and `/* */` comments outside strings and drop
-    trailing commas, then `json.loads`. If the result is not a JSON object, the config is ignored and its
-    coverage entry gets the `parse_error` flag.
+    trailing commas, then `json.loads`. If the result is not a JSON object, the config counts as absent and
+    its coverage entry gets the `parse_error` flag. Files fall back to the next valid ancestor config, and
+    a broken `extends` entry is skipped.
   - Read only `extends`, `compilerOptions.baseUrl` and `compilerOptions.paths`. `include`, `exclude`,
     `files`, `references` and `moduleResolution` are ignored.
   - **Nearest config.** For each TS/JS file, take the closest ancestor folder (inside the root) that has
@@ -180,7 +181,8 @@ against a probe file covering every import form in the spec.
     namespace.
   - Python edges get `form` (`static`, or `dynamic` for `importlib` / `__import__`) and
     `type_only: false`.
-  - `python-adapter` becomes `0.2.0`, because its output gains fields.
+  - `python-adapter` and `python-resolver` become `0.2.0`, because their output gains fields and ids
+    change.
 - **Rationale**:
   - These are the minimal changes for FR-015 … FR-019.
   - Export information is a list of names (`exported_as`) instead of a boolean, because one definition can
@@ -216,7 +218,9 @@ against a probe file covering every import form in the spec.
   - The three Python `expected.json` files are edited by hand. They get the new ids and ecosystems, and
     `type: "imports"` plus `form` on every edge. Nothing else changes (FR-020).
   - A test asserts that the Python fixtures' edge sets, with ids mapped back to v1 form, equal the v1
-    expected edge sets from git history. This proves SC-003.
+    expected edge sets. The v1 files are copied once from commit `732e98c` into
+    `backend/tests/golden/v1/` as frozen test data, so the test needs no git access and survives a squash
+    merge of 001. This proves SC-003.
 - **Rationale**: projecting only non-default flags keeps hand-written files short. The v1-equivalence
   check makes the "nothing else changed" claim mechanical rather than a review promise.
 - **Alternatives considered**: keeping the Python fixtures in a v1 projection and translating in the test.
