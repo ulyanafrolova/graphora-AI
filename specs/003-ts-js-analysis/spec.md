@@ -192,7 +192,8 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   3. the Node built-in module list;
   4. otherwise, an npm package named by the first segment of the specifier (the first two for `@scope/…`).
 
-  A specifier that matches an alias or `baseUrl` but no file is `unresolved` with reason `not_found`.
+  A specifier that matches a `paths` alias but no file is `unresolved` with reason `not_found`. A
+  `baseUrl` lookup that finds no file falls through to the next step, as in TypeScript.
 - **FR-010**: Before step 3 of FR-009, a bare specifier whose package name matches the `name` of a
   `package.json` inside the analyzed folder (other than the root one) MUST be recorded as `unresolved` with
   reason `workspace_package`. It MUST NOT become an npm package node, and no local file is guessed.

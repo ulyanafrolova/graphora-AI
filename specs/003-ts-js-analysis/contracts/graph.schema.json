@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://graphora.dev/schema/graph.schema.json",
+  "title": "Graphora graph document",
+  "description": "Schema version 2. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript and JavaScript.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "snapshot", "extractors", "nodes", "edges", "coverage"],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "snapshot": { "$ref": "#/$defs/snapshot" },
+    "extractors": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+    },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "coverage": { "$ref": "#/$defs/coverage" }
+  },
+  "$defs": {
+    "snapshot": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{40}(\\+dirty:[0-9a-f]{16})?|content:[0-9a-f]{16})$"
+    },
+    "relpath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!\\./)(?!.*(^|/)\\.\\.(/|$)).+$"
+    },
+    "ecosystem": { "enum": ["python", "npm"] },
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/fileNode" },
+        { "$ref": "#/$defs/externalNode" },
+        { "$ref": "#/$defs/unresolvedNode" },
+        { "$ref": "#/$defs/assetNode" }
+      ]
+    },
+    "fileNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path", "language", "definitions"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^file:.+$" },
+        "kind": { "const": "file" },
+        "path": { "$ref": "#/$defs/relpath" },
+        "language": { "enum": ["python", "typescript", "javascript"] },
+        "definitions": { "type": "array", "items": { "$ref": "#/$defs/definition" } },
+        "exports": { "type": "array", "items": { "$ref": "#/$defs/export" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "language": { "const": "python" } } },
+          "then": {
+            "not": { "required": ["exports"] },
+            "properties": {
+              "definitions": {
+                "items": {
+                  "not": { "required": ["exported_as"] },
+                  "properties": { "kind": { "enum": ["class", "function", "method"] } }
+                }
+              }
+            }
+          },
+          "else": {
+            "required": ["exports"],
+            "properties": { "definitions": { "items": { "required": ["exported_as"] } } }
+          }
+        }
+      ]
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "line"],
+      "properties": {
+        "kind": { "enum": ["class", "function", "method", "interface", "type_alias", "enum"] },
+        "name": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "exported_as": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "local", "line"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "local": { "type": ["string", "null"], "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "externalNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "name", "ecosystem", "category"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^ext:(python|npm):.+$" },
+        "kind": { "const": "external" },
+        "name": { "type": "string", "minLength": 1 },
+        "ecosystem": { "$ref": "#/$defs/ecosystem" },
+        "category": { "enum": ["stdlib", "builtin", "third_party"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "ecosystem": { "const": "python" } } },
+          "then": {
+            "properties": { "id": { "pattern": "^ext:python:" }, "category": { "enum": ["stdlib", "third_party"] } }
+          },
+          "else": {
+            "properties": { "id": { "pattern": "^ext:npm:" }, "category": { "enum": ["builtin", "third_party"] } }
+          }
+        }
+      ]
+    },
+    "unresolvedNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "reference", "ecosystem"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^unresolved:(python|npm):.+$" },
+        "kind": { "const": "unresolved" },
+        "reference": { "type": "string", "minLength": 1 },
+        "ecosystem": { "$ref": "#/$defs/ecosystem" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "ecosystem": { "const": "python" } } },
+          "then": { "properties": { "id": { "pattern": "^unresolved:python:" } } },
+          "else": { "properties": { "id": { "pattern": "^unresolved:npm:" } } }
+        }
+      ]
+    },
+    "assetNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "path"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^asset:.+$" },
+        "kind": { "const": "asset" },
+        "path": { "$ref": "#/$defs/relpath" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "source", "target", "type", "form", "type_only", "symbol", "line", "column",
+        "snapshot", "confidence", "extractor", "snippet_hash"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^e:[0-9a-f]{16}$" },
+        "source": { "type": "string", "pattern": "^file:.+$" },
+        "target": { "type": "string", "pattern": "^(file|ext|unresolved|asset):.+$" },
+        "type": { "enum": ["imports", "reexports"] },
+        "form": { "enum": ["static", "dynamic", "require"] },
+        "type_only": { "type": "boolean" },
+        "symbol": { "type": ["string", "null"], "minLength": 1 },
+        "alias": { "type": "string", "minLength": 1 },
+        "line": { "type": "integer", "minimum": 1 },
+        "column": { "type": "integer", "minimum": 1 },
+        "snapshot": { "$ref": "#/$defs/snapshot" },
+        "confidence": { "enum": ["resolved", "heuristic", "unresolved"] },
+        "reason": {
+          "enum": ["not_found", "relative_beyond_top", "namespace_package", "dynamic", "workspace_package"]
+        },
+        "extractor": { "type": "string", "pattern": "^[a-z0-9-]+@[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "snippet_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{16}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "confidence": { "const": "unresolved" } } },
+          "then": { "required": ["reason"], "properties": { "target": { "pattern": "^unresolved:" } } },
+          "else": { "not": { "required": ["reason"] }, "properties": { "target": { "pattern": "^(file|ext|asset):" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "reexports" } } },
+          "then": { "properties": { "form": { "const": "static" } } },
+          "else": { "not": { "required": ["alias"] } }
+        }
+      ]
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files", "skipped", "summary"],
+      "properties": {
+        "files": { "type": "array", "items": { "$ref": "#/$defs/coverageFile" } },
+        "skipped": { "type": "array", "items": { "$ref": "#/$defs/skipped" } },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["analyzed", "detected_only", "not_code", "skipped", "by_language"],
+          "properties": {
+            "analyzed": { "type": "integer", "minimum": 0 },
+            "detected_only": { "type": "integer", "minimum": 0 },
+            "not_code": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 },
+            "by_language": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 } }
+          }
+        }
+      }
+    },
+    "coverageFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "language", "status", "flags"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relpath" },
+        "language": { "type": ["string", "null"] },
+        "status": { "enum": ["analyzed", "detected_only", "not_code"] },
+        "flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["parse_error", "unreadable"] }
+        }
+      }
+    },
+    "skipped": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "reason"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relpath" },
+        "reason": { "enum": ["excluded_dir", "nested_repository", "symlink", "minified"] }
+      }
+    }
+  }
+}
