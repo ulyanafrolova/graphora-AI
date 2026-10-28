@@ -144,16 +144,22 @@ Developers who already run `graphora analyze <dir>` see no difference: same argu
   to a single file (`/blob/...`), or with extra path segments are rejected with a message listing accepted forms.
 - A ref name containing `/` (e.g. `feature/x`) in a `/tree/` link is ambiguous; the developer can pass the ref
   with `--ref`, and that is what the error message suggests.
-- An existing file that is not a ZIP archive (whatever its extension) is reported as an invalid archive; a path that
-  does not exist and does not start with `https://` is reported as bad input.
+- An existing file that does not start with a ZIP signature (whatever its extension), and a path that does not
+  exist and does not start with `https://`, are reported as bad input, as a file or missing path is today. A file
+  that starts with a ZIP signature but cannot be read as ZIP is reported as an invalid archive.
+- A `/tree/<ref>` link given together with `--ref` is bad input, even if both name the same ref.
 - A repository with no commits (empty) is reported as such; no graph is written.
 - A short commit SHA is accepted only if GitHub resolves it to exactly one commit.
 - The archive download is larger than allowed: the download stops at the limit, as a limit error.
 - Git submodules are not fetched (GitHub tarballs do not contain them); their folders are empty or absent and are
   not analyzed.
 - Files that are Git LFS pointers are analyzed as the small text files they are; LFS content is not fetched.
-- Two archive entries map to the same path (duplicates, or names that differ only by case on a case-insensitive
-  disk): the archive is rejected rather than one file silently replacing the other.
+- A repository whose `.gitattributes` uses `export-ignore` or `export-subst` is analyzed as GitHub's archive of
+  the commit serves it, which can differ from a clone in the files listed there. FR-016 applies to repositories
+  that do not use these attributes.
+- Two archive entries map to the same path (duplicates, or names that differ only by letter case or Unicode
+  normalisation): the archive is rejected rather than one file silently replacing the other. This applies on every
+  system, not only on case-insensitive disks, so the result does not depend on the machine.
 - File names that are not valid UTF-8, or contain characters forbidden on the current system: the archive is rejected
   with a message naming the entry.
 - Directory entries, empty folders and file permission bits in the archive do not affect the graph.
@@ -212,7 +218,8 @@ Developers who already run `graphora analyze <dir>` see no difference: same argu
   document and every edge; when not given, the snapshot id is computed exactly as today.
 - **FR-015**: For a local folder the output MUST be byte-identical to the output before this feature.
 - **FR-016**: The graph of a GitHub commit MUST be byte-identical to the graph of a clean local clone of the same
-  commit (same files, same paths, same snapshot id).
+  commit (same files, same paths, same snapshot id), unless the repository uses `export-ignore` or `export-subst`
+  (see Edge Cases).
 
 **Errors and output**
 
