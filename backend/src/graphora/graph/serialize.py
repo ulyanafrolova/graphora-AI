@@ -7,9 +7,9 @@ import json
 from collections import Counter
 from typing import Any
 
-from graphora.graph.model import Edge, ExternalNode, FileNode, GraphDocument, Node
+from graphora.graph.model import AssetNode, Definition, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _sha16(text: str) -> str:
@@ -21,27 +21,42 @@ def snippet_hash(text: str) -> str:
     return "sha256:" + _sha16(" ".join(text.split()))
 
 
+def edge_sort_key(edge: Edge) -> tuple[str, int, int, str, str, str, str]:
+    return (edge.source, edge.line, edge.column, edge.target, edge.symbol or "", edge.alias or "", edge.type)
+
+
 def edge_id(edge: Edge) -> str:
-    return "e:" + _sha16(f"{edge.source}|{edge.line}|{edge.column}|{edge.target}|{edge.symbol or ''}")
+    """Hash of `source|line|column|target|symbol|alias|type`, with "" for null values."""
+    return "e:" + _sha16("|".join(str(part) for part in edge_sort_key(edge)))
 
 
-def edge_sort_key(edge: Edge) -> tuple[str, int, int, str, str]:
-    return (edge.source, edge.line, edge.column, edge.target, edge.symbol or "")
+def _definition_dict(definition: Definition) -> dict[str, Any]:
+    out: dict[str, Any] = {"kind": definition.kind, "name": definition.name, "line": definition.line}
+    if definition.exported_as is not None:
+        out["exported_as"] = sorted(set(definition.exported_as))
+    return out
 
 
 def _node_dict(node: Node) -> dict[str, Any]:
     if isinstance(node, FileNode):
         definitions = sorted(node.definitions, key=lambda d: (d.line, d.name))
-        return {
+        out: dict[str, Any] = {
             "id": node.id,
             "kind": "file",
             "path": node.path,
-            "language": "python",
-            "definitions": [{"kind": d.kind, "name": d.name, "line": d.line} for d in definitions],
+            "language": node.language,
+            "definitions": [_definition_dict(d) for d in definitions],
         }
+        if node.language != "python":
+            exports = sorted(node.exports or (), key=lambda x: (x.name, x.line))
+            out["exports"] = [{"name": x.name, "local": x.local, "line": x.line} for x in exports]
+        return out
     if isinstance(node, ExternalNode):
-        return {"id": node.id, "kind": "external", "name": node.name, "category": node.category}
-    return {"id": node.id, "kind": "unresolved", "reference": node.reference}
+        return {"id": node.id, "kind": "external", "name": node.name, "ecosystem": node.ecosystem, "category": node.category}
+    if isinstance(node, UnresolvedNode):
+        return {"id": node.id, "kind": "unresolved", "reference": node.reference, "ecosystem": node.ecosystem}
+    assert isinstance(node, AssetNode)
+    return {"id": node.id, "kind": "asset", "path": node.path}
 
 
 def _edge_dict(edge: Edge) -> dict[str, Any]:
@@ -49,7 +64,9 @@ def _edge_dict(edge: Edge) -> dict[str, Any]:
         "id": edge_id(edge),
         "source": edge.source,
         "target": edge.target,
-        "type": "imports",
+        "type": edge.type,
+        "form": edge.form,
+        "type_only": edge.type_only,
         "symbol": edge.symbol,
         "line": edge.line,
         "column": edge.column,
@@ -60,6 +77,8 @@ def _edge_dict(edge: Edge) -> dict[str, Any]:
     }
     if edge.reason is not None:
         out["reason"] = edge.reason
+    if edge.alias is not None:
+        out["alias"] = edge.alias
     return out
 
 

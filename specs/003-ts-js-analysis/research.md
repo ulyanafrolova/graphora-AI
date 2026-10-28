@@ -146,9 +146,9 @@ against a probe file covering every import form in the spec.
 
 - **Decision**:
   - Commit `backend/src/graphora/resolve/data/node_builtins.txt` as the union of `module.builtinModules`
-    for Node 20, 22 and 24, plus the prefix-only modules (`node:test`, `node:sqlite`, `node:sea`,
+    for Node 20, 22, 24 and 26, plus the prefix-only modules (`node:ffi`, `node:test`, `node:sqlite`, `node:sea`,
     `node:test/reporters`). Prefix-only names are marked so that bare `test` stays an npm package.
-  - The list is versioned `node-builtins@24.0.0` in `extractors`.
+  - The list is versioned `node-builtins@26.0.0` in `extractors`.
   - `backend/scripts/gen_node_builtins.py` documents how the list was produced. It needs a local Node and
     is never run by tests or by `analyze`.
 - **Rationale**: FR-011 requires that the list does not depend on the machine. Using the union classifies

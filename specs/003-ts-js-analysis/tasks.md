@@ -36,17 +36,17 @@ Paths are relative to the repository root. Python code lives in `backend/src/gra
 
 **Purpose**: Dependencies and the shipped built-in list.
 
-- [ ] T001 Add `tree-sitter-typescript==0.23.2` and `tree-sitter-javascript==0.25.0` to `dependencies` in
+- [X] T001 Add `tree-sitter-typescript==0.23.2` and `tree-sitter-javascript==0.25.0` to `dependencies` in
   `backend/pyproject.toml`, keeping the existing exact pins. Run `uv sync` in `backend/` and commit the
   updated `backend/uv.lock`.
-- [ ] T002 [P] Create `backend/src/graphora/resolve/data/node_builtins.txt` (research R6):
+- [X] T002 [P] Create `backend/src/graphora/resolve/data/node_builtins.txt` (research R6):
   - one name per line, sorted, UTF-8, LF;
-  - the union of `require("module").builtinModules` for Node 20, 22 and 24, top-level names only (`fs`,
+  - the union of `require("module").builtinModules` for Node 20, 22, 24 and 26, top-level names only (`fs`,
     not `fs/promises`; `fs/promises` resolves through its top segment);
-  - prefix-only modules on lines of the form `node:<name>`: `node:sea`, `node:sqlite`, `node:test`,
+  - prefix-only modules on lines of the form `node:<name>`: `node:ffi`, `node:sea`, `node:sqlite`, `node:test`,
     `node:test/reporters`;
-  - a first comment line `# node-builtins@24.0.0`.
-- [ ] T003 [P] Create `backend/scripts/gen_node_builtins.py`. It runs a local `node -p` to print
+  - a first comment line `# node-builtins@26.0.0`.
+- [X] T003 [P] Create `backend/scripts/gen_node_builtins.py`. It runs a local `node -p` to print
   `builtinModules` and rewrites `node_builtins.txt` in the T002 format, merging with the existing file so
   the union is kept. Add a module docstring stating that it needs a local Node, is never run by tests or by
   `analyze`, and reads nothing from analyzed repositories.
@@ -60,9 +60,9 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 [P] Copy `specs/003-ts-js-analysis/contracts/graph.schema.json` to `schema/graph.schema.json`,
+- [X] T004 [P] Copy `specs/003-ts-js-analysis/contracts/graph.schema.json` to `schema/graph.schema.json`,
   replacing v1.
-- [ ] T005 [P] Rewrite `backend/tests/contract/test_schema.py` for v2:
+- [X] T005 [P] Rewrite `backend/tests/contract/test_schema.py` for v2:
   - **Valid cases**: a Python-only document and a TS document, both built through `to_dict` from model
     objects. The TS document must contain an asset node, an npm external node, a `reexports` edge with an
     `alias`, and a file node with `exports`.
@@ -85,7 +85,7 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
     - an unresolved node without `ecosystem`;
     - `schema_version: 1`;
     - a node `path` of `../x.ts`.
-- [ ] T006 [P] Update `backend/tests/unit/test_serialize.py` for v2. It must assert:
+- [X] T006 [P] Update `backend/tests/unit/test_serialize.py` for v2. It must assert:
   - `schema_version` is `2`;
   - edges sort by `(source, line, column, target, symbol ?? "", alias ?? "", type)`;
   - edge `id` is `"e:" + sha256("source|line|column|target|symbol|alias|type")[:16]`, with `""` for
@@ -100,7 +100,7 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
     `unresolved:<ecosystem>:<reference>`;
   - an asset node serializes as `{"id": "asset:<path>", "kind": "asset", "path": <path>}`;
   - the existing determinism and byte-format assertions still hold.
-- [ ] T007 Update `backend/src/graphora/graph/model.py` (data-model.md § Node, § Edge):
+- [X] T007 Update `backend/src/graphora/graph/model.py` (data-model.md § Node, § Edge):
   - add the `Ecosystem = Literal["python", "npm"]` and `Form = Literal["static", "dynamic", "require"]`
     types, and `EdgeType = Literal["imports", "reexports"]`;
   - add `"workspace_package"` to `Reason` and `"interface" | "type_alias" | "enum"` to `DefinitionKind`;
@@ -115,37 +115,37 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
     and `alias: str | None = None`. In `__post_init__` also raise when `alias` is set on a non-`reexports`
     edge, or when a `reexports` edge has a form other than `static`;
   - update the module docstring to point to `specs/003-ts-js-analysis/data-model.md` as well.
-- [ ] T008 Update `backend/src/graphora/graph/serialize.py`:
+- [X] T008 Update `backend/src/graphora/graph/serialize.py`:
   - `SCHEMA_VERSION = 2`;
   - the new `edge_id` and `edge_sort_key` from T006;
   - `_node_dict` for every node kind, with `language` taken from the node (no hard-coded `"python"`);
   - `_edge_dict` writes `type`, `form` and `type_only` always, and `alias` only when set.
 
   Make T005 and T006 pass.
-- [ ] T009 Update `backend/src/graphora/resolve/python.py` so it returns ids `ext:python:<top>` and
+- [X] T009 Update `backend/src/graphora/resolve/python.py` so it returns ids `ext:python:<top>` and
   `unresolved:python:<reference>`, without changing any rule. Update `backend/tests/unit/test_resolve.py`
   to the new ids only.
-- [ ] T010 Create `backend/src/graphora/adapters/js/__init__.py` with only the constants
+- [X] T010 Create `backend/src/graphora/adapters/js/__init__.py` with only the constants
   `NAME = "js-adapter"`, `VERSION = "0.1.0"` and `EXTRACTOR`, and add `RESOLVER_VERSION = "0.1.0"` plus
-  `BUILTINS_VERSION = "24.0.0"` constants in a new `backend/src/graphora/resolve/js.py`, which holds only
+  `BUILTINS_VERSION = "26.0.0"` constants in a new `backend/src/graphora/resolve/js.py`, which holds only
   these constants for now. Bump `backend/src/graphora/adapters/python/__init__.py` to `VERSION = "0.2.0"`
   and `RESOLVER_VERSION` in `backend/src/graphora/resolve/python.py` to `"0.2.0"`, because its node ids
   change.
-- [ ] T011 Update `backend/src/graphora/graph/build.py` for the v2 model with Python only:
+- [X] T011 Update `backend/src/graphora/graph/build.py` for the v2 model with Python only:
   - construct `FileNode(path, "python", definitions)`, `ExternalNode(name, "python", category)` and
     `UnresolvedNode(reference, "python")` from the `ext:python:` / `unresolved:python:` target ids;
   - set the edge `form` to `"dynamic"` for records with `kind == "dynamic"`, else `"static"`, with
     `type_only=False`;
   - write all six `extractors` keys from data-model.md § GraphDocument: `js-adapter`, `js-resolver`,
     `node-builtins`, `python-adapter`, `python-resolver`, `python-stdlib`.
-- [ ] T012 Update `project()` in `backend/tests/conftest.py` (research R9):
+- [X] T012 Update `project()` in `backend/tests/conftest.py` (research R9):
   - nodes: add `ecosystem` for external and unresolved nodes, `path` for asset nodes, and for file nodes
     `language` plus, when present, `exports`. Definitions are copied as serialized, so TS definitions
     include `exported_as`;
   - edges: add `type` and `form` always, `type_only` only when `true`, and `alias` only when set;
   - the edge sort key in `project()` and in `_normalize` of `backend/tests/golden/test_fixtures.py`
     becomes `(source, line, target, symbol or "", alias or "", type)`.
-- [ ] T013 Migrate by hand `fixtures/repos/py-flat/expected.json`, `fixtures/repos/py-src-layout/expected.json`
+- [X] T013 Migrate by hand `fixtures/repos/py-flat/expected.json`, `fixtures/repos/py-src-layout/expected.json`
   and `fixtures/repos/py-dynamic/expected.json` to the T012 projection:
   - prefix ids: `ext:x` → `ext:python:x`, `unresolved:r` → `unresolved:python:r`, in nodes and in edge
     targets;
@@ -154,7 +154,7 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
     `__import__` edges, `"form": "dynamic"`.
 
   Change nothing else (FR-020). The `web/app.ts` change in `py-dynamic` belongs to T033.
-- [ ] T014 In `backend/tests/golden/test_fixtures.py`:
+- [X] T014 In `backend/tests/golden/test_fixtures.py`:
   - change `test_provenance_consistent` to expect `python-adapter@0.2.0` for edges from `.py` / `.pyi`
     sources and `js-adapter@0.1.0` for all others;
   - before editing anything in T013, copy the three v1 files once with
@@ -169,7 +169,7 @@ fixtures. After this phase the existing 001 test suite passes on v2, before any 
     - keep only Python-language file nodes and edges with Python sources.
 
     It asserts that the v1 nodes and edges are equal (SC-003).
-- [ ] T015 Run `uv run pytest -m "not slow"`. Every existing test must pass on schema v2 before Phase 3
+- [X] T015 Run `uv run pytest -m "not slow"`. Every existing test must pass on schema v2 before Phase 3
   starts.
 
 **Checkpoint**: v2 schema in place, Python output migrated, 001 test suite green.
@@ -190,17 +190,17 @@ validate against v2 (quickstart § 2, § 3).
 
 ### Tests for User Story 1
 
-- [ ] T016 [P] [US1] Update `backend/tests/unit/test_languages.py`:
+- [X] T016 [P] [US1] Update `backend/tests/unit/test_languages.py`:
   - `.ts`, `.tsx`, `.mts`, `.cts` and `x.d.ts` give `("typescript", "analyzed")`;
   - `.js`, `.jsx`, `.mjs` and `.cjs` give `("javascript", "analyzed")`;
   - `.vue`, `.svelte` and `.astro` give `detected_only` with languages `vue`, `svelte` and `astro`;
   - `jsconfig.json` is a marker with language `javascript` and status `not_code`;
   - replace the `DETECTED_ONLY_EXTENSIONS` table test with the new table, which has no TS/JS entries and
     does have the three new ones.
-- [ ] T017 [P] [US1] Extend `backend/tests/unit/test_walk.py` so each of `.next`, `.nuxt`, `.turbo`,
+- [X] T017 [P] [US1] Extend `backend/tests/unit/test_walk.py` so each of `.next`, `.nuxt`, `.turbo`,
   `.svelte-kit`, `coverage`, `out` and `bower_components` is skipped once with reason `excluded_dir`, and
   its contents are not listed.
-- [ ] T018 [P] [US1] Write `backend/tests/unit/test_js_extract.py`. Assert on records and definitions
+- [X] T018 [P] [US1] Write `backend/tests/unit/test_js_extract.py`. Assert on records and definitions
   returned for small sources:
   - **Import forms**, each row of research R2 except the `export … from` rows: symbol, form, type-only,
     line and column;
@@ -224,7 +224,7 @@ validate against v2 (quickstart § 2, § 3).
     sets `has_error`;
   - a file with a syntax error still yields its intact imports;
   - a UTF-8 BOM is stripped, and invalid UTF-8 returns None (`unreadable`).
-- [ ] T019 [P] [US1] Write `backend/tests/unit/test_tsconfig.py` (research R4):
+- [X] T019 [P] [US1] Write `backend/tests/unit/test_tsconfig.py` (research R4):
   - **JSONC**: `//` and `/* */` comments are stripped, but not inside strings (`"a//b"`); trailing commas
     in objects and arrays are dropped; a non-object or invalid input returns None;
   - **Nearest config**: the nearest ancestor wins, `tsconfig.json` beats `jsconfig.json` in the same
@@ -243,7 +243,7 @@ validate against v2 (quickstart § 2, § 3).
     - a file whose nearest config is broken uses the next valid ancestor config, as if the broken one were
       absent;
     - a broken `extends` target is skipped, and the remaining chain still applies.
-- [ ] T020 [P] [US1] Write `backend/tests/unit/test_js_resolve.py`, one test per row of the
+- [X] T020 [P] [US1] Write `backend/tests/unit/test_js_resolve.py`, one test per row of the
   data-model.md resolution table, using in-memory file sets:
   - **`try()` order**: exact file, then the extensions in the order "`.ts`, `.tsx`, `.d.ts`, `.mts`,
     `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.json`", then `.js` → `.ts` / `.tsx`, `.jsx` → `.tsx`,
@@ -261,7 +261,7 @@ validate against v2 (quickstart § 2, § 3).
   - **Package names**: `@scope/pkg/deep` gives `ext:npm:@scope/pkg`; `lodash/fp` gives
     `ext:npm:lodash`; `@scope` and `@scope/` are `not_found`;
   - a dynamic record is `unresolved` with reason `dynamic` and the call text as reference.
-- [ ] T021 [P] [US1] Create the fixture `fixtures/repos/ts-app/repo/` and hand-write
+- [X] T021 [P] [US1] Create the fixture `fixtures/repos/ts-app/repo/` and hand-write
   `fixtures/repos/ts-app/expected.json` (all sections: `snapshot_kind`, `nodes`, `edges`, `coverage`,
   `skipped`). The fixture must contain (plan.md § Source Code):
   - `tsconfig.json` with comments, extending `./tsconfig.base` (no `.json`). The base sets
@@ -277,7 +277,7 @@ validate against v2 (quickstart § 2, § 3).
   - a `.ts` file with a syntax error;
   - a `.vue` file;
   - `node_modules/react/index.js`, `dist/bundle.js` and `.next/cache.js`, all skipped.
-- [ ] T022 [P] [US1] Create the fixture `fixtures/repos/js-commonjs/repo/` and hand-write its
+- [X] T022 [P] [US1] Create the fixture `fixtures/repos/js-commonjs/repo/` and hand-write its
   `expected.json`. The fixture must contain:
   - `require` with a literal, with a non-literal argument, and with a template literal without
     substitutions;
@@ -291,15 +291,15 @@ validate against v2 (quickstart § 2, § 3).
 
 ### Implementation for User Story 1
 
-- [ ] T023 [P] [US1] Update `backend/src/graphora/detect/languages.py` (data-model.md § Coverage):
+- [X] T023 [P] [US1] Update `backend/src/graphora/detect/languages.py` (data-model.md § Coverage):
   - move the TS/JS extensions into `ANALYZED_EXTENSIONS`;
   - add `.vue`, `.svelte` and `.astro` to `DETECTED_ONLY_EXTENSIONS`;
   - add the marker `jsconfig.json` → `javascript`.
 
   Make T016 pass.
-- [ ] T024 [P] [US1] Add `.next`, `.nuxt`, `.turbo`, `.svelte-kit`, `coverage`, `out` and
+- [X] T024 [P] [US1] Add `.next`, `.nuxt`, `.turbo`, `.svelte-kit`, `coverage`, `out` and
   `bower_components` to `EXCLUDED_DIRS` in `backend/src/graphora/ingest/walk.py`. Make T017 pass.
-- [ ] T025 [US1] Implement `backend/src/graphora/adapters/js/extract.py`, part 1: imports.
+- [X] T025 [US1] Implement `backend/src/graphora/adapters/js/extract.py`, part 1: imports.
   - Load the grammars per research R1 and pick one by file extension.
   - Expose `extract(path: str, source: bytes) -> FileFacts | None`, returning None for invalid UTF-8 and
     stripping a BOM.
@@ -307,11 +307,11 @@ validate against v2 (quickstart § 2, § 3).
     dynamic), `names` (tuples of `(symbol, type_only)`), `text`, `line`, `column` and `literal`.
   - Cover every row of research R2 except the `export … from` rows.
   - `has_error` is true when the tree contains ERROR or MISSING nodes.
-- [ ] T026 [US1] Implement `backend/src/graphora/adapters/js/extract.py`, part 2: definitions, following
+- [X] T026 [US1] Implement `backend/src/graphora/adapters/js/extract.py`, part 2: definitions, following
   the data-model.md definition table and the line rule "Line of the declaring keyword … never of a
   decorator". Fill `exported_as` from `export` declarations only, and add `Export(name, name, line)` for
   exported declarations that are not definitions (`export const x = 1`). Make T018 pass.
-- [ ] T027 [P] [US1] Implement `backend/src/graphora/resolve/tsconfig.py`:
+- [X] T027 [P] [US1] Implement `backend/src/graphora/resolve/tsconfig.py`:
   - `parse_jsonc(text) -> dict | None`;
   - `load_configs(files: set[str], read: Callable[[str], bytes]) -> Configs`, which loads every
     `tsconfig.json` and `jsconfig.json` in `files`, plus every file reached through their `extends` chains
@@ -321,7 +321,7 @@ validate against v2 (quickstart § 2, § 3).
   - `Configs.invalid: tuple[str, ...]`, sorted.
 
   Cache the effective config per folder. Make T019 pass.
-- [ ] T028 [US1] Implement `backend/src/graphora/resolve/js.py` (keep the T010 constants):
+- [X] T028 [US1] Implement `backend/src/graphora/resolve/js.py` (keep the T010 constants):
   - load `node_builtins.txt` once;
   - `try_path(p, files, analyzed)`, implementing the resolution table except the workspace row;
   - `resolve(path, record, files, analyzed, configs) -> list[Target]`, with one target per name, using
@@ -330,7 +330,7 @@ validate against v2 (quickstart § 2, § 3).
   - cache `try_path` per candidate path.
 
   Make T020 pass, except the workspace cases added in US2.
-- [ ] T029 [US1] Update `backend/src/graphora/graph/build.py`:
+- [X] T029 [US1] Update `backend/src/graphora/graph/build.py`:
   - dispatch by coverage language: Python to the Python adapter and resolver, `typescript`/`javascript` to
     the JS adapter and resolver;
   - build `Configs` from the walked files, and add `parse_error` to the coverage flags of
@@ -342,11 +342,11 @@ validate against v2 (quickstart § 2, § 3).
   - set `form` and `type_only` from the record, and `extractor` to `js-adapter@0.1.0`;
   - return the invalid config paths alongside the document as warnings, for example
     `build(...) -> tuple[GraphDocument, tuple[str, ...]]`, and update the callers.
-- [ ] T030 [US1] In `backend/src/graphora/cli/__init__.py`, log
+- [X] T030 [US1] In `backend/src/graphora/cli/__init__.py`, log
   `graphora: warning: ignoring <path>: not valid JSON-with-comments` for each warning returned by `build`,
   before the summary line (contracts/cli.md). Add a test to `backend/tests/integration/test_cli.py`: a
   broken `tsconfig.json` gives exit `0`, the warning line on stderr, and `parse_error` in coverage.
-- [ ] T031 [US1] Extend `backend/tests/integration/test_safety.py` with a TS case, built in `tmp_path`:
+- [X] T031 [US1] Add `backend/tests/integration/test_safety_ts.py` (kept separate from the git-hook test in `test_safety.py`) with a TS case, built in `tmp_path`:
   - a `tsconfig.json` that `extends` `../outside.json`, where `outside.json` exists next to the repository
     and sets `"paths": {"@out/*": ["src/*"]}`, and a file `src/x.ts` imported as `@out/x`;
   - a `node_modules/pkg/index.js` that writes a marker file if executed;
@@ -358,10 +358,10 @@ validate against v2 (quickstart § 2, § 3).
   - the `@out/x` edge targets `ext:npm:@out/x` and not `file:src/x.ts`. The outside config was not read,
     so the specifier falls through to npm (data-model.md § Resolution);
   - the repository tree is unchanged.
-- [ ] T032 [US1] Run the golden tests for `ts-app` and `js-commonjs`. Fix the implementation, never
+- [X] T032 [US1] Run the golden tests for `ts-app` and `js-commonjs`. Fix the implementation, never
   `expected.json`, unless a hand-check against data-model.md shows that the expected file is wrong. Record
   any such correction in the commit message.
-- [ ] T033 [US1] Update `fixtures/repos/py-dynamic`:
+- [X] T033 [US1] Update `fixtures/repos/py-dynamic`:
   - in `expected.json`, `web/app.ts` becomes `analyzed` with the file node
     `{"id": "file:web/app.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": [{"name": "x", "local": "x", "line": 1}]}`;
   - add `repo/tools/main.go` (one line, `package main`) and its coverage entry `detected_only` / `go`, so
@@ -385,7 +385,7 @@ JSON (quickstart § 4, SC-006).
 
 ### Tests for User Story 2
 
-- [ ] T034 [P] [US2] Extend `backend/tests/unit/test_js_extract.py`:
+- [X] T034 [P] [US2] Extend `backend/tests/unit/test_js_extract.py`:
   - the `export … from` rows of research R2: `export *`, `export * as ns` (symbol `*`, alias `ns`),
     `export { a, b as c } from` (alias only on `b`), and `export type { T } from` (type-only), all with
     edge type `reexports` and form `static`;
@@ -398,7 +398,7 @@ JSON (quickstart § 4, SC-006).
   - `import { a } from "./m"; export { a as b }` gives `Export("b", "a", line)`;
   - the invariant "every name a TS/JS file exports appears exactly once" holds over a file combining all
     of the above.
-- [ ] T035 [P] [US2] Extend `backend/tests/unit/test_js_resolve.py` with the workspace row:
+- [X] T035 [P] [US2] Extend `backend/tests/unit/test_js_resolve.py` with the workspace row:
   - a nested `packages/ui/package.json` with `"name": "@acme/ui"` makes `@acme/ui` and `@acme/ui/button`
     `unresolved` with reason `workspace_package` and the specifier as reference;
   - the root `package.json` name is not a workspace name;
@@ -406,7 +406,7 @@ JSON (quickstart § 4, SC-006).
   - a `paths` alias for the same name still wins (it comes first);
   - a `package.json` that is not valid JSON contributes no name and gets no coverage flag (data-model.md
     § Resolution).
-- [ ] T036 [P] [US2] Create the fixture `fixtures/repos/ts-monorepo/repo/` and hand-write its
+- [X] T036 [P] [US2] Create the fixture `fixtures/repos/ts-monorepo/repo/` and hand-write its
   `expected.json`. The fixture must contain:
   - a root `package.json` with `workspaces`;
   - `packages/ui/package.json` (`"name": "@acme/ui"`) and its own `tsconfig.json`;
@@ -423,22 +423,22 @@ JSON (quickstart § 4, SC-006).
 
 ### Implementation for User Story 2
 
-- [ ] T037 [US2] Extend `backend/src/graphora/adapters/js/extract.py` with `export … from` statements:
+- [X] T037 [US2] Extend `backend/src/graphora/adapters/js/extract.py` with `export … from` statements:
   - each becomes a record with edge type `reexports`, form `static`, `symbol` (the name in the target,
     or `*`) and `alias` (the exported name when it differs, or the namespace name for `export * as ns`);
   - extend `ImportRecord.names` to `(symbol, type_only, alias)`.
-- [ ] T038 [US2] Extend `backend/src/graphora/adapters/js/extract.py` with local export lists and
+- [X] T038 [US2] Extend `backend/src/graphora/adapters/js/extract.py` with local export lists and
   `export default`, filling `exported_as` and `exports` exactly as described in data-model.md § "How
   `exported_as` is filled" and § Export. Make T034 pass.
-- [ ] T039 [US2] Add the workspace step to `backend/src/graphora/resolve/js.py`, between `baseUrl` and the
+- [X] T039 [US2] Add the workspace step to `backend/src/graphora/resolve/js.py`, between `baseUrl` and the
   built-ins: compute `W` from every non-root `package.json` in the walked files (reading only `name`, and
   ignoring invalid JSON). Pass the edge type and alias through `backend/src/graphora/graph/build.py` into
   `Edge`. Make T035 pass.
-- [ ] T040 [US2] Add `test_exports_invariant` to `backend/tests/golden/test_fixtures.py`. For every TS/JS
+- [X] T040 [US2] Add `test_exports_invariant` to `backend/tests/golden/test_fixtures.py`. For every TS/JS
   file node in every fixture, count each exported name across `definitions[].exported_as`, `exports[].name`
   and the `alias` or `symbol` (except `*` without alias) of its `reexports` edges, and assert that each
   count is 1.
-- [ ] T041 [US2] Run the golden tests for `ts-monorepo`, under the same rule as T032.
+- [X] T041 [US2] Run the golden tests for `ts-monorepo`, under the same rule as T032.
 
 **Checkpoint**: US1 and US2 both pass, and quickstart § 4 holds.
 
@@ -454,7 +454,7 @@ JSON (quickstart § 4, SC-006).
 
 ### Tests for User Story 3
 
-- [ ] T042 [P] [US3] Create the fixture `fixtures/repos/mixed-fullstack/repo/` and hand-write its
+- [X] T042 [P] [US3] Create the fixture `fixtures/repos/mixed-fullstack/repo/` and hand-write its
   `expected.json`. The fixture must contain:
   - `backend/` with `pyproject.toml`, `app/__init__.py` and `app/api.py`, importing `yaml` and
     `requests`;
@@ -463,7 +463,7 @@ JSON (quickstart § 4, SC-006).
   - a `README.md`.
 
   The Python files resolve under the folder root, because there is no `src/` at the root.
-- [ ] T043 [P] [US3] Add `test_ecosystems_separate` to `backend/tests/golden/test_fixtures.py`, running
+- [X] T043 [P] [US3] Add `test_ecosystems_separate` to `backend/tests/golden/test_fixtures.py`, running
   over every fixture:
   - every `ext:` and `unresolved:` target's ecosystem matches its source file's language (`python` for
     Python, `npm` for TS/JS);
@@ -472,7 +472,7 @@ JSON (quickstart § 4, SC-006).
 
 ### Implementation for User Story 3
 
-- [ ] T044 [US3] Run the golden tests for `mixed-fullstack`, under the same rule as T032, and fix any issue
+- [X] T044 [US3] Run the golden tests for `mixed-fullstack`, under the same rule as T032, and fix any issue
   in `backend/src/graphora/graph/build.py`, the most likely place for language-dispatch mistakes.
 
 **Checkpoint**: all stories pass independently.
@@ -481,17 +481,17 @@ JSON (quickstart § 4, SC-006).
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T045 [P] Extend `backend/tests/integration/test_performance.py` with a `@pytest.mark.slow` test
+- [X] T045 [P] Extend `backend/tests/integration/test_performance.py` with a `@pytest.mark.slow` test
   (SC-005). It generates 10 folders with 100 `.ts` files each. Each file has three relative imports, one
   `paths` alias import through a root `tsconfig.json`, and an exported class with a method. The test
   asserts exit `0` and the summary line `analyzed 1000 files, 4000 edges (0 unresolved)`. The summary counts
   only `analyzed` files, so `tsconfig.json` is not included. It allows under 30 s.
-- [ ] T046 [P] Update `CLAUDE.md` § Commands if the commands changed (they should not). Add one line under
+- [X] T046 [P] Update `CLAUDE.md` § Commands if the commands changed (they should not). Add one line under
   Key rules: "TS/JS config files are data: never run Node, never read `node_modules`."
-- [ ] T047 Before opening the PR, check whether the feature 002 branch exists on `origin`. If it changed
+- [X] T047 Before opening the PR, check whether the feature 002 branch exists on `origin`. If it changed
   `schema/graph.schema.json` or `graph/`, rebase and fold its changes into v2 (research R10). Then run
   `uv run pytest`, the full suite including slow tests.
-- [ ] T048 Run every step of `specs/003-ts-js-analysis/quickstart.md`. Record any mismatch as a fix in the
+- [X] T048 Run every step of `specs/003-ts-js-analysis/quickstart.md`. Record any mismatch as a fix in the
   implementation, or as a documented correction to the spec, and confirm the determinism test covers all 7
   fixtures.
 

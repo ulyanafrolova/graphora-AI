@@ -35,8 +35,12 @@ def _snapshot_kind(snapshot: str) -> str:
     return "dirty" if "+dirty:" in snapshot else "sha"
 
 
+def edge_key(e: dict[str, Any]) -> tuple[str, int, str, str, str, str]:
+    return (e["source"], e["line"], e["target"], e["symbol"] or "", e.get("alias") or "", e["type"])
+
+
 def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
-    """Reduce a graph document to the hand-checkable shape used by expected.json (research.md § R10)."""
+    """Reduce a graph document to the hand-checkable shape used by expected.json (001 research § R10, 003 § R9)."""
     out: dict[str, Any] = {}
     if "nodes" in sections:
         nodes = []
@@ -44,23 +48,36 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
             item = {"id": n["id"], "kind": n["kind"]}
             if n["kind"] == "external":
                 item["category"] = n["category"]
+            if n["kind"] in ("external", "unresolved"):
+                item["ecosystem"] = n["ecosystem"]
+            if n["kind"] == "asset":
+                item["path"] = n["path"]
             if n["kind"] == "file":
+                item["language"] = n["language"]
                 item["definitions"] = n["definitions"]
+                if "exports" in n:
+                    item["exports"] = n["exports"]
             nodes.append(item)
         out["nodes"] = sorted(nodes, key=lambda n: n["id"])
     if "edges" in sections:
-        edges = [
-            {
+        edges = []
+        for e in doc["edges"]:
+            item = {
                 "source": e["source"],
                 "target": e["target"],
+                "type": e["type"],
+                "form": e["form"],
                 "symbol": e["symbol"],
                 "line": e["line"],
                 "confidence": e["confidence"],
                 "reason": e.get("reason"),
             }
-            for e in doc["edges"]
-        ]
-        out["edges"] = sorted(edges, key=lambda e: (e["source"], e["line"], e["target"], e["symbol"] or ""))
+            if e["type_only"]:
+                item["type_only"] = True
+            if "alias" in e:
+                item["alias"] = e["alias"]
+            edges.append(item)
+        out["edges"] = sorted(edges, key=edge_key)
     if "coverage" in sections:
         out["coverage"] = doc["coverage"]["files"]
     if "skipped" in sections:

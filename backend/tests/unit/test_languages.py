@@ -10,8 +10,7 @@ def test_detected_only(ext, language):
 
 def test_detected_only_table_matches_data_model():
     assert DETECTED_ONLY_EXTENSIONS == {
-        ".ts": "typescript", ".tsx": "typescript", ".mts": "typescript", ".cts": "typescript",
-        ".js": "javascript", ".jsx": "javascript", ".mjs": "javascript", ".cjs": "javascript",
+        ".vue": "vue", ".svelte": "svelte", ".astro": "astro",
         ".go": "go", ".java": "java", ".kt": "kotlin", ".kts": "kotlin", ".rs": "rust", ".cs": "csharp",
         ".c": "c", ".h": "c", ".cpp": "cpp", ".cc": "cpp", ".hpp": "cpp", ".rb": "ruby", ".php": "php",
         ".swift": "swift", ".scala": "scala", ".sh": "shell",
@@ -21,6 +20,21 @@ def test_detected_only_table_matches_data_model():
 @pytest.mark.parametrize("path", ["a.py", "pkg/b.pyi"])
 def test_python_analyzed(path):
     assert classify(path) == ("python", "analyzed")
+
+
+@pytest.mark.parametrize("path", ["a.ts", "a.tsx", "a.mts", "a.cts", "types/x.d.ts"])
+def test_typescript_analyzed(path):
+    assert classify(path) == ("typescript", "analyzed")
+
+
+@pytest.mark.parametrize("path", ["a.js", "a.jsx", "a.mjs", "a.cjs"])
+def test_javascript_analyzed(path):
+    assert classify(path) == ("javascript", "analyzed")
+
+
+def test_jsconfig_marker():
+    assert MARKER_FILES["jsconfig.json"] == "javascript"
+    assert classify("web/jsconfig.json") == ("javascript", "not_code")
 
 
 @pytest.mark.parametrize("path", ["README.md", "config.yaml", "Makefile", ".env"])

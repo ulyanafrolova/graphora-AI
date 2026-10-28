@@ -23,6 +23,13 @@ EXCLUDED_DIRS = frozenset(
         ".tox",
         ".mypy_cache",
         ".pytest_cache",
+        ".next",
+        ".nuxt",
+        ".turbo",
+        ".svelte-kit",
+        "coverage",
+        "out",
+        "bower_components",
     }
 )
 MINIFIED_SUFFIXES = (".min.js", ".min.css")

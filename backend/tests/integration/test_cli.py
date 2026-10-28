@@ -71,3 +71,14 @@ def test_out_file(tmp_path):
 def test_unwritable_out(tmp_path):
     code, _, err = run_analyze(FLAT, "--out", str(tmp_path / "missing-dir" / "g.json"))
     assert code == 2 and "cannot write" in err
+
+
+def test_broken_tsconfig_warns_and_succeeds(tmp_path):
+    (tmp_path / "tsconfig.json").write_text('{ "compilerOptions": { oops } }\n')
+    (tmp_path / "a.ts").write_text('import x from "./b";\n')
+    code, out, err = run_analyze(tmp_path)
+    assert code == 0, err
+    assert "graphora: warning: ignoring tsconfig.json: not valid JSON-with-comments" in err
+    assert err.index("warning") < err.index("info: analyzed")
+    coverage = {f["path"]: f for f in json.loads(out)["coverage"]["files"]}
+    assert coverage["tsconfig.json"]["flags"] == ["parse_error"]

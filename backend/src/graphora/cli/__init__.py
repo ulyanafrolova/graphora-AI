@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_USAGE
 
     try:
-        doc = build(root, args.max_files, args.max_bytes, Deadline(args.max_seconds))
+        doc, warnings = build(root, args.max_files, args.max_bytes, Deadline(args.max_seconds))
     except LimitExceeded as exc:
         _log("error", _LIMIT_MESSAGES[exc.limit].format(observed=exc.observed, value=exc.value))
         return EXIT_LIMIT
@@ -82,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
             _log("error", f"cannot write {args.out}: {exc.strerror or exc}")
             return EXIT_USAGE
 
+    for path in warnings:
+        _log("warning", f"ignoring {path}: not valid JSON-with-comments")
     files = sum(1 for f in doc.files if f.status == "analyzed")
     unresolved = sum(1 for e in doc.edges if e.confidence == "unresolved")
     _log("info", f"analyzed {files} files, {len(doc.edges)} edges ({unresolved} unresolved), snapshot {doc.snapshot}")

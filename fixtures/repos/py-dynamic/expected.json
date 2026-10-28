@@ -1,52 +1,55 @@
 {
   "snapshot_kind": "content",
   "nodes": [
-    {"id": "ext:csv", "kind": "external", "category": "stdlib"},
-    {"id": "ext:importlib", "kind": "external", "category": "stdlib"},
-    {"id": "ext:json", "kind": "external", "category": "stdlib"},
-    {"id": "ext:os", "kind": "external", "category": "stdlib"},
-    {"id": "ext:pathlib", "kind": "external", "category": "stdlib"},
-    {"id": "ext:typing", "kind": "external", "category": "stdlib"},
-    {"id": "ext:ujson", "kind": "external", "category": "third_party"},
-    {"id": "file:broken.py", "kind": "file", "definitions": [
+    {"id": "ext:python:csv", "kind": "external", "ecosystem": "python", "category": "stdlib"},
+    {"id": "ext:python:importlib", "kind": "external", "ecosystem": "python", "category": "stdlib"},
+    {"id": "ext:python:json", "kind": "external", "ecosystem": "python", "category": "stdlib"},
+    {"id": "ext:python:os", "kind": "external", "ecosystem": "python", "category": "stdlib"},
+    {"id": "ext:python:pathlib", "kind": "external", "ecosystem": "python", "category": "stdlib"},
+    {"id": "ext:python:typing", "kind": "external", "ecosystem": "python", "category": "stdlib"},
+    {"id": "ext:python:ujson", "kind": "external", "ecosystem": "python", "category": "third_party"},
+    {"id": "file:broken.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "broken", "line": 3}
     ]},
-    {"id": "file:latin1.py", "kind": "file", "definitions": []},
-    {"id": "file:loader.py", "kind": "file", "definitions": [
+    {"id": "file:latin1.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:loader.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "load", "line": 6}
     ]},
-    {"id": "file:plugins/__init__.py", "kind": "file", "definitions": []},
-    {"id": "file:plugins/alpha.py", "kind": "file", "definitions": [
+    {"id": "file:plugins/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:plugins/alpha.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "class", "name": "Thing", "line": 1}
     ]},
-    {"id": "file:plugins/evil.py", "kind": "file", "definitions": []},
-    {"id": "file:typing_stuff.py", "kind": "file", "definitions": [
+    {"id": "file:plugins/evil.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:typing_stuff.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "lazy", "line": 12},
       {"kind": "function", "name": "typed", "line": 18}
     ]},
-    {"id": "unresolved:il.import_module(\".rel\")", "kind": "unresolved"},
-    {"id": "unresolved:import_module(f\"plugins.{x}\")", "kind": "unresolved"},
-    {"id": "unresolved:importlib.import_module(name)", "kind": "unresolved"}
+    {"id": "file:web/app.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": [
+      {"name": "x", "local": "x", "line": 1}
+    ]},
+    {"id": "unresolved:python:il.import_module(\".rel\")", "kind": "unresolved", "ecosystem": "python"},
+    {"id": "unresolved:python:import_module(f\"plugins.{x}\")", "kind": "unresolved", "ecosystem": "python"},
+    {"id": "unresolved:python:importlib.import_module(name)", "kind": "unresolved", "ecosystem": "python"}
   ],
   "edges": [
-    {"source": "file:broken.py", "line": 1, "target": "ext:os", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:broken.py", "line": 1, "type": "imports", "form": "static", "target": "ext:python:os", "symbol": null, "confidence": "resolved", "reason": null},
 
-    {"source": "file:loader.py", "line": 1, "target": "ext:importlib", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:loader.py", "line": 2, "target": "ext:importlib", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:loader.py", "line": 3, "target": "ext:importlib", "symbol": "import_module", "confidence": "resolved", "reason": null},
-    {"source": "file:loader.py", "line": 7, "target": "unresolved:importlib.import_module(name)", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
-    {"source": "file:loader.py", "line": 8, "target": "file:plugins/alpha.py", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:loader.py", "line": 9, "target": "ext:json", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:loader.py", "line": 10, "target": "unresolved:il.import_module(\".rel\")", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
-    {"source": "file:loader.py", "line": 11, "target": "unresolved:import_module(f\"plugins.{x}\")", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
+    {"source": "file:loader.py", "line": 1, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:loader.py", "line": 2, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:loader.py", "line": 3, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": "import_module", "confidence": "resolved", "reason": null},
+    {"source": "file:loader.py", "line": 7, "type": "imports", "form": "dynamic", "target": "unresolved:python:importlib.import_module(name)", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
+    {"source": "file:loader.py", "line": 8, "type": "imports", "form": "dynamic", "target": "file:plugins/alpha.py", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:loader.py", "line": 9, "type": "imports", "form": "dynamic", "target": "ext:python:json", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:loader.py", "line": 10, "type": "imports", "form": "dynamic", "target": "unresolved:python:il.import_module(\".rel\")", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
+    {"source": "file:loader.py", "line": 11, "type": "imports", "form": "dynamic", "target": "unresolved:python:import_module(f\"plugins.{x}\")", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
 
-    {"source": "file:plugins/evil.py", "line": 6, "target": "ext:pathlib", "symbol": "Path", "confidence": "resolved", "reason": null},
+    {"source": "file:plugins/evil.py", "line": 6, "type": "imports", "form": "static", "target": "ext:python:pathlib", "symbol": "Path", "confidence": "resolved", "reason": null},
 
-    {"source": "file:typing_stuff.py", "line": 1, "target": "ext:typing", "symbol": "TYPE_CHECKING", "confidence": "resolved", "reason": null},
-    {"source": "file:typing_stuff.py", "line": 4, "target": "file:plugins/alpha.py", "symbol": "Thing", "confidence": "resolved", "reason": null},
-    {"source": "file:typing_stuff.py", "line": 7, "target": "ext:ujson", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:typing_stuff.py", "line": 9, "target": "ext:json", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:typing_stuff.py", "line": 13, "target": "ext:csv", "symbol": null, "confidence": "resolved", "reason": null}
+    {"source": "file:typing_stuff.py", "line": 1, "type": "imports", "form": "static", "target": "ext:python:typing", "symbol": "TYPE_CHECKING", "confidence": "resolved", "reason": null},
+    {"source": "file:typing_stuff.py", "line": 4, "type": "imports", "form": "static", "target": "file:plugins/alpha.py", "symbol": "Thing", "confidence": "resolved", "reason": null},
+    {"source": "file:typing_stuff.py", "line": 7, "type": "imports", "form": "static", "target": "ext:python:ujson", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:typing_stuff.py", "line": 9, "type": "imports", "form": "static", "target": "ext:python:json", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:typing_stuff.py", "line": 13, "type": "imports", "form": "static", "target": "ext:python:csv", "symbol": null, "confidence": "resolved", "reason": null}
   ],
   "coverage": [
     {"path": "README.md", "language": null, "status": "not_code", "flags": []},
@@ -57,8 +60,9 @@
     {"path": "plugins/__init__.py", "language": "python", "status": "analyzed", "flags": []},
     {"path": "plugins/alpha.py", "language": "python", "status": "analyzed", "flags": []},
     {"path": "plugins/evil.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "tools/main.go", "language": "go", "status": "detected_only", "flags": []},
     {"path": "typing_stuff.py", "language": "python", "status": "analyzed", "flags": []},
-    {"path": "web/app.ts", "language": "typescript", "status": "detected_only", "flags": []}
+    {"path": "web/app.ts", "language": "typescript", "status": "analyzed", "flags": []}
   ],
   "skipped": [
     {"path": ".venv", "reason": "excluded_dir"},

@@ -1,0 +1,65 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "ext:json", "kind": "external", "category": "stdlib"},
+    {"id": "ext:os", "kind": "external", "category": "stdlib"},
+    {"id": "ext:requests", "kind": "external", "category": "third_party"},
+    {"id": "file:main.py", "kind": "file", "definitions": [
+      {"kind": "function", "name": "run", "line": 9}
+    ]},
+    {"id": "file:pkg/__init__.py", "kind": "file", "definitions": []},
+    {"id": "file:pkg/a.py", "kind": "file", "definitions": [
+      {"kind": "function", "name": "helper", "line": 6},
+      {"kind": "class", "name": "Service", "line": 10},
+      {"kind": "method", "name": "Service.run", "line": 11},
+      {"kind": "method", "name": "Service.stop", "line": 15}
+    ]},
+    {"id": "file:pkg/b.py", "kind": "file", "definitions": [
+      {"kind": "function", "name": "f", "line": 4}
+    ]},
+    {"id": "file:pkg/c.py", "kind": "file", "definitions": []},
+    {"id": "file:pkg/sub/__init__.py", "kind": "file", "definitions": []},
+    {"id": "file:pkg/sub/deep.py", "kind": "file", "definitions": [
+      {"kind": "function", "name": "go", "line": 1}
+    ]},
+    {"id": "file:top.py", "kind": "file", "definitions": []},
+    {"id": "unresolved:.", "kind": "unresolved"},
+    {"id": "unresolved:...toohigh", "kind": "unresolved"},
+    {"id": "unresolved:pkg.missing", "kind": "unresolved"},
+    {"id": "unresolved:pkg.nope", "kind": "unresolved"}
+  ],
+  "edges": [
+    {"source": "file:main.py", "line": 2, "target": "ext:os", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:main.py", "line": 3, "target": "ext:requests", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:main.py", "line": 4, "target": "file:pkg/a.py", "symbol": "a", "confidence": "resolved", "reason": null},
+    {"source": "file:main.py", "line": 5, "target": "file:pkg/a.py", "symbol": "helper", "confidence": "resolved", "reason": null},
+    {"source": "file:main.py", "line": 6, "target": "file:pkg/sub/deep.py", "symbol": null, "confidence": "resolved", "reason": null},
+
+    {"source": "file:pkg/__init__.py", "line": 1, "target": "file:pkg/a.py", "symbol": "helper", "confidence": "resolved", "reason": null},
+
+    {"source": "file:pkg/a.py", "line": 3, "target": "file:pkg/b.py", "symbol": "f", "confidence": "resolved", "reason": null},
+    {"source": "file:pkg/b.py", "line": 1, "target": "file:pkg/a.py", "symbol": "a", "confidence": "resolved", "reason": null},
+
+    {"source": "file:pkg/c.py", "line": 1, "target": "unresolved:pkg.missing", "symbol": "x", "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:pkg/c.py", "line": 2, "target": "unresolved:...toohigh", "symbol": "y", "confidence": "unresolved", "reason": "relative_beyond_top"},
+    {"source": "file:pkg/c.py", "line": 3, "target": "file:pkg/a.py", "symbol": "*", "confidence": "resolved", "reason": null},
+    {"source": "file:pkg/c.py", "line": 4, "target": "ext:json", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:pkg/c.py", "line": 5, "target": "unresolved:pkg.nope", "symbol": null, "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:pkg/c.py", "line": 6, "target": "file:pkg/sub/__init__.py", "symbol": "sub", "confidence": "resolved", "reason": null},
+    {"source": "file:pkg/c.py", "line": 7, "target": "ext:requests", "symbol": "Session", "confidence": "resolved", "reason": null},
+    {"source": "file:pkg/c.py", "line": 7, "target": "ext:requests", "symbol": "adapters", "confidence": "resolved", "reason": null},
+
+    {"source": "file:top.py", "line": 1, "target": "unresolved:.", "symbol": "main", "confidence": "unresolved", "reason": "relative_beyond_top"}
+  ],
+  "coverage": [
+    {"path": "main.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pkg/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pkg/a.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pkg/b.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pkg/c.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pkg/sub/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pkg/sub/deep.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "top.py", "language": "python", "status": "analyzed", "flags": []}
+  ],
+  "skipped": []
+}

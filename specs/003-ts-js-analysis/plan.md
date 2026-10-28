@@ -133,7 +133,7 @@ backend/
 │   │   ├── tsconfig.py               # JSONC reader, nearest config, extends chain, effective baseUrl/paths
 │   │   └── data/
 │   │       ├── stdlib_modules.txt
-│   │       └── node_builtins.txt     # node-builtins@24.0.0
+│   │       └── node_builtins.txt     # node-builtins@26.0.0
 │   ├── detect/languages.py           # TS/JS analyzed; .vue/.svelte/.astro detected_only; jsconfig.json marker
 │   ├── ingest/walk.py                # + .next, .nuxt, .turbo, .svelte-kit, coverage, out, bower_components
 │   └── graph/

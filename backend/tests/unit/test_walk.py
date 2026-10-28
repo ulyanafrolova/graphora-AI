@@ -31,6 +31,8 @@ def test_fr009_list_is_complete():
     assert EXCLUDED_DIRS == {
         ".git", ".venv", "venv", "env", "node_modules", "__pycache__",
         "site-packages", "dist", "build", ".tox", ".mypy_cache", ".pytest_cache",
+        # 003 FR-003
+        ".next", ".nuxt", ".turbo", ".svelte-kit", "coverage", "out", "bower_components",
     }
 
 
