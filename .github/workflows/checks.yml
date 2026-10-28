@@ -1,0 +1,21 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: cd backend && uv sync --locked
+      - name: Lint
+        run: cd backend && uv run ruff check src tests scripts
+      - name: Test
+        run: cd backend && uv run pytest
