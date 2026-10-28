@@ -223,7 +223,9 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   reason.
 - **FR-020**: The existing Python fixtures' `expected.json` files MUST be updated by hand to schema v2. The only
   allowed differences from v1 are the version number, ecosystem-qualified external and placeholder ids, and the
-  new edge form and type-only fields. All Python nodes and edges stay the same.
+  new edge form and type-only fields. All Python nodes and edges stay the same. TS/JS files that were
+  `detected_only` in a Python fixture (`py-dynamic/repo/web/app.ts`) become `analyzed` and get file nodes; the
+  fixture gains another `detected_only` file so that status stays covered.
 - **FR-021**: All consumers of the schema present in the repository at merge time MUST be updated in the same
   change (constitution VII).
 
