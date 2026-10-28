@@ -1,0 +1,7 @@
+{
+  // Project config: everything shared lives in the base file.
+  "extends": "./tsconfig.base",
+  "compilerOptions": {
+    "strict": true, /* trailing comma on purpose */
+  },
+}

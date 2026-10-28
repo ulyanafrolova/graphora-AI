@@ -1,12 +1,12 @@
-"""Language and coverage status per file (data-model.md § CoverageFile)."""
+"""Language and coverage status per file (001 data-model.md § CoverageFile, 003 data-model.md § Coverage)."""
 
 from __future__ import annotations
 
 from graphora.graph.model import Status
 
-ANALYZED_EXTENSIONS = {".py": "python", ".pyi": "python"}
-
-DETECTED_ONLY_EXTENSIONS = {
+ANALYZED_EXTENSIONS = {
+    ".py": "python",
+    ".pyi": "python",
     ".ts": "typescript",
     ".tsx": "typescript",
     ".mts": "typescript",
@@ -15,6 +15,12 @@ DETECTED_ONLY_EXTENSIONS = {
     ".jsx": "javascript",
     ".mjs": "javascript",
     ".cjs": "javascript",
+}
+
+DETECTED_ONLY_EXTENSIONS = {
+    ".vue": "vue",
+    ".svelte": "svelte",
+    ".astro": "astro",
     ".go": "go",
     ".java": "java",
     ".kt": "kotlin",
@@ -39,6 +45,7 @@ MARKER_FILES = {
     "setup.cfg": "python",
     "package.json": "typescript",
     "tsconfig.json": "typescript",
+    "jsconfig.json": "javascript",
     "go.mod": "go",
     "Cargo.toml": "rust",
     "pom.xml": "java",

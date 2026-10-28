@@ -1,0 +1,65 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "ext:npm:lodash", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "ext:npm:node:test", "kind": "external", "ecosystem": "npm", "category": "builtin"},
+    {"id": "ext:npm:path", "kind": "external", "ecosystem": "npm", "category": "builtin"},
+    {"id": "ext:npm:test", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "ext:npm:util", "kind": "external", "ecosystem": "npm", "category": "builtin"},
+    {"id": "file:esm/entry.mjs", "kind": "file", "language": "javascript", "definitions": [
+      {"kind": "function", "name": "run", "line": 3, "exported_as": ["run"]}
+    ], "exports": []},
+    {"id": "file:index.js", "kind": "file", "language": "javascript", "definitions": [
+      {"kind": "function", "name": "loadPage", "line": 14, "exported_as": []}
+    ], "exports": []},
+    {"id": "file:lib/config.cjs", "kind": "file", "language": "javascript", "definitions": [], "exports": []},
+    {"id": "file:lib/helpers.js", "kind": "file", "language": "javascript", "definitions": [
+      {"kind": "function", "name": "helper", "line": 3, "exported_as": []}
+    ], "exports": []},
+    {"id": "file:lib/template.js", "kind": "file", "language": "javascript", "definitions": [
+      {"kind": "function", "name": "shadow", "line": 1, "exported_as": []}
+    ], "exports": []},
+    {"id": "file:sub/widget.js", "kind": "file", "language": "javascript", "definitions": [], "exports": []},
+    {"id": "unresolved:npm:#internal", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:../../outside", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:https://cdn.example.com/x.js", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:import(`./pages/${n}.js`)", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:lib/not-a-module", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:require(name)", "kind": "unresolved", "ecosystem": "npm"}
+  ],
+  "edges": [
+    {"source": "file:esm/entry.mjs", "line": 1, "target": "file:lib/helpers.js", "type": "imports", "form": "static", "symbol": "helper", "confidence": "resolved", "reason": null},
+    {"source": "file:esm/entry.mjs", "line": 2, "target": "file:lib/config.cjs", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+
+    {"source": "file:index.js", "line": 1, "target": "ext:npm:path", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 2, "target": "file:lib/helpers.js", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 3, "target": "file:lib/config.cjs", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 4, "target": "file:lib/template.js", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 6, "target": "unresolved:npm:require(name)", "type": "imports", "form": "require", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
+    {"source": "file:index.js", "line": 7, "target": "ext:npm:lodash", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 8, "target": "ext:npm:test", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 9, "target": "ext:npm:node:test", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:index.js", "line": 10, "target": "unresolved:npm:#internal", "type": "imports", "form": "require", "symbol": null, "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:index.js", "line": 11, "target": "unresolved:npm:https://cdn.example.com/x.js", "type": "imports", "form": "require", "symbol": null, "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:index.js", "line": 12, "target": "unresolved:npm:../../outside", "type": "imports", "form": "require", "symbol": null, "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:index.js", "line": 15, "target": "unresolved:npm:import(`./pages/${n}.js`)", "type": "imports", "form": "dynamic", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
+
+    {"source": "file:lib/helpers.js", "line": 1, "target": "ext:npm:util", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:lib/template.js", "line": 1, "target": "unresolved:npm:lib/not-a-module", "type": "imports", "form": "require", "symbol": null, "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:sub/widget.js", "line": 1, "target": "file:lib/config.cjs", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null}
+  ],
+  "coverage": [
+    {"path": "esm/entry.mjs", "language": "javascript", "status": "analyzed", "flags": []},
+    {"path": "index.js", "language": "javascript", "status": "analyzed", "flags": []},
+    {"path": "jsconfig.json", "language": "javascript", "status": "not_code", "flags": []},
+    {"path": "lib/config.cjs", "language": "javascript", "status": "analyzed", "flags": []},
+    {"path": "lib/helpers.js", "language": "javascript", "status": "analyzed", "flags": []},
+    {"path": "lib/template.js", "language": "javascript", "status": "analyzed", "flags": []},
+    {"path": "package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "sub/jsconfig.json", "language": "javascript", "status": "not_code", "flags": ["parse_error"]},
+    {"path": "sub/widget.js", "language": "javascript", "status": "analyzed", "flags": []}
+  ],
+  "skipped": [
+    {"path": "vendor/lib.min.js", "reason": "minified"}
+  ]
+}

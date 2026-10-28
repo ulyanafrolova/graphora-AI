@@ -1,0 +1,64 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "file:packages/app/src/helper.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "helper", "line": 1, "exported_as": ["helper"]}
+    ], "exports": []},
+    {"id": "file:packages/app/src/main.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "run", "line": 5, "exported_as": ["run"]}
+    ], "exports": []},
+    {"id": "file:packages/ui/src/format.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "upper", "line": 1, "exported_as": ["upper"]}
+    ], "exports": []},
+    {"id": "file:packages/ui/src/index.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": []},
+    {"id": "file:packages/ui/src/log.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "class", "name": "Log", "line": 3, "exported_as": ["Log"]},
+      {"kind": "method", "name": "Log.write", "line": 4, "exported_as": []},
+      {"kind": "function", "name": "format", "line": 7, "exported_as": ["fmt2"]}
+    ], "exports": []},
+    {"id": "file:packages/ui/src/math.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "add", "line": 3, "exported_as": ["add"]},
+      {"kind": "function", "name": "default", "line": 9, "exported_as": ["default"]}
+    ], "exports": [
+      {"name": "PI", "local": "PI", "line": 13},
+      {"name": "x", "local": "x", "line": 14}
+    ]},
+    {"id": "file:packages/ui/src/types.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "type_alias", "name": "Level", "line": 1, "exported_as": ["Level"]}
+    ], "exports": []},
+    {"id": "file:packages/ui/src/x.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": [
+      {"name": "x", "local": "x", "line": 1}
+    ]},
+    {"id": "unresolved:npm:@acme/ui", "kind": "unresolved", "ecosystem": "npm"}
+  ],
+  "edges": [
+    {"source": "file:packages/app/src/main.ts", "line": 1, "target": "unresolved:npm:@acme/ui", "type": "imports", "form": "static", "symbol": "Logger", "confidence": "unresolved", "reason": "workspace_package"},
+    {"source": "file:packages/app/src/main.ts", "line": 1, "target": "unresolved:npm:@acme/ui", "type": "imports", "form": "static", "symbol": "add", "confidence": "unresolved", "reason": "workspace_package"},
+    {"source": "file:packages/app/src/main.ts", "line": 2, "target": "file:packages/ui/src/index.ts", "type": "imports", "form": "static", "symbol": "Logger", "confidence": "resolved", "reason": null},
+    {"source": "file:packages/app/src/main.ts", "line": 3, "target": "file:packages/app/src/helper.ts", "type": "imports", "form": "static", "symbol": "helper", "confidence": "resolved", "reason": null},
+
+    {"source": "file:packages/ui/src/index.ts", "line": 1, "target": "file:packages/ui/src/math.ts", "type": "reexports", "form": "static", "symbol": "*", "confidence": "resolved", "reason": null},
+    {"source": "file:packages/ui/src/index.ts", "line": 2, "target": "file:packages/ui/src/log.ts", "type": "reexports", "form": "static", "symbol": "Log", "alias": "Logger", "confidence": "resolved", "reason": null},
+    {"source": "file:packages/ui/src/index.ts", "line": 3, "target": "file:packages/ui/src/format.ts", "type": "reexports", "form": "static", "symbol": "*", "alias": "fmt", "confidence": "resolved", "reason": null},
+    {"source": "file:packages/ui/src/index.ts", "line": 4, "target": "file:packages/ui/src/types.ts", "type": "reexports", "form": "static", "symbol": "Level", "type_only": true, "confidence": "resolved", "reason": null},
+
+    {"source": "file:packages/ui/src/log.ts", "line": 1, "target": "file:packages/ui/src/types.ts", "type": "imports", "form": "static", "symbol": "Level", "type_only": true, "confidence": "resolved", "reason": null},
+    {"source": "file:packages/ui/src/math.ts", "line": 1, "target": "file:packages/ui/src/x.ts", "type": "imports", "form": "static", "symbol": "x", "confidence": "resolved", "reason": null}
+  ],
+  "coverage": [
+    {"path": "package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "packages/app/package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "packages/app/src/helper.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/app/src/main.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/app/tsconfig.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "packages/ui/package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "packages/ui/src/format.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/ui/src/index.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/ui/src/log.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/ui/src/math.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/ui/src/types.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/ui/src/x.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "packages/ui/tsconfig.json", "language": "typescript", "status": "not_code", "flags": []}
+  ],
+  "skipped": []
+}

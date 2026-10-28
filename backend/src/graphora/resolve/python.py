@@ -7,7 +7,7 @@ from importlib import resources
 
 from graphora.adapters.python.extract import ImportRecord
 
-RESOLVER_VERSION = "0.1.0"
+RESOLVER_VERSION = "0.2.0"
 STDLIB_VERSION = "3.14.0"
 ROOTS = ("", "src")
 _SUFFIX_RANK = {".py": 0, ".pyi": 1}
@@ -97,7 +97,7 @@ def _package_parts(path: str, index: ModuleIndex) -> list[str]:
 
 def _external(dotted: str, symbol: str | None) -> Target:
     top = dotted.split(".")[0]
-    return Target(f"ext:{top}", symbol)
+    return Target(f"ext:python:{top}", symbol)
 
 
 def category(name: str) -> str:
@@ -109,9 +109,9 @@ def _import_target(dotted: str, index: ModuleIndex) -> Target:
     if dotted in index.modules:
         return Target(f"file:{index.modules[dotted]}", None)
     if dotted in index.namespaces:
-        return Target(f"unresolved:{dotted}", None, "namespace_package")
+        return Target(f"unresolved:python:{dotted}", None, "namespace_package")
     if index.is_local(dotted):
-        return Target(f"unresolved:{dotted}", None, "not_found")
+        return Target(f"unresolved:python:{dotted}", None, "not_found")
     return _external(dotted, None)
 
 
@@ -122,9 +122,9 @@ def _from_target(module: str, name: str, index: ModuleIndex, relative: bool) -> 
         return Target(f"file:{index.modules[module]}", name)
     if module in index.namespaces:
         reference = module if name == "*" else f"{module}.{name}"
-        return Target(f"unresolved:{reference}", name, "not_found")
+        return Target(f"unresolved:python:{reference}", name, "not_found")
     if relative or index.is_local(module):
-        return Target(f"unresolved:{module}", name, "not_found")
+        return Target(f"unresolved:python:{module}", name, "not_found")
     return _external(module, name)
 
 
@@ -132,7 +132,7 @@ def resolve(path: str, record: ImportRecord, index: ModuleIndex) -> list[Target]
     """One target per imported name of `record`, found in file `path`."""
     if record.kind == "dynamic":
         if not record.literal or record.module is None:
-            return [Target(f"unresolved:{record.text}", None, "dynamic")]
+            return [Target(f"unresolved:python:{record.text}", None, "dynamic")]
         return [_import_target(record.module, index)]
     if record.kind == "import":
         return [_import_target(record.module, index)]
@@ -143,7 +143,7 @@ def resolve(path: str, record: ImportRecord, index: ModuleIndex) -> list[Target]
     package = _package_parts(path, index)
     drop = record.level - 1
     if drop > len(package) or len(package) - drop == 0:
-        return [Target(f"unresolved:{record.module_text}", name, "relative_beyond_top") for name in record.names]
+        return [Target(f"unresolved:python:{record.module_text}", name, "relative_beyond_top") for name in record.names]
     base = package[: len(package) - drop]
     module = ".".join(base + ([record.module] if record.module else []))
     return [_from_target(module, name, index, relative=True) for name in record.names]

@@ -1,4 +1,4 @@
-"""SC-005: about 1,000 Python files are analyzed in under 30 seconds."""
+"""SC-005 (001 and 003): about 1,000 Python or TS files are analyzed in under 30 seconds."""
 
 import time
 
@@ -23,4 +23,25 @@ def test_thousand_files_under_30s(tmp_path):
 
     assert code == 0, err
     assert "analyzed 1010 files, 3000 edges (0 unresolved)" in err
+    assert elapsed < 30, f"took {elapsed:.1f}s"
+
+
+@pytest.mark.slow
+def test_thousand_ts_files_under_30s(tmp_path):
+    """003 SC-005: about 1,000 TS files with relative and `paths` imports in under 30 seconds."""
+    (tmp_path / "tsconfig.json").write_text('{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["*"]}}}\n')
+    for p in range(10):
+        pkg = tmp_path / f"pkg{p}"
+        pkg.mkdir()
+        for m in range(100):
+            relative = "\n".join(f'import {{ C{(m + k) % 100} }} from "../pkg{(p + k) % 10}/mod{(m + k) % 100}";' for k in (1, 2, 3))
+            alias = f'import {{ C{m} as Self }} from "@/pkg{(p + 4) % 10}/mod{m}";'
+            (pkg / f"mod{m}.ts").write_text(f"{relative}\n{alias}\n\nexport class C{m} {{\n  run(): number {{\n    return {m};\n  }}\n}}\n")
+
+    start = time.monotonic()
+    code, out, err = run_analyze(tmp_path)
+    elapsed = time.monotonic() - start
+
+    assert code == 0, err
+    assert "analyzed 1000 files, 4000 edges (0 unresolved)" in err
     assert elapsed < 30, f"took {elapsed:.1f}s"

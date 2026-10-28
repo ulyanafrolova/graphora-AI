@@ -1,0 +1,43 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "ext:npm:react", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "ext:npm:yaml", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "ext:python:requests", "kind": "external", "ecosystem": "python", "category": "third_party"},
+    {"id": "ext:python:yaml", "kind": "external", "ecosystem": "python", "category": "third_party"},
+    {"id": "file:backend/app/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:backend/app/api.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "handler", "line": 6}
+    ]},
+    {"id": "file:backend/app/models.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "class", "name": "Item", "line": 1}
+    ]},
+    {"id": "file:frontend/src/api.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "fetchItems", "line": 1, "exported_as": ["fetchItems"]}
+    ], "exports": []},
+    {"id": "file:frontend/src/main.tsx", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "App", "line": 5, "exported_as": ["App"]}
+    ], "exports": []}
+  ],
+  "edges": [
+    {"source": "file:backend/app/api.py", "line": 1, "target": "ext:python:yaml", "type": "imports", "form": "static", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/api.py", "line": 2, "target": "ext:python:requests", "type": "imports", "form": "static", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/api.py", "line": 3, "target": "file:backend/app/models.py", "type": "imports", "form": "static", "symbol": "models", "confidence": "resolved", "reason": null},
+
+    {"source": "file:frontend/src/main.tsx", "line": 1, "target": "ext:npm:react", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+    {"source": "file:frontend/src/main.tsx", "line": 2, "target": "ext:npm:yaml", "type": "imports", "form": "static", "symbol": "parse", "confidence": "resolved", "reason": null},
+    {"source": "file:frontend/src/main.tsx", "line": 3, "target": "file:frontend/src/api.ts", "type": "imports", "form": "static", "symbol": "fetchItems", "confidence": "resolved", "reason": null}
+  ],
+  "coverage": [
+    {"path": "README.md", "language": null, "status": "not_code", "flags": []},
+    {"path": "backend/app/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/api.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/models.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/pyproject.toml", "language": "python", "status": "not_code", "flags": []},
+    {"path": "frontend/package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "frontend/src/api.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "frontend/src/main.tsx", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "frontend/tsconfig.json", "language": "typescript", "status": "not_code", "flags": []}
+  ],
+  "skipped": []
+}

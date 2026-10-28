@@ -1,0 +1,113 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "asset:src/data.json", "kind": "asset", "path": "src/data.json"},
+    {"id": "asset:src/styles.css", "kind": "asset", "path": "src/styles.css"},
+    {"id": "ext:npm:@scope/pkg", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "ext:npm:fs", "kind": "external", "ecosystem": "npm", "category": "builtin"},
+    {"id": "ext:npm:react", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "file:src/broken.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": [
+      {"name": "value", "local": "value", "line": 3}
+    ]},
+    {"id": "file:src/components/Button.tsx", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "track", "line": 4, "exported_as": []},
+      {"kind": "class", "name": "Button", "line": 7, "exported_as": ["Button"]},
+      {"kind": "method", "name": "Button.render", "line": 8, "exported_as": []}
+    ], "exports": []},
+    {"id": "file:src/config.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": [
+      {"name": "settings", "local": "settings", "line": 1}
+    ]},
+    {"id": "file:src/cycle/a.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "cycleA", "line": 3, "exported_as": ["cycleA"]}
+    ], "exports": []},
+    {"id": "file:src/cycle/b.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "cycleB", "line": 3, "exported_as": ["cycleB"]},
+      {"kind": "function", "name": "again", "line": 7, "exported_as": ["again"]}
+    ], "exports": []},
+    {"id": "file:src/lib/index.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "interface", "name": "Config", "line": 3, "exported_as": ["Config"]},
+      {"kind": "function", "name": "lib", "line": 7, "exported_as": ["lib"]}
+    ], "exports": []},
+    {"id": "file:src/main.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "main", "line": 19, "exported_as": ["main"]}
+    ], "exports": []},
+    {"id": "file:src/models.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "class", "name": "User", "line": 1, "exported_as": ["User"]},
+      {"kind": "method", "name": "User.constructor", "line": 2, "exported_as": []},
+      {"kind": "method", "name": "User.greet", "line": 3, "exported_as": []},
+      {"kind": "enum", "name": "Role", "line": 8, "exported_as": ["Role"]}
+    ], "exports": []},
+    {"id": "file:src/polyfill.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": []},
+    {"id": "file:src/shapes.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "type_alias", "name": "Shape", "line": 1, "exported_as": ["Shape"]},
+      {"kind": "function", "name": "area", "line": 3, "exported_as": ["area"]}
+    ], "exports": []},
+    {"id": "file:src/types.d.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "legacy", "line": 1, "exported_as": []},
+      {"kind": "interface", "name": "Window", "line": 2, "exported_as": []}
+    ], "exports": []},
+    {"id": "file:src/util.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "helper", "line": 1, "exported_as": ["helper"]}
+    ], "exports": [
+      {"name": "VERSION", "local": "VERSION", "line": 2}
+    ]},
+    {"id": "unresolved:npm:@app/missing", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:src/logo.svg", "kind": "unresolved", "ecosystem": "npm"},
+    {"id": "unresolved:npm:src/missing", "kind": "unresolved", "ecosystem": "npm"}
+  ],
+  "edges": [
+    {"source": "file:src/broken.ts", "line": 1, "target": "file:src/util.ts", "type": "imports", "form": "static", "symbol": "helper", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/components/Button.tsx", "line": 1, "target": "ext:npm:react", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+    {"source": "file:src/components/Button.tsx", "line": 2, "target": "file:src/models.ts", "type": "imports", "form": "static", "symbol": "User", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/cycle/a.ts", "line": 1, "target": "file:src/cycle/b.ts", "type": "imports", "form": "static", "symbol": "cycleB", "confidence": "resolved", "reason": null},
+    {"source": "file:src/cycle/b.ts", "line": 1, "target": "file:src/cycle/a.ts", "type": "imports", "form": "static", "symbol": "cycleA", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/lib/index.ts", "line": 1, "target": "file:src/cycle/a.ts", "type": "imports", "form": "static", "symbol": "cycleA", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/main.ts", "line": 1, "target": "file:src/util.ts", "type": "imports", "form": "static", "symbol": "helper", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 2, "target": "file:src/lib/index.ts", "type": "imports", "form": "static", "symbol": "lib", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 3, "target": "file:src/models.ts", "type": "imports", "form": "static", "symbol": "*", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 4, "target": "file:src/polyfill.ts", "type": "imports", "form": "static", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 5, "target": "file:src/lib/index.ts", "type": "imports", "form": "static", "symbol": "Config", "type_only": true, "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 6, "target": "file:src/shapes.ts", "type": "imports", "form": "static", "symbol": "Shape", "type_only": true, "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 6, "target": "file:src/shapes.ts", "type": "imports", "form": "static", "symbol": "area", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 7, "target": "ext:npm:fs", "type": "imports", "form": "require", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 8, "target": "ext:npm:fs", "type": "imports", "form": "static", "symbol": "readFile", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 9, "target": "ext:npm:fs", "type": "imports", "form": "static", "symbol": "stat", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 10, "target": "ext:npm:@scope/pkg", "type": "imports", "form": "static", "symbol": "deep", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 11, "target": "ext:npm:react", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 12, "target": "asset:src/styles.css", "type": "imports", "form": "static", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 13, "target": "asset:src/data.json", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+    {"source": "file:src/main.ts", "line": 14, "target": "unresolved:npm:src/logo.svg", "type": "imports", "form": "static", "symbol": "default", "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:src/main.ts", "line": 15, "target": "unresolved:npm:src/missing", "type": "imports", "form": "static", "symbol": "gone", "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:src/main.ts", "line": 16, "target": "unresolved:npm:@app/missing", "type": "imports", "form": "static", "symbol": "nope", "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:src/main.ts", "line": 17, "target": "file:src/config.ts", "type": "imports", "form": "static", "symbol": "settings", "confidence": "resolved", "reason": null}
+  ],
+  "coverage": [
+    {"path": "package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "src/App.vue", "language": "vue", "status": "detected_only", "flags": []},
+    {"path": "src/broken.ts", "language": "typescript", "status": "analyzed", "flags": ["parse_error"]},
+    {"path": "src/components/Button.tsx", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/config.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/cycle/a.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/cycle/b.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/data.json", "language": null, "status": "not_code", "flags": []},
+    {"path": "src/lib/index.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/main.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/models.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/polyfill.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/shapes.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/styles.css", "language": null, "status": "not_code", "flags": []},
+    {"path": "src/types.d.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/util.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "tsconfig.base.json", "language": null, "status": "not_code", "flags": []},
+    {"path": "tsconfig.json", "language": "typescript", "status": "not_code", "flags": []}
+  ],
+  "skipped": [
+    {"path": ".next", "reason": "excluded_dir"},
+    {"path": "dist", "reason": "excluded_dir"},
+    {"path": "node_modules", "reason": "excluded_dir"}
+  ]
+}

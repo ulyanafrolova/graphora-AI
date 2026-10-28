@@ -1,37 +1,37 @@
 {
   "snapshot_kind": "content",
   "nodes": [
-    {"id": "ext:pytest", "kind": "external", "category": "third_party"},
-    {"id": "file:src/app/__init__.py", "kind": "file", "definitions": []},
-    {"id": "file:src/app/api/__init__.py", "kind": "file", "definitions": []},
-    {"id": "file:src/app/api/routes.py", "kind": "file", "definitions": [
+    {"id": "ext:python:pytest", "kind": "external", "ecosystem": "python", "category": "third_party"},
+    {"id": "file:src/app/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:src/app/api/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:src/app/api/routes.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "index", "line": 5}
     ]},
-    {"id": "file:src/app/core.py", "kind": "file", "definitions": [
+    {"id": "file:src/app/core.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "class", "name": "Engine", "line": 1},
       {"kind": "method", "name": "Engine.start", "line": 2}
     ]},
-    {"id": "file:src/app/core.pyi", "kind": "file", "definitions": [
+    {"id": "file:src/app/core.pyi", "kind": "file", "language": "python", "definitions": [
       {"kind": "class", "name": "Engine", "line": 1},
       {"kind": "method", "name": "Engine.start", "line": 2}
     ]},
-    {"id": "file:src/nsp/plugin.py", "kind": "file", "definitions": [
+    {"id": "file:src/nsp/plugin.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "hook", "line": 1}
     ]},
-    {"id": "file:tests/test_core.py", "kind": "file", "definitions": [
+    {"id": "file:tests/test_core.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "test_engine", "line": 8}
     ]},
-    {"id": "unresolved:nsp", "kind": "unresolved"}
+    {"id": "unresolved:python:nsp", "kind": "unresolved", "ecosystem": "python"}
   ],
   "edges": [
-    {"source": "file:src/app/api/routes.py", "line": 1, "target": "file:src/app/core.py", "symbol": "Engine", "confidence": "resolved", "reason": null},
-    {"source": "file:src/app/api/routes.py", "line": 2, "target": "file:src/app/core.py", "symbol": "Engine", "confidence": "resolved", "reason": null},
+    {"source": "file:src/app/api/routes.py", "line": 1, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "Engine", "confidence": "resolved", "reason": null},
+    {"source": "file:src/app/api/routes.py", "line": 2, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "Engine", "confidence": "resolved", "reason": null},
 
-    {"source": "file:tests/test_core.py", "line": 1, "target": "file:src/app/core.py", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:tests/test_core.py", "line": 2, "target": "file:src/app/core.py", "symbol": "core", "confidence": "resolved", "reason": null},
-    {"source": "file:tests/test_core.py", "line": 3, "target": "ext:pytest", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:tests/test_core.py", "line": 4, "target": "file:src/nsp/plugin.py", "symbol": "plugin", "confidence": "resolved", "reason": null},
-    {"source": "file:tests/test_core.py", "line": 5, "target": "unresolved:nsp", "symbol": null, "confidence": "unresolved", "reason": "namespace_package"}
+    {"source": "file:tests/test_core.py", "line": 1, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:tests/test_core.py", "line": 2, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "core", "confidence": "resolved", "reason": null},
+    {"source": "file:tests/test_core.py", "line": 3, "type": "imports", "form": "static", "target": "ext:python:pytest", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:tests/test_core.py", "line": 4, "type": "imports", "form": "static", "target": "file:src/nsp/plugin.py", "symbol": "plugin", "confidence": "resolved", "reason": null},
+    {"source": "file:tests/test_core.py", "line": 5, "type": "imports", "form": "static", "target": "unresolved:python:nsp", "symbol": null, "confidence": "unresolved", "reason": "namespace_package"}
   ],
   "coverage": [
     {"path": "pyproject.toml", "language": "python", "status": "not_code", "flags": []},
