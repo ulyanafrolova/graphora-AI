@@ -71,13 +71,13 @@ After this phase `graphora analyze <dir>` goes through `fetch_snapshot()` and be
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 [P] Create `backend/src/graphora/ingest/errors.py` with `class IngestError(Exception)` and the
+- [X] T004 [P] Create `backend/src/graphora/ingest/errors.py` with `class IngestError(Exception)` and the
   subclasses `BadInput`, `UnsafeArchive`, `InvalidArchive`, `RemoteError` (data-model.md § Errors). Each
   takes one `message: str` that the CLI prints as is.
-- [ ] T005 [P] Add `Deadline.remaining() -> float` to `backend/src/graphora/ingest/walk.py`: seconds left,
+- [X] T005 [P] Add `Deadline.remaining() -> float` to `backend/src/graphora/ingest/walk.py`: seconds left,
   never below `0.0`. Do not change `check()` or anything else in the file. Unit test in
   `backend/tests/unit/test_deadline.py`.
-- [ ] T006 Create `backend/src/graphora/ingest/fetch.py` (contracts/ingest-api.md, data-model.md):
+- [X] T006 Create `backend/src/graphora/ingest/fetch.py` (contracts/ingest-api.md, data-model.md):
   - `@dataclass(frozen=True) IngestLimits(max_archive_bytes=209715200, max_extract_bytes=209715200,
     max_entries=20000)`;
   - `@dataclass(frozen=True) FetchedSnapshot(root: Path, repository: str, snapshot: str | None,
@@ -88,13 +88,13 @@ After this phase `graphora analyze <dir>` goes through `fetch_snapshot()` and be
     `FetchedSnapshot(root=path.resolve(), repository=path.resolve().name, snapshot=None, skipped=())`
     with no temp folder. Leave `GitHubSource` and `ZipSource` branches raising `NotImplementedError`
     until US1 and US2.
-- [ ] T007 Create `backend/src/graphora/ingest/source.py` with the `LocalSource`, `GitHubSource(owner, repo,
+- [X] T007 Create `backend/src/graphora/ingest/source.py` with the `LocalSource`, `GitHubSource(owner, repo,
   ref)` and `ZipSource` dataclasses (frozen) and `parse_source(argument: str, ref: str | None) -> Source`.
   In this task implement only: existing folder → `LocalSource`; `--ref` given with a folder →
   `BadInput("--ref is allowed only with a GitHub link")`; anything else not yet handled →
   `BadInput(f"not a directory or ZIP archive: {argument}")`. The `https://` and ZIP branches are added
   in T024 and T031.
-- [ ] T008 Rewire `backend/src/graphora/cli/__init__.py` (contracts/cli.md), keeping every existing
+- [X] T008 Rewire `backend/src/graphora/cli/__init__.py` (contracts/cli.md), keeping every existing
   message, default and status:
   - the positional argument keeps `dest="dir"` with `metavar="source"`; help text "a local folder, a
     GitHub link or a ZIP file";
@@ -127,19 +127,19 @@ appears in the document and every edge with nothing else changed.
 
 ### Tests for User Story 4
 
-- [ ] T009 [P] [US4] In `backend/tests/unit/test_build_snapshot.py`: for every fixture in
+- [X] T009 [P] [US4] In `backend/tests/unit/test_build_snapshot.py`: for every fixture in
   `fixtures/repos/`, `build(root, 5000, 50*1024*1024, Deadline(300))` serialized with `dumps` equals the
   output of `build(..., snapshot=None)`; and `build(..., snapshot="a"*40)` gives a document whose
   `snapshot` and every edge's `snapshot` is `"a"*40`, and which equals the default output after replacing
   the snapshot strings (FR-014, US4 scenario 2).
-- [ ] T010 [P] [US4] In `backend/tests/integration/test_ingest_cli.py` add local-path tests:
+- [X] T010 [P] [US4] In `backend/tests/integration/test_ingest_cli.py` add local-path tests:
   `--ref main` with a folder → status `2` and `--ref is allowed only with a GitHub link`; a missing path →
   `2` and `not a directory or ZIP archive`; the stdout bytes for `fixtures/repos/py-flat/repo` are
   identical with and without explicitly passing the three new limit options at their defaults.
 
 ### Implementation for User Story 4
 
-- [ ] T011 [US4] Add `snapshot: str | None = None` as the last parameter of `build()` in
+- [X] T011 [US4] Add `snapshot: str | None = None` as the last parameter of `build()` in
   `backend/src/graphora/graph/build.py`: when it is not `None`, use it and do not call `snapshot_id()`;
   otherwise keep the current line unchanged. No other change in `graph/` (plan, FR-014). Note in the PR
   description that this change needs review and approval from Ulyana as module owner.

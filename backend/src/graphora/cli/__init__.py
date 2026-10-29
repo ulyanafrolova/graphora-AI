@@ -94,7 +94,7 @@ def _analyze(args: argparse.Namespace) -> int:
                 _log("error", "--out must not be inside the analyzed folder")
                 return EXIT_USAGE
         with fetch_snapshot(source, limits, deadline) as fetched:
-            doc, warnings = build(fetched.root, args.max_files, args.max_bytes, deadline)
+            doc, warnings = build(fetched.root, args.max_files, args.max_bytes, deadline, snapshot=fetched.snapshot)
             doc = with_skipped(doc, fetched.skipped)
             data = dumps(doc)
     except BadInput as exc:
