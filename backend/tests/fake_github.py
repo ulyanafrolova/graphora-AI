@@ -1,8 +1,6 @@
-"""A fake GitHub for tests: replaces the opener `graphora.ingest.github._open` (002 research § R1, R10).
+"""Fake GitHub that replaces `graphora.ingest.github._open` in tests (specs/002-repo-ingest/research.md § R10).
 
-Each URL maps to a canned `(status, headers, body)`. `body` is `bytes`, an iterator of chunks, or
-`"stall"`: reading blocks for the socket timeout passed in, then raises `TimeoutError`. Like a real
-`urllib` opener, a status of 300 or above raises `urllib.error.HTTPError`. Every request is recorded.
+`body` is bytes, an iterator of chunks, or "stall" (read blocks for the timeout, then raises TimeoutError).
 """
 
 from __future__ import annotations
@@ -16,13 +14,12 @@ from dataclasses import dataclass
 from email.message import Message
 
 Body = bytes | Iterable[bytes] | str
-Response = tuple[int, Mapping[str, str], Body]
 
 
 @dataclass(frozen=True)
 class RecordedRequest:
     url: str
-    headers: dict[str, str]  # keys lower-cased
+    headers: dict[str, str]  # lower-case keys
     timeout: float
 
 
@@ -34,8 +31,6 @@ def _headers(values: Mapping[str, str]) -> Message:
 
 
 class FakeResponse(io.RawIOBase):
-    """Enough of `http.client.HTTPResponse` for the ingest code: status, headers, chunked `read`."""
-
     def __init__(self, url: str, status: int, headers: Mapping[str, str], body: Body, timeout: float) -> None:
         self.url = url
         self.status = status
@@ -75,10 +70,10 @@ class FakeResponse(io.RawIOBase):
 
 
 class FakeGitHub:
-    """Callable as `opener(request, timeout)`; serves `responses` and records every request."""
+    """Called as `opener(request, timeout)`. Like urllib, a status of 300 or above raises HTTPError."""
 
-    def __init__(self, responses: Mapping[str, Response] | None = None) -> None:
-        self.responses: dict[str, Response] = dict(responses or {})
+    def __init__(self) -> None:
+        self.responses: dict[str, tuple[int, dict[str, str], Body]] = {}
         self.requests: list[RecordedRequest] = []
 
     def serve(self, url: str, status: int = 200, headers: Mapping[str, str] | None = None, body: Body = b"") -> None:
@@ -98,6 +93,5 @@ class FakeGitHub:
         return FakeResponse(url, status, headers, body, timeout)
 
     def urls(self, host: str | None = None) -> list[str]:
-        """Requested URLs in order, optionally only those on `host`."""
         prefix = f"https://{host}/" if host else ""
         return [r.url for r in self.requests if r.url.startswith(prefix)]

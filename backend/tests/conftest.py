@@ -20,7 +20,7 @@ def _deny_network(*args: object, **kwargs: object) -> None:
 
 @pytest.fixture(autouse=True)
 def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Fail any test that opens a network connection (002 research § R10, FR-019)."""
+    """The suite runs offline (002 research § R10)."""
     monkeypatch.setattr(socket.socket, "connect", _deny_network)
     monkeypatch.setattr(socket.socket, "connect_ex", _deny_network)
     monkeypatch.setattr(socket, "create_connection", _deny_network)

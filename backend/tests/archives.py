@@ -1,9 +1,6 @@
-"""Build tar.gz and ZIP archives in memory for tests, hostile ones included (002 research § R10).
+"""In-memory tar.gz and ZIP archives for tests (specs/002-repo-ingest/research.md § R10).
 
-Archives are never written into `fixtures/`. An entry is `(name, kind, data_or_target, mode)`:
-`name` is a `str`, or raw `bytes` for names that are not valid UTF-8; `kind` is one of `file`, `dir`,
-`symlink`, `hardlink`, `chr`, `fifo`; `data_or_target` is the file content (`bytes` or `str`) or the link
-target; `mode` defaults per kind. The last two fields may be omitted.
+An entry is `(name, kind, data_or_target, mode)`; `name` may be raw `bytes`; the last two fields are optional.
 """
 
 from __future__ import annotations
@@ -16,8 +13,6 @@ import tarfile
 import zipfile
 from collections.abc import Collection, Iterable, Sequence
 from pathlib import Path
-
-Entry = Sequence[object]
 
 _TAR_TYPES = {
     "file": tarfile.REGTYPE,
@@ -39,22 +34,20 @@ _ZIP_DATE = (1980, 1, 1, 0, 0, 0)
 _CHUNK = 1 << 20
 
 
-def _unpack(entry: Entry) -> tuple[str | bytes, str, bytes | str | None, int]:
+def _unpack(entry: Sequence[object]) -> tuple:
     name, kind, *rest = entry
     data = rest[0] if rest else None
-    mode = rest[1] if len(rest) > 1 and rest[1] is not None else _DEFAULT_MODES.get(str(kind), 0o644)
-    return name, str(kind), data, int(mode)  # type: ignore[return-value]
+    mode = rest[1] if len(rest) > 1 and rest[1] is not None else _DEFAULT_MODES.get(kind, 0o644)
+    return name, kind, data, mode
 
 
-def _as_bytes(data: bytes | str | None) -> bytes:
+def _as_bytes(data) -> bytes:
     if data is None:
         return b""
     return data.encode("utf-8") if isinstance(data, str) else data
 
 
 class _Zeros(io.RawIOBase):
-    """A stream of `size` zero bytes that never holds more than one chunk in memory."""
-
     def __init__(self, size: int) -> None:
         self._left = size
 
@@ -67,22 +60,21 @@ class _Zeros(io.RawIOBase):
         return bytes(n)
 
 
-def _tar_gz(add: Iterable[tuple[tarfile.TarInfo, io.IOBase | None]], pax_comment: str | None) -> bytes:
-    """Deterministic bytes: the gzip header has no file name and mtime 0."""
+def _tar_gz(members, pax_comment: str | None) -> bytes:
     buf = io.BytesIO()
     with gzip.GzipFile(filename="", mode="wb", fileobj=buf, mtime=0) as gz:
         pax = {"comment": pax_comment} if pax_comment is not None else {}
         with tarfile.open(fileobj=gz, mode="w|", format=tarfile.PAX_FORMAT, pax_headers=pax) as tar:
-            for info, fileobj in add:
+            for info, fileobj in members:
                 tar.addfile(info, fileobj)
     return buf.getvalue()
 
 
-def _tar_info(name: str | bytes, kind: str, data: bytes | str | None, mode: int) -> tuple[tarfile.TarInfo, io.IOBase | None]:
+def _tar_member(name, kind: str, data, mode: int) -> tuple[tarfile.TarInfo, io.IOBase | None]:
     if kind not in _TAR_TYPES:
         raise ValueError(f"unknown entry kind: {kind}")
     if isinstance(name, bytes):
-        name = name.decode("utf-8", "surrogateescape")  # tarfile writes it back as the same bytes
+        name = name.decode("utf-8", "surrogateescape")  # tarfile writes the same bytes back
     info = tarfile.TarInfo(name)
     info.type = _TAR_TYPES[kind]
     info.mode = mode
@@ -96,17 +88,13 @@ def _tar_info(name: str | bytes, kind: str, data: bytes | str | None, mode: int)
     return info, None
 
 
-def make_tar_gz(entries: Iterable[Entry], pax_comment: str | None = None) -> bytes:
-    """A tar.gz in PAX format; `pax_comment` adds a global header `comment=<value>` as GitHub writes."""
-    return _tar_gz((_tar_info(*_unpack(e)) for e in entries), pax_comment)
+def make_tar_gz(entries: Iterable[Sequence[object]], pax_comment: str | None = None) -> bytes:
+    """`pax_comment` writes a pax global header `comment=<value>`, as GitHub does with the commit SHA."""
+    return _tar_gz((_tar_member(*_unpack(e)) for e in entries), pax_comment)
 
 
 class _ZipInfo(zipfile.ZipInfo):
-    """A ZIP entry that can store its name as exact bytes (no UTF-8 flag) and extra flag bits.
-
-    `zipfile` resets `flag_bits` when it writes, but takes the stored name and flags from
-    `_encodeFilenameFlags()` for both the local and the central header, so both are set here."""
-
+    # zipfile resets flag_bits on write, but takes the stored name and flags from this method.
     raw_name: bytes | None = None
     extra_flags = 0
 
@@ -118,7 +106,7 @@ class _ZipInfo(zipfile.ZipInfo):
         return name, flags | self.extra_flags
 
 
-def _zip_info(name: str | bytes, kind: str, mode: int, utf8_flag: bool) -> _ZipInfo:
+def _zip_info(name, kind: str, mode: int, utf8_flag: bool) -> _ZipInfo:
     if kind not in _ZIP_TYPES:
         raise ValueError(f"ZIP cannot hold entry kind: {kind}")
     if kind == "dir" and isinstance(name, str) and not name.endswith("/"):
@@ -131,18 +119,16 @@ def _zip_info(name: str | bytes, kind: str, mode: int, utf8_flag: bool) -> _ZipI
         info.raw_name = raw
     else:
         info = _ZipInfo(name, _ZIP_DATE)
-    info.create_system = 3  # Unix, so external_attr carries the file type
+    info.create_system = 3  # Unix: external_attr carries the file type
     info.external_attr = (_ZIP_TYPES[kind] | mode) << 16
     if kind == "dir":
-        info.external_attr |= 0x10  # MS-DOS directory bit
+        info.external_attr |= 0x10
     info.compress_type = zipfile.ZIP_DEFLATED
     return info
 
 
-def make_zip(entries: Iterable[Entry], utf8_flag: bool = True, encrypted: Collection[str] = ()) -> bytes:
-    """A ZIP. `utf8_flag=False` stores non-ASCII names as raw UTF-8 bytes without the flag, as old tools
-    do; a `bytes` name is stored exactly. Names in `encrypted` get the encryption flag bit while their data
-    stays plain. Hardlinks cannot be expressed in ZIP."""
+def make_zip(entries: Iterable[Sequence[object]], utf8_flag: bool = True, encrypted: Collection[str] = ()) -> bytes:
+    """`utf8_flag=False` stores non-ASCII names without the UTF-8 flag; names in `encrypted` get the flag bit only."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         for entry in entries:
@@ -155,7 +141,6 @@ def make_zip(entries: Iterable[Entry], utf8_flag: bool = True, encrypted: Collec
 
 
 def _tree(path: Path, exclude: Collection[str]) -> list[tuple[str, Path]]:
-    """Every folder, file and symlink under `path`, folders before their contents, in sorted order."""
     found: list[tuple[str, Path]] = []
 
     def visit(folder: Path, rel: str) -> None:
@@ -170,9 +155,9 @@ def _tree(path: Path, exclude: Collection[str]) -> list[tuple[str, Path]]:
     return found
 
 
-def _dir_entries(path: Path, prefix: str | None, exclude: Collection[str]) -> list[tuple[str, str, bytes | str | None, int]]:
+def _dir_entries(path: Path, prefix: str | None, exclude: Collection[str]) -> list[tuple]:
     head = f"{prefix}/" if prefix else ""
-    entries: list[tuple[str, str, bytes | str | None, int]] = [(prefix, "dir", None, 0o755)] if prefix else []
+    entries: list[tuple] = [(prefix, "dir", None, 0o755)] if prefix else []
     for rel, full in _tree(path, exclude):
         mode = os.lstat(full).st_mode
         if stat.S_ISLNK(mode):
@@ -185,18 +170,15 @@ def _dir_entries(path: Path, prefix: str | None, exclude: Collection[str]) -> li
 
 
 def tar_of_dir(path: Path, prefix: str, pax_comment: str | None = None, exclude: Collection[str] = ()) -> bytes:
-    """A tar.gz of `path` shaped like a GitHub tarball: everything under `prefix/`, symlinks kept as
-    symlink entries. Top-level names in `exclude` (e.g. `.git`) are left out."""
+    """A tar.gz shaped like a GitHub tarball: everything under `prefix/`, symlinks kept."""
     return make_tar_gz(_dir_entries(path, prefix, exclude), pax_comment)
 
 
 def zip_of_dir(path: Path, prefix: str | None = None, exclude: Collection[str] = ()) -> bytes:
-    """A ZIP of `path`, optionally under `prefix/` as GitHub's "Download ZIP" does."""
     return make_zip(_dir_entries(path, prefix, exclude))
 
 
 def bomb_zip(size: int) -> bytes:
-    """One entry of `size` zero bytes, highly compressed; streamed so `size` bytes never sit in memory."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         info = zipfile.ZipInfo("bomb.bin", _ZIP_DATE)
@@ -209,7 +191,6 @@ def bomb_zip(size: int) -> bytes:
 
 
 def bomb_tar_gz(size: int) -> bytes:
-    """One tar entry of `size` zero bytes, gzip-compressed."""
     info = tarfile.TarInfo("bomb.bin")
     info.size = size
     info.mode = 0o644
