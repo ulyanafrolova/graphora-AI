@@ -9,7 +9,7 @@ against a probe file covering every import form in the spec.
 
 - **Decision**:
   - Add `tree-sitter-typescript==0.23.2` and `tree-sitter-javascript==0.25.0`, pinned exactly, next to the
-    existing `tree-sitter==0.26.0`.
+    existing `tree-sitter==0.25.2` (was 0.26.0, downgraded for memory corruption, issue #8).
   - Pick the grammar by extension:
 
     | Extensions | Grammar | Language label |

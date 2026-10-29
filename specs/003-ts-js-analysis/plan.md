@@ -34,8 +34,8 @@ How it works:
 **Language/Version**: Python ≥ 3.12, developed on 3.14 (unchanged)
 
 **Primary Dependencies**: adds `tree-sitter-typescript==0.23.2` and `tree-sitter-javascript==0.25.0` to the
-existing `tree-sitter==0.26.0`, `tree-sitter-python==0.25.0` and `dulwich==1.2.19`. No new dev
-dependencies. Research: [R1–R10](research.md)
+existing `tree-sitter==0.25.2` (was 0.26.0; issue #8), `tree-sitter-python==0.25.0` and `dulwich==1.2.19`. No
+new dev dependencies. Research: [R1–R10](research.md)
 
 **Storage**: None. The output is one JSON file
 
