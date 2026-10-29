@@ -14,7 +14,7 @@ from graphora.graph.build import build
 from graphora.graph.serialize import dumps
 from graphora.ingest.errors import BadInput, InvalidArchive, RemoteError, UnsafeArchive
 from graphora.ingest.fetch import IngestLimits, fetch_snapshot, with_skipped
-from graphora.ingest.source import LocalSource, parse_source
+from graphora.ingest.source import GitHubSource, LocalSource, ZipSource, parse_source
 from graphora.ingest.walk import Deadline, LimitExceeded
 
 EXIT_OK, EXIT_USAGE, EXIT_LIMIT = 0, 2, 3
@@ -123,6 +123,10 @@ def _analyze(args: argparse.Namespace) -> int:
             _log("error", f"cannot write {args.out}: {exc.strerror or exc}")
             return EXIT_USAGE
 
+    if isinstance(source, GitHubSource):
+        _log("info", f"fetched {fetched.repository} at {fetched.snapshot}")
+    elif isinstance(source, ZipSource):
+        _log("info", f"extracted {source.path.name}")
     for path in warnings:
         _log("warning", f"ignoring {path}: not valid JSON-with-comments")
     files = sum(1 for f in doc.files if f.status == "analyzed")
