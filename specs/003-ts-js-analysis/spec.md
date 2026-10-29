@@ -184,8 +184,11 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   2. the path with each extension appended, in the order `.ts`, `.tsx`, `.d.ts`, `.mts`, `.cts`, `.js`,
      `.jsx`, `.mjs`, `.cjs`, `.json`;
   3. a specifier ending in `.js`, `.jsx`, `.mjs` or `.cjs` that names a missing file, tried with the matching
-     TypeScript extension (`.ts`, `.tsx`, `.mts`, `.cts`);
+     TypeScript extension (`.ts`, `.tsx` or `.d.ts` for `.js`; `.tsx`, `.mts`, `.cts`);
   4. the path as a folder, with `index` plus each extension from step 2.
+
+  A specifier that is `.` or `..`, ends in `/.` or `/..`, or ends with `/` names a folder: only step 4 is
+  tried, as in Node and TypeScript.
 
   The first match wins. If nothing matches, the edge is `unresolved` with reason `not_found`.
 - **FR-009**: Bare specifiers MUST be tried, in order, against:

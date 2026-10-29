@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from graphora.adapters import js, python
 from conftest import FIXTURES, REPO_ROOT, edge_key, project, run_analyze
 
 FIXTURE_NAMES = sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file())
@@ -45,7 +46,7 @@ def test_provenance_consistent(name):
     for edge in doc["edges"]:
         assert edge["snapshot"] == doc["snapshot"]
         is_python = edge["source"].endswith((".py", ".pyi"))
-        assert edge["extractor"] == ("python-adapter@0.2.0" if is_python else "js-adapter@0.1.0")
+        assert edge["extractor"] == (python.EXTRACTOR if is_python else js.EXTRACTOR)
 
 
 V1 = Path(__file__).parent / "v1"
@@ -96,7 +97,9 @@ def test_exports_invariant(name):
     for node in doc["nodes"]:
         if node["kind"] != "file" or node["language"] == "python":
             continue
-        names = [n for d in node["definitions"] for n in d["exported_as"]]
+        # merged declarations (`interface X` + `class X`) share one exported binding: count it once per name
+        names = list({(d["name"], n) for d in node["definitions"] for n in d["exported_as"]})
+        names = [n for _, n in names]
         names += [x["name"] for x in node["exports"]]
         names += [
             e.get("alias") or e["symbol"]
@@ -130,3 +133,12 @@ def test_mixed_fullstack_has_no_cross_language_edges():
     assert {"python", "typescript"} <= set(doc["coverage"]["summary"]["by_language"])
     externals = {n["id"] for n in doc["nodes"] if n["kind"] == "external"}
     assert {"ext:python:yaml", "ext:npm:yaml"} <= externals
+
+
+@pytest.mark.parametrize("name", FIXTURE_NAMES)
+def test_edge_ids_unique_and_endpoints_exist(name):
+    doc = json.loads(_analyze(FIXTURES / name / "repo"))
+    ids = [e["id"] for e in doc["edges"]]
+    assert len(ids) == len(set(ids))
+    nodes = {n["id"] for n in doc["nodes"]}
+    assert all(e["source"] in nodes and e["target"] in nodes for e in doc["edges"])

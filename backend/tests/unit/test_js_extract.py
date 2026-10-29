@@ -273,3 +273,31 @@ def test_every_exported_name_once():
     names += [x.name for x in facts.exports]
     names += [n.alias or n.symbol for r in facts.imports if r.edge_type == "reexports" for n in r.names if n.symbol != "*" or n.alias]
     assert sorted(names) == ["C", "a", "default", "g", "r2", "x"]
+
+
+def test_destructured_export_lists_only_bound_names():
+    """Default values and computed keys are read, not bound, so they are not exported."""
+    source = "export const { x = foo, [k]: v, y: [z = bar, ...rest] } = obj;\n"
+    assert sorted(x.name for x in _facts(source).exports) == ["rest", "v", "x", "z"]
+
+
+@pytest.mark.parametrize("path", ["a.ts", "a.tsx"])
+@pytest.mark.parametrize("source, alias", [('export type * from "./b";\n', None), ('export type * as T from "./b";\n', "T")])
+def test_export_type_star_is_type_only_and_not_a_parse_error(path, source, alias):
+    """TS 5.0 syntax that tree-sitter-typescript 0.23.2 does not know: valid code, so no parse_error."""
+    facts = _facts(source, path)
+    assert not facts.has_error
+    assert _names(facts.imports[0]) == [("*", True, alias)]
+
+
+def test_real_error_next_to_export_type_star_still_flagged():
+    assert _facts('export type * from "./b";\nlet = ;\n').has_error
+
+
+def test_merged_declarations_keep_every_kind():
+    source = "export interface Dup { a: number }\nclass Dup {}\nnamespace Dup {}\nfunction f(a: string): void;\nfunction f(a: any) {}\n"
+    assert _facts(source).definitions == (
+        Definition("interface", "Dup", 1, ("Dup",)),
+        Definition("class", "Dup", 2, ("Dup",)),
+        Definition("function", "f", 4, ()),
+    )

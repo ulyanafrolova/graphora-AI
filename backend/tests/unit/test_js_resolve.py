@@ -53,6 +53,8 @@ def test_file_beats_folder_index():
     [
         ("./util.js", ["src/util.ts"], "src/util.ts"),
         ("./util.js", ["src/util.tsx"], "src/util.tsx"),
+        ("./types.js", ["src/types.d.ts"], "src/types.d.ts"),
+        ("./types.js", ["src/types.tsx", "src/types.d.ts"], "src/types.tsx"),
         ("./util.js", ["src/util.js", "src/util.ts"], "src/util.js"),
         ("./c.jsx", ["src/c.tsx"], "src/c.tsx"),
         ("./m.mjs", ["src/m.mts"], "src/m.mts"),
@@ -69,6 +71,25 @@ def test_asset_vs_file():
     assert _resolve(resolver, "./data.json") == ("asset:src/data.json", None)
     assert _resolve(resolver, "./data") == ("asset:src/data.json", None)
     assert _resolve(resolver, "../src/b") == ("file:src/b.ts", None)
+
+
+@pytest.mark.parametrize(
+    "specifier, source, expected",
+    [
+        ("./", "src/sub/x.ts", "src/sub/index.ts"),
+        (".", "src/sub/x.ts", "src/sub/index.ts"),
+        ("..", "src/sub/x.ts", "src/index.ts"),
+        ("../..", "src/sub/x.ts", "index.ts"),
+        ("../lib/", "src/sub/x.ts", "src/lib/index.ts"),
+    ],
+)
+def test_folder_specifier_never_tries_sibling_file(specifier, source, expected):
+    files = ["src.ts", "src/sub.ts", "src/lib.ts", "index.ts", "src/index.ts", "src/sub/index.ts", "src/lib/index.ts"]
+    assert _resolve(_resolver(files), specifier, source) == (f"file:{expected}", None)
+
+
+def test_folder_specifier_without_index_is_not_found():
+    assert _resolve(_resolver(["src/lib.ts"]), "./lib/") == ("unresolved:npm:src/lib", "not_found")
 
 
 def test_missing_relative_uses_normalized_path():

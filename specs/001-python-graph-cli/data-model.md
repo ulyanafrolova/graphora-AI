@@ -72,7 +72,7 @@ Definitions are sorted by `(line, name)`. Nested functions, nested classes and d
 | `target` | node id | A `file:`, `ext:` or `unresolved:` node |
 | `type` | `"imports"` | The only edge type in schema v1 |
 | `symbol` | string \| null | The name imported by `from … import`, or `*`. `null` for `import x` and for dynamic imports |
-| `line` | integer ≥ 1 | Start line of the import statement or call |
+| `line` | integer ≥ 1 | Start line of the import statement or call. A line ends at LF, CRLF or a lone CR |
 | `column` | integer ≥ 1 | Start column of the statement or call, counted in Unicode code points (1-based) |
 | `snapshot` | string | Equals the document's `snapshot` |
 | `confidence` | `resolved` \| `heuristic` \| `unresolved` | `heuristic` is allowed by the schema but never emitted in this slice |
@@ -83,7 +83,8 @@ Definitions are sorted by `(line, name)`. Nested functions, nested classes and d
 These rules apply to edges:
 
 - `from m import a, b` produces two edges with the same line and column and different `symbol` values. The
-  pair `(line, column, symbol)` keeps edge ids unique.
+  pair `(line, column, symbol)` keeps edge ids unique. Names of one statement that give the same target and
+  symbol (`import os, os.path`, `from m import f, f`) are one fact and produce one edge.
 - `confidence = resolved` exactly when the target is a `file:` or `ext:` node.
 - `confidence = unresolved` exactly when the target is an `unresolved:` node.
 
@@ -102,7 +103,7 @@ These rules apply to edges:
 | `path` | string | |
 | `language` | string \| null | From the extension table, or from the marker-file table (`pyproject.toml`, `setup.py` and `setup.cfg` → `python`; `package.json` and `tsconfig.json` → `typescript`; `go.mod` → `go`; `Cargo.toml` → `rust`; `pom.xml` and `build.gradle` → `java`) |
 | `status` | `analyzed` \| `detected_only` \| `not_code` | `.py` and `.pyi` files are `analyzed`. Other files with a programming-language extension are `detected_only`. Everything else, including marker files, is `not_code` |
-| `flags` | string[] | Sorted. Possible values: `parse_error` (the tree has ERROR or MISSING nodes) and `unreadable` (the Python file cannot be decoded, so it gets no edges and no definitions) |
+| `flags` | string[] | Sorted. Possible values: `parse_error` (the tree has ERROR or MISSING nodes) and `unreadable` (the file cannot be read, or the Python file cannot be decoded, so it gets no edges and no definitions) |
 
 `detected_only` extensions in this slice:
 

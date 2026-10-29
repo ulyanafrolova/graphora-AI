@@ -117,11 +117,19 @@ def build(
     A given `snapshot` (e.g. the commit SHA of a fetched tarball) is used as is (specs/002-repo-ingest FR-014).
     """
     walked = walk(root, max_files, max_bytes, deadline)
-    contents = {path: read_file(root, path) for path in walked.files}
+    contents: dict[str, bytes] = {}
+    for path in walked.files:
+        if path in walked.special:
+            continue  # not a regular file: listed as `unreadable`, never opened
+        try:
+            contents[path] = read_file(root, path)
+        except OSError:
+            pass  # e.g. no read permission: listed as `unreadable`, left out of the content hash
     if snapshot is None:
         snapshot = snapshot_id(root, contents, tuple(s.path for s in walked.skipped))
     files = frozenset(walked.files)
-    configs = load_configs(files, contents.__getitem__)
+    read = lambda path: contents.get(path, b"")  # an unreadable config or package.json reads as empty
+    configs = load_configs(files, read)
     invalid_configs = frozenset(configs.invalid)
 
     coverage: list[CoverageFile] = []
@@ -134,17 +142,20 @@ def build(
         if status == "analyzed":
             deadline.check()
             languages[path] = language
+            data = contents.get(path)
             if language == "python":
-                text = _decode(contents[path])
-                facts = py_extract.extract(text.encode("utf-8")) if text is not None else None
+                text = _decode(data) if data is not None else None
+                facts = py_extract.extract(text.encode("utf-8"), deadline.check) if text is not None else None
                 py_facts[path] = facts
             else:
-                facts = js_extract.extract(path, contents[path])
+                facts = js_extract.extract(path, data, deadline.check) if data is not None else None
                 js_facts[path] = facts
             if facts is None:
                 flags.append("unreadable")
             elif facts.has_error:
                 flags.append("parse_error")
+        elif path not in contents:
+            flags.append("unreadable")
         if path in invalid_configs:
             flags.append("parse_error")
         coverage.append(CoverageFile(path, language, status, tuple(sorted(flags))))
@@ -152,7 +163,7 @@ def build(
     nodes: dict[str, Node] = {}
     edges: list[Edge] = []
     _python_graph(py_facts, snapshot, nodes, edges)
-    resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, contents.__getitem__))
+    resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, read))
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
 
     doc = GraphDocument(
@@ -166,7 +177,8 @@ def build(
             "python-stdlib": py_resolve.STDLIB_VERSION,
         },
         nodes=tuple(nodes.values()),
-        edges=tuple(edges),
+        # `import os, os.path` or `from m import f, f` repeat one fact; keeping both would repeat an edge id
+        edges=tuple(dict.fromkeys(edges)),
         files=tuple(coverage),
         skipped=tuple(walked.skipped),
     )

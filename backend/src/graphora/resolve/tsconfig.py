@@ -112,7 +112,7 @@ class Configs:
         self._by_folder: dict[str, Effective] = {}
         for path in sorted(files):
             if posixpath.basename(path) in CONFIG_NAMES:
-                self._load(path)
+                self._merged(path)  # loads the whole `extends` chain now, so `invalid` is complete before any lookup
 
     @property
     def invalid(self) -> tuple[str, ...]:

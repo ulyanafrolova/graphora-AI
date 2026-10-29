@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from graphora.graph.model import Skipped
+from graphora.ingest.errors import BadInput
 
 EXCLUDED_DIRS = frozenset(
     {
@@ -64,6 +65,7 @@ class WalkResult:
     files: list[str]
     skipped: list[Skipped]
     total_bytes: int
+    special: frozenset[str] = frozenset()  # FIFOs, sockets, devices: listed, never opened (a FIFO read blocks)
 
 
 def is_excluded_path(rel: str) -> bool:
@@ -74,6 +76,7 @@ def is_excluded_path(rel: str) -> bool:
 
 def walk(root: Path, max_files: int, max_bytes: int, deadline: Deadline | None = None) -> WalkResult:
     files: list[str] = []
+    special: list[str] = []
     skipped: list[Skipped] = []
     total = 0
     if deadline is not None:
@@ -82,8 +85,12 @@ def walk(root: Path, max_files: int, max_bytes: int, deadline: Deadline | None =
     stack = [""]
     while stack:
         rel_dir = stack.pop()
-        with os.scandir(root / rel_dir if rel_dir else root) as it:
-            entries = sorted(it, key=lambda e: e.name)
+        try:
+            with os.scandir(root / rel_dir if rel_dir else root) as it:
+                entries = sorted(it, key=lambda e: e.name)
+        except OSError as exc:
+            # A folder that cannot be listed would silently drop files; schema v2 has no skip reason for it.
+            raise BadInput(f"cannot read folder {rel_dir or '.'}: {exc.strerror or exc}") from exc
         subdirs = []
         for entry in entries:
             if deadline is not None:
@@ -108,11 +115,16 @@ def walk(root: Path, max_files: int, max_bytes: int, deadline: Deadline | None =
                     raise LimitExceeded("files", max_files, len(files))
                 if total > max_bytes:
                     raise LimitExceeded("bytes", max_bytes, total)
+            else:
+                files.append(rel)
+                special.append(rel)
+                if len(files) > max_files:
+                    raise LimitExceeded("files", max_files, len(files))
         stack.extend(reversed(subdirs))
 
     files.sort()
     skipped.sort(key=lambda s: s.path)
-    return WalkResult(files=files, skipped=skipped, total_bytes=total)
+    return WalkResult(files=files, skipped=skipped, total_bytes=total, special=frozenset(special))
 
 
 def read_file(root: Path, rel: str) -> bytes:
