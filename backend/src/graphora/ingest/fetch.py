@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import dataclasses
+import os
+import tempfile
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
 from graphora.graph.model import GraphDocument, Skipped
+from graphora.ingest import github
+from graphora.ingest.archive import extract_tar_gz
 from graphora.ingest.source import GitHubSource, LocalSource, Source, ZipSource
 from graphora.ingest.walk import Deadline
 
@@ -41,7 +45,13 @@ def fetch_snapshot(source: Source, limits: IngestLimits, deadline: Deadline) -> 
         root = source.path.resolve()
         yield FetchedSnapshot(root=root, repository=root.name, snapshot=None, skipped=())
     elif isinstance(source, GitHubSource):
-        raise NotImplementedError("GitHub sources arrive in US1")
+        sha = github.resolve_sha(source, deadline)
+        with tempfile.TemporaryDirectory(prefix="graphora-") as tmp:
+            with closing(github.open_tarball(source, sha, limits, deadline)) as stream:
+                root, skipped = extract_tar_gz(stream, Path(tmp), limits, deadline, expected_sha=sha)
+            if not os.path.lexists(root / ".git"):
+                os.mkdir(root / ".git", 0o755)  # a clone has one: the walk reports it the same way (FR-016)
+            yield FetchedSnapshot(root, f"github.com/{source.owner}/{source.repo}", sha, skipped)
     elif isinstance(source, ZipSource):
         raise NotImplementedError("ZIP sources arrive in US2")
     else:
