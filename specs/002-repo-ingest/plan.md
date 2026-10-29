@@ -131,14 +131,20 @@ backend/
 │   ├── graph/build.py          # + optional snapshot parameter (owner review)
 │   └── cli/__init__.py         # <source>, --ref, new limits, statuses 4/5/130, signal handling
 └── tests/
-    ├── conftest.py             # + autouse no-network guard, archive builders, fake GitHub opener
+    ├── conftest.py             # + autouse no-network guard
+    ├── archives.py             # in-memory tar.gz / ZIP builders, hostile entries, bombs
+    ├── fake_github.py          # fake opener: canned statuses, chunked and stalled bodies
     ├── unit/
-    │   ├── test_source.py      # argument detection, link forms, --ref rules, ref names
+    │   ├── test_no_network.py  # the guard itself
+    │   ├── test_deadline.py    # Deadline.remaining()
+    │   ├── test_build_snapshot.py  # build(snapshot=) on every fixture
+    │   ├── test_source.py      # argument detection, link forms, --ref rules, ref names, ZIP signature
     │   ├── test_github.py      # status mapping, rate limit, redirects, SHA checks, size and time limits
     │   └── test_archive.py     # every row of the entry classification table, tar and ZIP
     ├── integration/
     │   ├── test_ingest_cli.py      # exit statuses and messages end to end, --out untouched on failure
-    │   └── test_ingest_cleanup.py  # no graphora-* left after success, each failure, interrupt
+    │   ├── test_ingest_cleanup.py  # no graphora-* left after success, each failure, interrupt
+    │   └── test_safety_ingest.py   # setup.py, conftest.py, npm scripts, git hooks are never run
     └── golden/
         └── test_ingest_equivalence.py  # every fixture: GitHub tarball == clean clone; ZIP == folder
 ```
@@ -152,6 +158,48 @@ Existing tests are not edited (FR-015).
 - `graph/` changes by one parameter. No `api/`, `store/` or new top-level folder; those belong to 005 and
   007.
 
+## Architecture
+
+One run of `graphora analyze <source>`. Everything inside the `with fetch_snapshot(...)` block runs while
+the temp folder exists; `--out` is written only after it is removed.
+
+```mermaid
+flowchart TD
+    A["argument + --ref"] --> P["source.parse_source()"]
+    P -->|existing folder| L["LocalSource"]
+    P -->|"https://github.com/..."| G["GitHubSource(owner, repo, ref)"]
+    P -->|"file starting with PK"| Z["ZipSource"]
+    P -->|anything else| E2["BadInput → exit 2"]
+
+    subgraph F["fetch.fetch_snapshot() — one Deadline for the whole run"]
+        L --> LR["root = the folder, snapshot = None"]
+        G --> R["github.resolve_sha()<br/>1 anonymous API request"]
+        R --> T["github.open_tarball(sha)<br/>codeload, streamed, size-capped"]
+        T --> X1["archive.extract_tar_gz()<br/>pax SHA check"]
+        Z --> X2["archive.extract_zip()<br/>size and entry count first"]
+        X1 --> W["_Writer: name checks, collisions,<br/>markers, limits, 0o644 files, no links"]
+        X2 --> W
+        W --> GR["root = wrapper folder or temp folder<br/>+ empty .git for GitHub"]
+    end
+
+    LR --> B["graph.build(root, ..., snapshot)"]
+    GR --> B
+    B --> S["with_skipped(): archive symlinks into coverage"]
+    S --> D["serialize.dumps()"]
+    D --> C["temp folder removed"]
+    C --> O["write --out or stdout"]
+```
+
+| Source | Snapshot id | Temp folder | Repository name |
+|---|---|---|---|
+| Local folder | computed by `build()` as before | none | folder name |
+| GitHub link | resolved commit SHA, passed to `build()` | `graphora-*`, removed on exit | `github.com/<owner>/<repo>` |
+| ZIP file | `content:<hash>`, computed by `build()` | `graphora-*`, removed on exit | file name without extension |
+
+Errors raised anywhere in the block map to exit statuses in the CLI: `BadInput` 2, `LimitExceeded` 3,
+`UnsafeArchive`/`InvalidArchive` 4, `RemoteError` 5, interruption 130.
+
 ## Complexity Tracking
 
-No constitution violations to justify.
+No constitution violations to justify. Deviations found during implementation are listed in
+[research.md § Implementation notes](research.md#implementation-notes).

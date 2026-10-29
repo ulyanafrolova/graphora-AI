@@ -231,3 +231,23 @@ Decisions behind [plan.md](plan.md). Each entry gives the decision, why, and wha
   `/tree/` link must have exactly one segment after `tree`; more segments are rejected with a message
   suggesting `--ref`.
 - **Rationale**: one place states the ref; no silent precedence rule to remember.
+
+## Implementation notes
+
+Decisions made while implementing, not covered above.
+
+- **Empty `.git` for GitHub archives.** A clone has a `.git` folder, which the walk reports as skipped
+  `excluded_dir`; a tarball has none. `fetch_snapshot()` creates an empty `.git` in the extracted root, so
+  the coverage report matches a clone byte for byte (FR-016). `snapshot_id()` is not called for GitHub
+  sources, so the empty folder is never read.
+- **Wrapper folder is exempt from markers (R9).** Marker rules apply below a single top-level wrapper
+  folder, not to it, so a ZIP of a project folder named `build/` or `dist/` is not emptied. For ZIP the
+  wrapper is found from the central directory before extraction; for tar.gz it is the first entry when it
+  is a folder, as GitHub writes `<owner>-<repo>-<sha7>/` first.
+- **Test hooks.** `graphora.ingest.github._open` and `_timeout`, and `graphora.ingest.archive._write`, are
+  module-level so tests can replace the network, shorten the socket timeout and count bytes written.
+- **tree-sitter 0.26.0 memory corruption** ([issue #8](https://github.com/ulyanafrolova/graphora-AI/issues/8)).
+  Found during the manual GitHub check (quickstart step 5): parsing several files in one process can
+  crash (exit 139) or write impossible definition lines into the graph. It is independent of 002 and
+  reproduces with the adapters alone; `tree-sitter==0.25.2` does not have it. The GitHub-equals-clone
+  check on a real repository is to be repeated after #8 is fixed.

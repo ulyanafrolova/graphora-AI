@@ -361,10 +361,10 @@ apart from the snapshot id.
 - [X] T036 [P] Update `CLAUDE.md` § Commands with
   `uv run graphora analyze https://github.com/<owner>/<repo> [--ref <ref>] --out graph.json` and
   `uv run graphora analyze <file.zip> --out graph.json`.
-- [ ] T037 Run `uv run pytest` with no network (the T001 guard enforces it) and confirm that no file under
+- [X] T037 Run `uv run pytest` with no network (the T001 guard enforces it) and confirm that no file under
   `backend/tests/` that existed before this branch was modified: `git diff --stat main -- backend/tests`
   must list only new files (FR-015, SC-006).
-- [ ] T038 Run the steps in `specs/002-repo-ingest/quickstart.md` 1–4; run step 5 once by hand against a
+- [X] T038 Run the steps in `specs/002-repo-ingest/quickstart.md` 1–4; run step 5 once by hand against a
   small public repository and record the result in the PR description.
 
 ---
