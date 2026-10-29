@@ -44,7 +44,7 @@ Paths are relative to the repository root. Code lives in `backend/src/graphora/`
   function that raises `AssertionError("network access in tests")`. Add a test
   `backend/tests/unit/test_no_network.py` that asserts `urllib.request.urlopen("https://example.com")`
   raises that error.
-- [ ] T002 [P] Create `backend/tests/archives.py`, helpers that build archives in memory for tests (never
+- [X] T002 [P] Create `backend/tests/archives.py`, helpers that build archives in memory for tests (never
   written into `fixtures/`):
   - `make_tar_gz(entries, pax_comment=None) -> bytes`, where each entry is `(name, kind, data_or_target,
     mode)` and `kind` is one of `file`, `dir`, `symlink`, `hardlink`, `chr`, `fifo`; `pax_comment` writes
@@ -56,7 +56,7 @@ Paths are relative to the repository root. Code lives in `backend/src/graphora/`
     folder and symlink under `path` in sorted order with `prefix/` in front, keeping symlinks as symlink
     entries;
   - `bomb_zip(size)` and `bomb_tar_gz(size)`: one entry of `size` zero bytes, highly compressed.
-- [ ] T003 [P] Create `backend/tests/fake_github.py`: a `FakeGitHub` object usable as the opener in
+- [X] T003 [P] Create `backend/tests/fake_github.py`: a `FakeGitHub` object usable as the opener in
   `graphora.ingest.github` (implemented in T025). It maps a URL to a canned response
   `(status, headers, body)`, where `body` is `bytes`, an iterator of chunks, or `"stall"` (blocks until the
   socket timeout passed in, then raises `TimeoutError`). It records every requested URL and the request
