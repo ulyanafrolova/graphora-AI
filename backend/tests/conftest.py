@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import socket
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,18 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = REPO_ROOT / "fixtures" / "repos"
 SCHEMA_PATH = REPO_ROOT / "schema" / "graph.schema.json"
+
+
+def _deny_network(*args: object, **kwargs: object) -> None:
+    raise AssertionError("network access in tests")
+
+
+@pytest.fixture(autouse=True)
+def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The suite runs offline (002 research § R10)."""
+    monkeypatch.setattr(socket.socket, "connect", _deny_network)
+    monkeypatch.setattr(socket.socket, "connect_ex", _deny_network)
+    monkeypatch.setattr(socket, "create_connection", _deny_network)
 
 
 def run_analyze(directory: Path | str, *args: str) -> tuple[int, bytes, str]:

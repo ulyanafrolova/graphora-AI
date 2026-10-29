@@ -109,11 +109,17 @@ def _js_graph(
                 )
 
 
-def build(root: Path, max_files: int, max_bytes: int, deadline: Deadline) -> tuple[GraphDocument, tuple[str, ...]]:
-    """The graph document, plus warnings: config files that could not be read (contracts/cli.md)."""
+def build(
+    root: Path, max_files: int, max_bytes: int, deadline: Deadline, snapshot: str | None = None
+) -> tuple[GraphDocument, tuple[str, ...]]:
+    """The graph document, plus warnings: config files that could not be read (contracts/cli.md).
+
+    A given `snapshot` (e.g. the commit SHA of a fetched tarball) is used as is (specs/002-repo-ingest FR-014).
+    """
     walked = walk(root, max_files, max_bytes, deadline)
     contents = {path: read_file(root, path) for path in walked.files}
-    snapshot = snapshot_id(root, contents, tuple(s.path for s in walked.skipped))
+    if snapshot is None:
+        snapshot = snapshot_id(root, contents, tuple(s.path for s in walked.skipped))
     files = frozenset(walked.files)
     configs = load_configs(files, contents.__getitem__)
     invalid_configs = frozenset(configs.invalid)
