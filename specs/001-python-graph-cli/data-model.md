@@ -72,7 +72,7 @@ Definitions are sorted by `(line, name)`. Nested functions, nested classes and d
 | `target` | node id | A `file:`, `ext:` or `unresolved:` node |
 | `type` | `"imports"` | The only edge type in schema v1 |
 | `symbol` | string \| null | The name imported by `from … import`, or `*`. `null` for `import x` and for dynamic imports |
-| `line` | integer ≥ 1 | Start line of the import statement or call |
+| `line` | integer ≥ 1 | Start line of the import statement or call. A line ends at LF, CRLF or a lone CR |
 | `column` | integer ≥ 1 | Start column of the statement or call, counted in Unicode code points (1-based) |
 | `snapshot` | string | Equals the document's `snapshot` |
 | `confidence` | `resolved` \| `heuristic` \| `unresolved` | `heuristic` is allowed by the schema but never emitted in this slice |
@@ -83,7 +83,8 @@ Definitions are sorted by `(line, name)`. Nested functions, nested classes and d
 These rules apply to edges:
 
 - `from m import a, b` produces two edges with the same line and column and different `symbol` values. The
-  pair `(line, column, symbol)` keeps edge ids unique.
+  pair `(line, column, symbol)` keeps edge ids unique. Names of one statement that give the same target and
+  symbol (`import os, os.path`, `from m import f, f`) are one fact and produce one edge.
 - `confidence = resolved` exactly when the target is a `file:` or `ext:` node.
 - `confidence = unresolved` exactly when the target is an `unresolved:` node.
 
@@ -102,7 +103,7 @@ These rules apply to edges:
 | `path` | string | |
 | `language` | string \| null | From the extension table, or from the marker-file table (`pyproject.toml`, `setup.py` and `setup.cfg` → `python`; `package.json` and `tsconfig.json` → `typescript`; `go.mod` → `go`; `Cargo.toml` → `rust`; `pom.xml` and `build.gradle` → `java`) |
 | `status` | `analyzed` \| `detected_only` \| `not_code` | `.py` and `.pyi` files are `analyzed`. Other files with a programming-language extension are `detected_only`. Everything else, including marker files, is `not_code` |
-| `flags` | string[] | Sorted. Possible values: `parse_error` (the tree has ERROR or MISSING nodes) and `unreadable` (the Python file cannot be decoded, so it gets no edges and no definitions) |
+| `flags` | string[] | Sorted. Possible values: `parse_error` (the tree has ERROR or MISSING nodes) and `unreadable` (the file cannot be read, or the Python file cannot be decoded, so it gets no edges and no definitions) |
 
 `detected_only` extensions in this slice:
 
@@ -154,6 +155,11 @@ root that has the name wins. Within one root, `.py` wins over `.pyi`.
 
 **Locality.** A top-level name `t` is local when `t` is in the index or in `NS` for some root.
 
+**Defined below the roots.** `NESTED` holds every module or package name that appears as a path part after
+the first one (`backend/app/models.py` gives `app` and `models`). A name in `NESTED` that is not local and not
+in the standard-library list is treated like a local name that was not found: reason `not_found`, never
+`ext:`. The subproject's root is unknown, so the import cannot be proved external.
+
 **Home root and base package.** A file's *home root* is the most specific root containing it, so a file
 under `src/` uses `src`. Its *module name* is computed under that root. Its *package* is:
 
@@ -162,7 +168,7 @@ under `src/` uses `src`. Its *module name* is computed under that root. Its *pac
 
 | Import | Result |
 |---|---|
-| `import a.b.c` | The edge goes to the index entry for `a.b.c` if there is one. Otherwise, if `a.b.c` is in `NS` the reason is `namespace_package`. Otherwise, if `a` is local the reason is `not_found`. Otherwise the edge goes to `ext:a` |
+| `import a.b.c` | The edge goes to the index entry for `a.b.c` if there is one. Otherwise, if `a.b.c` is in `NS` the reason is `namespace_package`. Otherwise, if `a` is local, or defined below the roots, the reason is `not_found`. Otherwise the edge goes to `ext:a` |
 | `from M import n` (absolute) | Resolve `M` as above. If `M.n` is in the index, the edge goes to it, with symbol `n`. Otherwise, if `M` is a file, the edge goes to it, with symbol `n`. Otherwise, if `M` is in `NS` and `M.n` is not in the index, the reason is `not_found`. If `M` is external, the edge goes to `ext:<top of M>`, with symbol `n` |
 | `from .X import n` (level k) | The base is the file's package with `k-1` trailing parts removed. If there are not enough parts, or the package is empty, the reason is `relative_beyond_top`. Otherwise `M` is `base.X` (or `base` when `X` is empty) and is resolved like an absolute import, with one difference: a missing local name is never external. It gets reason `not_found`, and the reference is the dotted name |
 | `importlib.import_module("a.b")`, `import_module("a.b")`, `__import__("a.b")` | Resolved like `import a.b`, with symbol `null` |

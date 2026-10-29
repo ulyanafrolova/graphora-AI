@@ -88,3 +88,23 @@ def test_stdlib_category():
     assert category("json") == "stdlib"
     assert category("__future__") == "stdlib"
     assert category("requests") == "third_party"
+
+
+SUBPROJECT = build_index(["backend/app/__init__.py", "backend/app/models.py", "backend/app/api.py", "tools/logging.py"])
+
+
+@pytest.mark.parametrize(
+    "src, expected",
+    [
+        ("from app import models", [("unresolved:python:app", "models", "not_found")]),
+        ("import app.models", [("unresolved:python:app.models", None, "not_found")]),
+        ("import importlib\nimportlib.import_module('app')", None),
+        ("import logging", [("ext:python:logging", None, None)]),  # stdlib wins over tools/logging.py
+        ("import requests", [("ext:python:requests", None, None)]),
+    ],
+)
+def test_name_defined_only_in_a_subproject_is_not_external(src, expected):
+    """A top name that exists below the roots (backend/app/) is never guessed to be a third-party package."""
+    records = extract(src.encode()).imports
+    targets = [(t.node_id, t.symbol, t.reason) for t in resolve("backend/app/api.py", records[-1], SUBPROJECT)]
+    assert targets == (expected or [("unresolved:python:app", None, "not_found")])

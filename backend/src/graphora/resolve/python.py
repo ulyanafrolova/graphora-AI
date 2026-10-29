@@ -7,7 +7,7 @@ from importlib import resources
 
 from graphora.adapters.python.extract import ImportRecord
 
-RESOLVER_VERSION = "0.2.0"
+RESOLVER_VERSION = "0.3.0"  # 0.3.0: names defined only below the roots are unresolved, not external
 STDLIB_VERSION = "3.14.0"
 ROOTS = ("", "src")
 _SUFFIX_RANK = {".py": 0, ".pyi": 1}
@@ -39,6 +39,13 @@ class ModuleIndex:
     modules: dict[str, str]
     namespaces: frozenset[str]
     has_src: bool
+    nested: frozenset[str] = frozenset()  # module or package names that exist only below the top of a root
+
+    def defined_below(self, dotted: str) -> bool:
+        """The top name is a local module of some subproject (`backend/app/`), so it may not be external.
+        Standard-library names stay external: absolute imports reach the stdlib first."""
+        top = dotted.split(".")[0]
+        return top in self.nested and top not in STDLIB
 
     def is_local(self, dotted: str) -> bool:
         top = dotted.split(".")[0]
@@ -85,7 +92,12 @@ def build_index(paths: list[str]) -> ModuleIndex:
         for dotted, (_, path) in candidates.items():
             modules.setdefault(dotted, path)
         namespaces |= dirs - packages
-    return ModuleIndex(modules, frozenset(namespaces - set(modules)), has_src)
+    nested = set()
+    for path in paths:
+        split = _split(path)
+        parts = split[0] if split else []
+        nested.update(p for p in parts[1:] if p.isidentifier() and p != "__init__")
+    return ModuleIndex(modules, frozenset(namespaces - set(modules)), has_src, frozenset(nested))
 
 
 def _package_parts(path: str, index: ModuleIndex) -> list[str]:
@@ -110,7 +122,7 @@ def _import_target(dotted: str, index: ModuleIndex) -> Target:
         return Target(f"file:{index.modules[dotted]}", None)
     if dotted in index.namespaces:
         return Target(f"unresolved:python:{dotted}", None, "namespace_package")
-    if index.is_local(dotted):
+    if index.is_local(dotted) or index.defined_below(dotted):
         return Target(f"unresolved:python:{dotted}", None, "not_found")
     return _external(dotted, None)
 
@@ -123,7 +135,7 @@ def _from_target(module: str, name: str, index: ModuleIndex, relative: bool) -> 
     if module in index.namespaces:
         reference = module if name == "*" else f"{module}.{name}"
         return Target(f"unresolved:python:{reference}", name, "not_found")
-    if relative or index.is_local(module):
+    if relative or index.is_local(module) or index.defined_below(module):
         return Target(f"unresolved:python:{module}", name, "not_found")
     return _external(module, name)
 

@@ -107,8 +107,8 @@ All outputs validate against schema version 2 and match their (updated) `expecte
 
 - **Relative specifier with no matching file** (`./missing`): `unresolved`, reason `not_found`. It is never
   turned into an npm package.
-- **Bare specifier that matches a `paths` alias but no file**: `unresolved`, reason `not_found`. It is not
-  turned into an npm package.
+- **Bare specifier that matches a `paths` alias but no file**: falls through to `baseUrl`, workspace packages,
+  built-ins and npm, as in TypeScript. A catch-all `"*"` pattern therefore keeps npm imports and built-ins.
 - **Scoped and deep package imports** (`@scope/pkg/sub/path`, `lodash/fp`): resolved to the package node
   `@scope/pkg` / `lodash`. The subpath is not stored in the graph; it is covered by the edge's snippet
   hash and can be read at the cited line.
@@ -184,8 +184,11 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   2. the path with each extension appended, in the order `.ts`, `.tsx`, `.d.ts`, `.mts`, `.cts`, `.js`,
      `.jsx`, `.mjs`, `.cjs`, `.json`;
   3. a specifier ending in `.js`, `.jsx`, `.mjs` or `.cjs` that names a missing file, tried with the matching
-     TypeScript extension (`.ts`, `.tsx`, `.mts`, `.cts`);
+     TypeScript extension (`.ts`, `.tsx` or `.d.ts` for `.js`; `.tsx`, `.mts`, `.cts`);
   4. the path as a folder, with `index` plus each extension from step 2.
+
+  A specifier that is `.` or `..`, ends in `/.` or `/..`, or ends with `/` names a folder: only step 4 is
+  tried, as in Node and TypeScript.
 
   The first match wins. If nothing matches, the edge is `unresolved` with reason `not_found`.
 - **FR-009**: Bare specifiers MUST be tried, in order, against:
@@ -195,8 +198,8 @@ All outputs validate against schema version 2 and match their (updated) `expecte
   3. the Node built-in module list;
   4. otherwise, an npm package named by the first segment of the specifier (the first two for `@scope/…`).
 
-  A specifier that matches a `paths` alias but no file is `unresolved` with reason `not_found`. A
-  `baseUrl` lookup that finds no file falls through to the next step, as in TypeScript.
+  Only the first matching `paths` pattern is tried. When none of its targets is a file, and likewise when a
+  `baseUrl` lookup finds no file, resolution falls through to the next step, as in TypeScript.
 - **FR-010**: Before step 3 of FR-009, a bare specifier whose package name matches the `name` of a
   `package.json` inside the analyzed folder (other than the root one) MUST be recorded as `unresolved` with
   reason `workspace_package`. It MUST NOT become an npm package node, and no local file is guessed.

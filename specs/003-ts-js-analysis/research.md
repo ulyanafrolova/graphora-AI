@@ -9,7 +9,7 @@ against a probe file covering every import form in the spec.
 
 - **Decision**:
   - Add `tree-sitter-typescript==0.23.2` and `tree-sitter-javascript==0.25.0`, pinned exactly, next to the
-    existing `tree-sitter==0.26.0`.
+    existing `tree-sitter==0.25.2` (was 0.26.0, downgraded for memory corruption, issue #8).
   - Pick the grammar by extension:
 
     | Extensions | Grammar | Language label |
@@ -51,7 +51,10 @@ against a probe file covering every import form in the spec.
   | `export * as ns from "m"` | `reexports` | `static` | `*` | `ns` |
   | `export { a, b as c } from "m"` | `reexports` | `static` | `a`, `b` | — / `c` |
   | `export type { T } from "m"` | `reexports` | `static`, type-only | `T` | — |
+  | `export type * from "m"`, `export type * as ns from "m"` (TS 5.0) | `reexports` | `static`, type-only | `*` | — / `ns` |
 
+  - The 0.23.2 grammar parses the `type` of `export type *` as an ERROR node. The adapter recognises that one
+    node, marks the edge type-only and does not count it as a parse error.
   - `require` counts only when the callee is the plain identifier `require` and there is exactly one
     argument. Shadowing is not tracked (spec edge case).
   - A specifier is a literal if it is a string, or a template string without substitutions. Anything else

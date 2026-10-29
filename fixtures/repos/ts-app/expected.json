@@ -3,6 +3,7 @@
   "nodes": [
     {"id": "asset:src/data.json", "kind": "asset", "path": "src/data.json"},
     {"id": "asset:src/styles.css", "kind": "asset", "path": "src/styles.css"},
+    {"id": "ext:npm:@app/missing", "kind": "external", "ecosystem": "npm", "category": "third_party"},
     {"id": "ext:npm:@scope/pkg", "kind": "external", "ecosystem": "npm", "category": "third_party"},
     {"id": "ext:npm:fs", "kind": "external", "ecosystem": "npm", "category": "builtin"},
     {"id": "ext:npm:react", "kind": "external", "ecosystem": "npm", "category": "third_party"},
@@ -51,7 +52,6 @@
     ], "exports": [
       {"name": "VERSION", "local": "VERSION", "line": 2}
     ]},
-    {"id": "unresolved:npm:@app/missing", "kind": "unresolved", "ecosystem": "npm"},
     {"id": "unresolved:npm:src/logo.svg", "kind": "unresolved", "ecosystem": "npm"},
     {"id": "unresolved:npm:src/missing", "kind": "unresolved", "ecosystem": "npm"}
   ],
@@ -82,7 +82,7 @@
     {"source": "file:src/main.ts", "line": 13, "target": "asset:src/data.json", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
     {"source": "file:src/main.ts", "line": 14, "target": "unresolved:npm:src/logo.svg", "type": "imports", "form": "static", "symbol": "default", "confidence": "unresolved", "reason": "not_found"},
     {"source": "file:src/main.ts", "line": 15, "target": "unresolved:npm:src/missing", "type": "imports", "form": "static", "symbol": "gone", "confidence": "unresolved", "reason": "not_found"},
-    {"source": "file:src/main.ts", "line": 16, "target": "unresolved:npm:@app/missing", "type": "imports", "form": "static", "symbol": "nope", "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:src/main.ts", "line": 16, "target": "ext:npm:@app/missing", "type": "imports", "form": "static", "symbol": "nope", "confidence": "resolved", "reason": null},
     {"source": "file:src/main.ts", "line": 17, "target": "file:src/config.ts", "type": "imports", "form": "static", "symbol": "settings", "confidence": "resolved", "reason": null}
   ],
   "coverage": [

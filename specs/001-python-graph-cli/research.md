@@ -20,8 +20,9 @@ Every decision below resolves an open point from the plan's Technical Context. V
 
 ## R2. Parser
 
-- **Decision**: `tree-sitter==0.26.0` with `tree-sitter-python==0.25.0`, pinned exactly. The adapter version
-  string `python-adapter@0.1.0` changes whenever the grammar pin or the extraction logic changes.
+- **Decision**: `tree-sitter==0.25.2` (first 0.26.0, downgraded for memory corruption, issue #8) with `tree-sitter-python==0.25.0`, pinned exactly. The adapter version
+  string `python-adapter@<version>` changes whenever the grammar pin or the extraction logic changes;
+  `tests/unit/test_extractor_versions.py` fails when it does not.
 - **Rationale**:
   - The constitution names Tree-sitter.
   - It tolerates errors: a file with a syntax error still yields a tree. `ERROR` and `MISSING` nodes mark

@@ -15,11 +15,11 @@ from importlib import resources
 from graphora.adapters.js.extract import ImportRecord
 from graphora.resolve.tsconfig import Configs
 
-RESOLVER_VERSION = "0.1.0"
+RESOLVER_VERSION = "0.2.0"  # 0.2.0: `.`, `..`, trailing `/` resolve to a folder index; a `paths` miss falls through
 BUILTINS_VERSION = "26.0.0"
 
 EXTENSIONS = (".ts", ".tsx", ".d.ts", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json")
-TS_FOR_JS = {".js": (".ts", ".tsx"), ".jsx": (".tsx",), ".mjs": (".mts",), ".cjs": (".cts",)}
+TS_FOR_JS = {".js": (".ts", ".tsx", ".d.ts"), ".jsx": (".tsx",), ".mjs": (".mts",), ".cjs": (".cts",)}
 _URL = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
@@ -85,19 +85,21 @@ class JsResolver:
         self._analyzed = analyzed
         self._configs = configs
         self._workspaces = workspaces
-        self._tried: dict[str, str | None] = {}
+        self._tried: dict[tuple[str, bool], str | None] = {}
 
-    def _try(self, p: str) -> str | None:
-        """The first existing file for path `p` (data-model.md § Trying a path)."""
-        if p not in self._tried:
-            candidates = [p] if p else []
-            candidates += [p + ext for ext in EXTENSIONS] if p else []
-            ext = posixpath.splitext(p)[1]
-            candidates += [p[: -len(ext)] + ts for ts in TS_FOR_JS.get(ext, ())]
+    def _try(self, p: str, folder_only: bool = False) -> str | None:
+        """The first existing file for path `p` (data-model.md § Trying a path); only step 4 when `folder_only`."""
+        key = (p, folder_only)
+        if key not in self._tried:
+            candidates = []
+            if p and not folder_only:
+                candidates += [p] + [p + ext for ext in EXTENSIONS]
+                ext = posixpath.splitext(p)[1]
+                candidates += [p[: -len(ext)] + ts for ts in TS_FOR_JS.get(ext, ())]
             index = posixpath.join(p, "index") if p else "index"
             candidates += [index + e for e in EXTENSIONS]
-            self._tried[p] = next((c for c in candidates if c in self._files), None)
-        return self._tried[p]
+            self._tried[key] = next((c for c in candidates if c in self._files), None)
+        return self._tried[key]
 
     def _target(self, hit: str) -> str:
         return f"file:{hit}" if hit in self._analyzed else f"asset:{hit}"
@@ -111,7 +113,9 @@ class JsResolver:
             joined = _inside(posixpath.join(posixpath.dirname(path), specifier))
             if joined is None:
                 return f"unresolved:npm:{specifier}", "not_found"
-            hit = self._try(joined)
+            # `.`, `..`, `../..` and a trailing `/` name a folder, as in Node and TypeScript
+            folder_only = specifier.endswith("/") or posixpath.basename(specifier) in (".", "..")
+            hit = self._try(joined, folder_only)
             return (self._target(hit), None) if hit else (f"unresolved:npm:{joined or '.'}", "not_found")
         if specifier.startswith("node:"):
             top = specifier[5:].split("/")[0]
@@ -135,7 +139,7 @@ class JsResolver:
                 hit = self._try(candidate) if candidate is not None else None
                 if hit:
                     return self._target(hit), None
-            return f"unresolved:npm:{specifier}", "not_found"
+            break  # as in TypeScript: a `paths` miss falls through to baseUrl and packages; later patterns are not tried
         if effective.base_url is not None:
             candidate = _inside(posixpath.join(effective.base_url, specifier))
             hit = self._try(candidate) if candidate else None

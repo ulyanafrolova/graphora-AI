@@ -5,6 +5,7 @@ Forms and fields are defined in specs/003-ts-js-analysis/research.md § R2 and d
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
@@ -12,6 +13,7 @@ import tree_sitter_javascript
 import tree_sitter_typescript
 from tree_sitter import Language, Node, Parser
 
+from graphora.adapters.position import CHECK_EVERY, Positions, normalize_newlines
 from graphora.graph.model import Definition, Export
 
 _TYPESCRIPT = Parser(Language(tree_sitter_typescript.language_typescript()))
@@ -67,12 +69,6 @@ def _text(node: Node) -> str:
     return node.text.decode("utf-8", errors="replace")
 
 
-def _position(source: bytes, node: Node) -> tuple[int, int]:
-    line_start = source.rfind(b"\n", 0, node.start_byte) + 1
-    column = len(source[line_start : node.start_byte].decode("utf-8", errors="replace")) + 1
-    return node.start_point.row + 1, column
-
-
 def _has_token(node: Node, token: str) -> bool:
     return any(c.type == token and not c.is_named for c in node.children)
 
@@ -87,8 +83,8 @@ def _literal(node: Node | None) -> str | None:
     return "".join(_text(c) for c in parts)
 
 
-def _record(source: bytes, node: Node, edge_type, form, specifier, names, text_node: Node | None = None) -> ImportRecord:
-    line, column = _position(source, node)
+def _record(position: Positions, node: Node, edge_type, form, specifier, names, text_node: Node | None = None) -> ImportRecord:
+    line, column = position(node)
     return ImportRecord(edge_type, form, specifier, tuple(names), _text(text_node or node), line, column)
 
 
@@ -98,12 +94,12 @@ def _name(node: Node) -> str:
     return literal if literal is not None else _text(node)
 
 
-def _import_statement(source: bytes, node: Node) -> ImportRecord | None:
+def _import_statement(position: Positions, node: Node) -> ImportRecord | None:
     statement_type_only = _has_token(node, "type")
     require = next((c for c in node.named_children if c.type == "import_require_clause"), None)
     if require is not None:
         specifier = _literal(require.child_by_field_name("source"))
-        return _record(source, node, "imports", "require", specifier, [ImportName(None, False)])
+        return _record(position, node, "imports", "require", specifier, [ImportName(None, False)])
     source_node = node.child_by_field_name("source")
     if source_node is None:
         return None
@@ -121,11 +117,28 @@ def _import_statement(source: bytes, node: Node) -> ImportRecord | None:
                     names.append(ImportName(_name(name), statement_type_only or _has_token(spec, "type")))
     if not names:
         names.append(ImportName(None, statement_type_only))
-    return _record(source, node, "imports", "static", _literal(source_node), names)
+    return _record(position, node, "imports", "static", _literal(source_node), names)
 
 
-def _reexport_statement(source: bytes, node: Node) -> ImportRecord:
-    statement_type_only = _has_token(node, "type")
+def _export_type_modifier(node: Node) -> bool:
+    """The `type` of TS 5.0 `export type * from "m"`, which tree-sitter-typescript 0.23.2 parses as an ERROR node."""
+    parent = node.parent
+    return node.type == "ERROR" and parent is not None and parent.type == "export_statement" and [c.type for c in node.children] == ["type"]
+
+
+def _has_error(root: Node) -> bool:
+    """ERROR or MISSING nodes, except the `export type *` modifier, which is valid TypeScript."""
+    stack = [root] if root.has_error else []
+    while stack:
+        node = stack.pop()
+        if node.is_missing or (node.type == "ERROR" and not _export_type_modifier(node)):
+            return True
+        stack.extend(c for c in node.children if c.has_error)
+    return False
+
+
+def _reexport_statement(position: Positions, node: Node) -> ImportRecord:
+    statement_type_only = _has_token(node, "type") or any(_export_type_modifier(c) for c in node.children)
     names: list[ImportName] = []
     namespace = next((c for c in node.named_children if c.type == "namespace_export"), None)
     clause = next((c for c in node.named_children if c.type == "export_clause"), None)
@@ -142,10 +155,10 @@ def _reexport_statement(source: bytes, node: Node) -> ImportRecord:
             names.append(ImportName(name, statement_type_only or _has_token(spec, "type"), alias if alias != name else None))
     else:
         names.append(ImportName("*", statement_type_only))
-    return _record(source, node, "reexports", "static", _literal(node.child_by_field_name("source")), names)
+    return _record(position, node, "reexports", "static", _literal(node.child_by_field_name("source")), names)
 
 
-def _call(source: bytes, node: Node) -> ImportRecord | None:
+def _call(position: Positions, node: Node) -> ImportRecord | None:
     func = node.child_by_field_name("function")
     args = node.child_by_field_name("arguments")
     if func is None or args is None:
@@ -157,21 +170,25 @@ def _call(source: bytes, node: Node) -> ImportRecord | None:
         form = "require"
     else:
         return None
-    return _record(source, node, "imports", form, _literal(arguments[0]), [ImportName(None, False)])
+    return _record(position, node, "imports", form, _literal(arguments[0]), [ImportName(None, False)])
 
 
-def _imports(source: bytes, root: Node) -> list[ImportRecord]:
+def _imports(position: Positions, root: Node, check: Callable[[], None]) -> list[ImportRecord]:
     records: list[ImportRecord] = []
     stack = [root]
+    visited = 0
     while stack:
         node = stack.pop()
+        visited += 1
+        if visited % CHECK_EVERY == 0:
+            check()
         record = None
         if node.type == "import_statement":
-            record = _import_statement(source, node)
+            record = _import_statement(position, node)
         elif node.type == "export_statement" and node.child_by_field_name("source") is not None:
-            record = _reexport_statement(source, node)
+            record = _reexport_statement(position, node)
         elif node.type == "call_expression":
-            record = _call(source, node)
+            record = _call(position, node)
         if record is not None:
             records.append(record)
         stack.extend(reversed(node.children))
@@ -193,6 +210,10 @@ def _bound_names(pattern: Node) -> list[str]:
         node = stack.pop()
         if node.type in ("identifier", "shorthand_property_identifier_pattern"):
             found.append(_text(node))
+        elif node.type in ("assignment_pattern", "object_assignment_pattern", "pair_pattern"):
+            # only `left` / `value` bind; a default value or a computed key `[k]` only reads names
+            bound = node.child_by_field_name("value" if node.type == "pair_pattern" else "left")
+            stack.extend([bound] if bound is not None else [])
         elif node.type != "property_identifier":
             stack.extend(reversed(node.named_children))
     return found
@@ -202,13 +223,15 @@ class _Collector:
     """Top-level definitions plus the names each is exported under, and exported names without a definition."""
 
     def __init__(self) -> None:
-        self.definitions: dict[str, tuple[str, int]] = {}  # qualified name -> (kind, line); first line wins
+        # (kind, qualified name) -> line; first line wins (overloads). Merged declarations such as `interface X` +
+        # `class X` keep one entry per kind and share one exported binding, so `exported` is keyed by name.
+        self.definitions: dict[tuple[str, str], int] = {}
         self.exported: dict[str, set[str]] = {}
         self.exports: list[Export] = []
         self.local_exports: list[tuple[str, str, int]] = []  # (local, exported, line)
 
     def define(self, kind: str, name: str, line: int, exported_as: str | None = None) -> None:
-        self.definitions.setdefault(name, (kind, line))
+        self.definitions.setdefault((kind, name), line)
         self.exported.setdefault(name, set())
         if exported_as is not None:
             self.exported[name].add(exported_as)
@@ -285,13 +308,13 @@ class _Collector:
     def finish(self) -> tuple[tuple[Definition, ...], tuple[Export, ...]]:
         exports = list(self.exports)
         for local, exported, line in self.local_exports:
-            if local in self.definitions and "." not in local:
+            if local in self.exported and "." not in local:
                 self.exported[local].add(exported)
             else:
                 exports.append(Export(exported, local, line))
         definitions = tuple(
             Definition(kind, name, line, tuple(sorted(self.exported[name])))
-            for name, (kind, line) in sorted(self.definitions.items(), key=lambda item: (item[1][1], item[0]))
+            for (kind, name), line in sorted(self.definitions.items(), key=lambda item: (item[1], item[0][1], item[0][0]))
         )
         return definitions, tuple(sorted(exports, key=lambda x: (x.name, x.line)))
 
@@ -307,13 +330,16 @@ def _definitions(root: Node) -> tuple[tuple[Definition, ...], tuple[Export, ...]
     return collector.finish()
 
 
-def extract(path: str, source: bytes) -> FileFacts | None:
-    """Parse one TS/JS file, choosing the grammar by extension. None if the file is not valid UTF-8."""
+def extract(path: str, source: bytes, check: Callable[[], None] = lambda: None) -> FileFacts | None:
+    """Parse one TS/JS file, choosing the grammar by extension. None if the file is not valid UTF-8.
+
+    `check` is called every few thousand nodes, so a time limit can stop work inside one large file."""
     source = source.removeprefix(_BOM)
     try:
         source.decode("utf-8")
     except UnicodeDecodeError:
         return None
+    source = normalize_newlines(source)
     root = _parser(path).parse(source).root_node
     definitions, exports = _definitions(root)
-    return FileFacts(tuple(_imports(source, root)), definitions, exports, root.has_error)
+    return FileFacts(tuple(_imports(Positions(source), root, check)), definitions, exports, _has_error(root))

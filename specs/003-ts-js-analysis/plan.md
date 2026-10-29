@@ -34,8 +34,8 @@ How it works:
 **Language/Version**: Python ≥ 3.12, developed on 3.14 (unchanged)
 
 **Primary Dependencies**: adds `tree-sitter-typescript==0.23.2` and `tree-sitter-javascript==0.25.0` to the
-existing `tree-sitter==0.26.0`, `tree-sitter-python==0.25.0` and `dulwich==1.2.19`. No new dev
-dependencies. Research: [R1–R10](research.md)
+existing `tree-sitter==0.25.2` (was 0.26.0; issue #8), `tree-sitter-python==0.25.0` and `dulwich==1.2.19`. No
+new dev dependencies. Research: [R1–R10](research.md)
 
 **Storage**: None. The output is one JSON file
 
@@ -72,7 +72,7 @@ become `unresolved`.
 | I. Never execute analyzed code | TS/JS files are parsed by Tree-sitter only. `tsconfig.json`, `jsconfig.json` and `package.json` are read as data by an in-house JSONC reader. Only `extends`, `baseUrl`, `paths` and `name` are used. No Node, `tsc`, bundler or package script is ever run. `extends` and every resolution candidate are limited to walked files inside `<dir>`, so symlinks, skipped folders (`node_modules`) and paths outside the root are never read. The safety test gains an `extends: "../../outside.json"` case and a marker file in `node_modules` | ✅ |
 | II. Deterministic output | Fixed extension order, fixed `paths` specificity order, fixed built-in list (R6). Edges sort by `(source, line, column, target, symbol, alias, type)`, and the id includes `alias` and `type` (R3). `exported_as` and `exports` are sorted. The determinism tests cover the new fixtures | ✅ |
 | III. Provenance on every edge | Every TS/JS edge carries the same required fields as v1 plus `form` and `type_only`. The schema rejects an edge missing any of them. Asset nodes are anchored by `path` plus the snapshot. Export entries carry a `line` | ✅ |
-| IV. Honest confidence | No `heuristic` edges. Dynamic specifiers, missing files, `paths` misses, URLs, `#` imports and workspace packages are `unresolved` with a reason. Re-export chains are not followed (FR-007b). Vue, Svelte and Astro stay `detected_only` | ✅ |
+| IV. Honest confidence | No `heuristic` edges. Dynamic specifiers, missing files, URLs, `#` imports and workspace packages are `unresolved` with a reason. Re-export chains are not followed (FR-007b). Vue, Svelte and Astro stay `detected_only` | ✅ |
 | V. Facts by code | There is no LLM in this slice | ✅ (n/a) |
 | VI. Analyzed content is data | No model reads content. Snippets are hashed, not copied | ✅ (n/a) |
 | VII. One graph query layer | Model and serializer stay in `graphora/graph/`. The schema version is bumped to 2, and every consumer in the repository (serializer, tests, all 7 fixtures) is updated in this PR (FR-021). Coordination with 002 is in R10 | ✅ |

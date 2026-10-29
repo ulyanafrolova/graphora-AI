@@ -10,7 +10,7 @@ here (snapshot, coverage structure, path rules, Python resolution) is unchanged.
 | Field | Change |
 |---|---|
 | `schema_version` | Always `2` |
-| `extractors` | Adds `js-adapter`, `js-resolver` and `node-builtins`, for example `{"js-adapter": "0.1.0", "js-resolver": "0.1.0", "node-builtins": "26.0.0", "python-adapter": "0.2.0", "python-resolver": "0.2.0", "python-stdlib": "3.14.0"}`. Both Python versions are bumped because their output changes (new edge fields, ecosystem ids). All six are always present, even when a repository has no files of one language |
+| `extractors` | Adds `js-adapter`, `js-resolver` and `node-builtins`, for example `{"js-adapter": "0.2.0", "js-resolver": "0.2.0", "node-builtins": "26.0.0", "python-adapter": "0.3.0", "python-resolver": "0.3.0", "python-stdlib": "3.14.0"}`. Both Python versions are bumped because their output changes (new edge fields, ecosystem ids). All six are always present, even when a repository has no files of one language |
 | `edges` | Sorted by `(source, line, column, target, symbol ?? "", alias ?? "", type)` |
 
 ## Node
@@ -60,6 +60,9 @@ inside a top-level `export` statement:
 | Method, getter or setter directly in a top-level class body | `method` | `C.m`. A getter/setter pair with the same name gives one entry, at the first line |
 | `export default class {}` / `export default function () {}` / `export default () => …` | `class` / `function` | `default` |
 
+Declarations that merge (`interface X` + `class X`, `enum E` + `namespace E`) give one entry per kind, each
+with the same `exported_as`, because they are one exported binding.
+
 Not listed: nested functions, namespaces (`namespace N {}`), `declare module` blocks, class fields, and
 abstract method signatures.
 
@@ -88,8 +91,8 @@ Examples:
 - `export default router` gives `{default, router}`.
 - `export default { … }` gives `{default, null}`.
 
-**The invariant:** every name a TS/JS file exports appears exactly once: either in one definition's
-`exported_as`, or in `exports`, or as the alias or symbol of one of its `reexports` edges.
+**The invariant:** every name a TS/JS file exports appears exactly once: either in the `exported_as` of
+one definition name (merged declarations of that name all carry it), or in `exports`, or as the alias or symbol of one of its `reexports` edges.
 
 ## Edge
 
@@ -102,7 +105,7 @@ Examples:
 | `type_only` | Boolean. `true` for `import type`, for an inline `type` specifier, and for `export type … from`. Always `false` for Python |
 | `alias` | Only on `reexports`. The exported name when it differs from `symbol` (`export { a as b }` gives `b`), or the namespace name for `export * as ns` |
 | `reason` | Adds `workspace_package` |
-| `extractor` | `js-adapter@0.1.0` for TS/JS edges, `python-adapter@0.2.0` for Python edges |
+| `extractor` | `js-adapter@0.2.0` for TS/JS edges, `python-adapter@0.3.0` for Python edges |
 
 These rules are new:
 
@@ -148,9 +151,12 @@ Edge examples for TS/JS:
 
 1. `p` itself;
 2. `p` + each of `.ts`, `.tsx`, `.d.ts`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.json`;
-3. if `p` ends with `.js`, `.jsx`, `.mjs` or `.cjs`: `p` with that suffix replaced by `.ts` / `.tsx`,
+3. if `p` ends with `.js`, `.jsx`, `.mjs` or `.cjs`: `p` with that suffix replaced by `.ts` / `.tsx` / `.d.ts`,
    `.tsx`, `.mts` or `.cts`, in that order;
 4. `p/index` + each extension of step 2.
+
+When the specifier names a folder (`.`, `..`, a last segment `.` or `..`, or a trailing `/`), only step 4
+is tried, so `import "./"` never resolves to a sibling `<folder>.ts`.
 
 If the result is in `A`, the target is `file:<result>`. Otherwise it is `asset:<result>`. A written import
 of an analyzed file in another language (for example `import "../backend/app.py"`) is therefore a normal
@@ -164,7 +170,7 @@ resolved `file:` edge: it is a fact in the code. Only heuristic cross-language l
 | Starts with `./` or `../`, or is `.` / `..` | `p` = normalize(importer folder + specifier). `outside`: reason `not_found`, and the reference is the specifier as written. Else `try(p)`, or reason `not_found` with the reference `p` |
 | Starts with `/`, or is a URL (`<scheme>:` other than `node:`), or starts with `#` | Reason `not_found`, and the reference is the specifier as written |
 | `node:<name>` | If the top segment of `<name>` is a bare built-in, the target is `ext:npm:<top>` with category `builtin` (`node:fs` and `fs` share `ext:npm:fs`). If it is prefix-only, the target is `ext:npm:node:<top>`, keeping the prefix so that it never collides with an npm package of the same bare name (`node:test` vs `test`). Otherwise reason `not_found` |
-| Bare, matching a `paths` pattern | Patterns are tried most specific first (an exact pattern first, then the longest prefix before `*`). For the first matching pattern, each target with `*` replaced is tried with `try` in listed order. The first hit wins. No hit: reason `not_found`, and the reference is the specifier as written. Patterns after the first match are not tried |
+| Bare, matching a `paths` pattern | Patterns are tried most specific first (an exact pattern first, then the longest prefix before `*`). For the first matching pattern, each target with `*` replaced is tried with `try` in listed order. The first hit wins. No hit: continue with the `baseUrl` row and below, as TypeScript does. Patterns after the first match are not tried |
 | Bare, with a `baseUrl` set | `try(normalize(baseUrl + specifier))`. A hit wins. No hit: continue below (unlike `paths`, `baseUrl` is only one of several places to look) |
 | Bare, package name in `W` | Reason `workspace_package`, and the reference is the specifier as written |
 | Bare, top segment in the built-in list and not prefix-only | `ext:npm:<top>`, category `builtin` |

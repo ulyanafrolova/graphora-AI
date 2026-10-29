@@ -120,6 +120,11 @@ absolute paths, and compare the output files byte by byte.
 - **The same target imported twice in one file**: two edges, one for each statement and line.
 - **Symbolic links**: never followed. They are reported as skipped.
 - **Files that cannot be decoded as text**: listed in coverage with reason `unreadable`, and no edges.
+- **Files that cannot be read** (for example, no read permission): listed in coverage with the `unreadable`
+  flag, no edges, and left out of the content hash. A folder that cannot be listed stops the run with a clear
+  error and exit status 2, because its files could not be accounted for.
+- **Special files** (FIFOs, sockets, device files): listed in coverage with the `unreadable` flag and never
+  opened, since reading a FIFO can block forever.
 - **Empty folder or a folder with no Python files**: a valid graph with only coverage entries. Exit status is
   success.
 - **Path that does not exist or is not a folder**: a clear error message, a failure exit status, and no
@@ -199,8 +204,10 @@ absolute paths, and compare the output files byte by byte.
   Edges with the same reference share one placeholder node. Placeholder nodes have kind `unresolved`.
 - **FR-015**: Resolution MUST search these source roots in this order: the analyzed folder itself, then
   `src/` if it exists. A local match MUST win over an external classification. Absolute imports that match
-  no local module MUST be classified as external. Relative imports and dynamic imports that match no local
-  module MUST be `unresolved`.
+  no local module MUST be classified as external, unless their top-level name is a module or package that
+  exists only below the roots (for example `backend/app/` in a monorepo, imported as `app`) and is not a
+  standard-library name: such imports MUST be `unresolved` with reason `not_found`, because the subproject's
+  own root is not known. Relative imports and dynamic imports that match no local module MUST be `unresolved`.
 
 **Snapshot and determinism**
 

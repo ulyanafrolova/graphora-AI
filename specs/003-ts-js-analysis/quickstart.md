@@ -38,7 +38,7 @@ Check against `fixtures/repos/ts-app/expected.json`. These must hold:
 - the folder import resolves to `index.ts`;
 - `node:fs` and `fs` share the node `ext:npm:fs`;
 - the CSS import targets an `asset:` node;
-- the missing alias is `unresolved` with reason `not_found`.
+- the missing alias `@app/missing` falls through to the npm package node `ext:npm:@app/missing`, as in TypeScript.
 
 ## 3. CommonJS and dynamic imports
 
@@ -63,7 +63,9 @@ jq '.nodes[] | select(.id=="file:packages/ui/src/log.ts") | .definitions' /tmp/m
 Expected:
 
 - every `export … from` statement in the barrel is a `reexports` edge;
-- `Logger` has `exported_as: ["Logger"]` and the private helper has `[]`;
+- `Log` has `exported_as: ["Log"]` (the barrel re-exports it as `Logger`), and `format` has `["fmt2"]`
+  (a local `export { format as fmt2 }`). A non-exported definition with `[]` is `track` in
+  `fixtures/repos/ts-app/repo/src/components/Button.tsx`;
 - the app's import of `@acme/ui` is `unresolved` with reason `workspace_package`;
 - no edge goes from the app to `packages/ui/src/log.ts` directly (FR-007b).
 
@@ -92,7 +94,7 @@ frozen v1 files in `backend/tests/golden/v1/` (research R9).
 
 ```
 uv run pytest tests/golden -k determinism
-uv run pytest tests/integration/test_safety.py
+uv run pytest tests/integration/test_safety.py tests/integration/test_safety_ts.py
 ```
 
 Expected:

@@ -139,5 +139,5 @@ def test_broken_extends_target_skipped_and_reported():
             "good.json": _paths_config("g"),
         }
     )
+    assert configs.invalid == ("bad.json",)  # before any lookup: build() reads it first
     assert configs.for_file("a.ts").base_url == "g"
-    assert configs.invalid == ("bad.json",)
