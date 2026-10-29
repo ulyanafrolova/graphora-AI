@@ -266,7 +266,7 @@ def extract_zip(path: Path, dest: Path, limits: IngestLimits, deadline: Deadline
                 raise LimitExceeded("entries", limits.max_entries, len(infos))
             names = [_zip_name(info) for info in infos]
             writer = _Writer(dest, limits, deadline, _zip_top(names))
-            for info, name in zip(infos, names):
+            for info, name in zip(infos, names, strict=True):
                 if info.flag_bits & 0x1:
                     raise InvalidArchive(f"{invalid}: encrypted entry {_display(name)}")
                 kind = stat.S_IFMT(info.external_attr >> 16)
