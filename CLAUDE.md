@@ -48,6 +48,8 @@ cd backend && uv sync                               # install
 uv run pytest                                       # all tests
 uv run pytest -m "not slow"                         # skip the performance test
 uv run graphora analyze <dir> --out graph.json      # build a graph
+uv run graphora analyze https://github.com/<owner>/<repo> [--ref <ref>] --out graph.json
+uv run graphora analyze <file.zip> --out graph.json
 ```
 
 Golden fixtures: `fixtures/repos/<name>/repo/` is analyzed, `fixtures/repos/<name>/expected.json` is

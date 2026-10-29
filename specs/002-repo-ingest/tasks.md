@@ -242,14 +242,14 @@ the analysis of a clean local clone of the same fixture at the same commit.
 
 ### Tests for User Story 1
 
-- [ ] T020 [P] [US1] In `backend/tests/unit/test_source.py`, link parsing (data-model.md § GitHub link
+- [X] T020 [P] [US1] In `backend/tests/unit/test_source.py`, link parsing (data-model.md § GitHub link
   rules, R14): accepted `https://github.com/o/r`, `.../r.git`, `.../r/`, `https://GitHub.com/O/R` (stored
   as `o`, `r`), `.../tree/v1`; rejected with `BadInput` mentioning the accepted forms: `http://github.com/o/r`,
   `https://gitlab.com/o/r`, `.../blob/main/x.py`, `.../o/r/extra`, `.../o/r?x=1`, `.../o/r#x`, `.../tree/`,
   owner longer than 39 characters, repo `..`; `.../tree/feature/x` → `BadInput` suggesting `--ref`;
   `.../tree/v1` with `--ref v1` → `BadInput("--ref given twice ...")`; ref names `a..b`, `a b`, `-x`,
   `x.lock`, `a~1`, `a@{1}` → `BadInput("invalid ref name: ...")`; `--ref feature/x` accepted.
-- [ ] T021 [P] [US1] In `backend/tests/unit/test_github.py` with `FakeGitHub` (research R2, R3, R7):
+- [X] T021 [P] [US1] In `backend/tests/unit/test_github.py` with `FakeGitHub` (research R2, R3, R7):
   - resolve with no ref requests `/repos/o/r/commits/HEAD` with `Accept: application/vnd.github.sha` and a
     `graphora/` user agent, and no `Authorization` header;
   - `--ref feature/x` requests `/commits/feature/x`;
@@ -265,27 +265,27 @@ the analysis of a clean local clone of the same fixture at the same commit.
   - a `"stall"` body with `Deadline(0.5)` → `LimitExceeded("seconds", ...)`; the same stall with a
     deadline of 300 s and a short fake socket timeout → `RemoteError`;
   - exactly one request goes to `api.github.com` per run.
-- [ ] T022 [P] [US1] In `backend/tests/golden/test_ingest_equivalence.py`, for every fixture in
+- [X] T022 [P] [US1] In `backend/tests/golden/test_ingest_equivalence.py`, for every fixture in
   `fixtures/repos/` (research R10, FR-016, SC-002): copy `repo/` to `tmp_path/clone` with
   `symlinks=True`, `porcelain.init`, add every file and symlink, commit with fixed author, committer and
   timestamps; `sha` = the new HEAD; serve `tar_of_dir(clone, f"o-r-{sha[:7]}")` with
   `pax_comment=sha` at the codeload URL and `sha` at the API URL; assert the stdout bytes of
   `run_analyze("https://github.com/o/r")` equal those of `run_analyze(clone)`, and that running the link
   twice gives identical bytes (US1 scenario 3). Exclude `.git` when building the tarball.
-- [ ] T023 [P] [US1] In `backend/tests/integration/test_ingest_cli.py` add GitHub CLI tests with
+- [X] T023 [P] [US1] In `backend/tests/integration/test_ingest_cli.py` add GitHub CLI tests with
   `FakeGitHub`: success prints `graphora: info: fetched github.com/o/r at <sha>`; statuses `2` (404, 422,
   409, bad link), `3` (archive size, stall past `--max-seconds`), `4` (tarball with `../x`), `5` (rate limit,
   500); in every failure case an existing `--out` file keeps its old bytes and stdout is empty (FR-018).
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] Extend `parse_source` in `backend/src/graphora/ingest/source.py` for arguments starting
+- [X] T024 [US1] Extend `parse_source` in `backend/src/graphora/ingest/source.py` for arguments starting
   with `https://`, exactly per data-model.md § GitHub link rules: host `github.com` (case-insensitive),
   no query or fragment, `<owner>` 1–39 characters of letters, digits and `-`; `<repo>` 1–100 characters
   of letters, digits, `.`, `-`, `_`, not `.` or `..`, an optional `.git` suffix removed; optional trailing
   `/`; optional `/tree/<one segment>`; owner and repo lower-cased; the ref checked against git's
   ref-name rules (research R2); the error messages in contracts/cli.md § New messages.
-- [ ] T025 [US1] Create `backend/src/graphora/ingest/github.py` (research R1–R3, R7):
+- [X] T025 [US1] Create `backend/src/graphora/ingest/github.py` (research R1–R3, R7):
   - module-level `_open(request, timeout)` built with `urllib.request.build_opener` and a redirect
     handler that allows only `https://` URLs on `github.com`, `api.github.com`, `codeload.github.com`;
     tests replace `_open`;
@@ -296,12 +296,12 @@ the analysis of a clean local clone of the same fixture at the same commit.
     bytes against `max_archive_bytes`, checks `Content-Length` first, and converts socket timeouts into
     `LimitExceeded("seconds", ...)` when the deadline has passed, else `RemoteError`;
   - every request uses `timeout=max(0.1, deadline.remaining())`; never send credentials.
-- [ ] T026 [US1] Implement the `GitHubSource` branch of `fetch_snapshot` in
+- [X] T026 [US1] Implement the `GitHubSource` branch of `fetch_snapshot` in
   `backend/src/graphora/ingest/fetch.py`: `resolve_sha` → `tempfile.TemporaryDirectory(prefix="graphora-")`
   → `extract_tar_gz(open_tarball(...), tmp, limits, deadline, expected_sha=sha)` → yield
   `FetchedSnapshot(root, f"github.com/{owner}/{repo}", sha, skipped)`; the temp folder is removed when the
   block exits for any reason.
-- [ ] T027 [US1] In `backend/src/graphora/cli/__init__.py` print `graphora: info: fetched <repository> at
+- [X] T027 [US1] In `backend/src/graphora/cli/__init__.py` print `graphora: info: fetched <repository> at
   <sha>` for a GitHub source before the summary line.
 
 **Checkpoint**: US1 tests pass; `graphora analyze <link>` works end to end against the fake.
@@ -317,29 +317,29 @@ apart from the snapshot id.
 
 ### Tests for User Story 2
 
-- [ ] T028 [P] [US2] In `backend/tests/unit/test_source.py` add ZIP detection (research R4): an existing
+- [X] T028 [P] [US2] In `backend/tests/unit/test_source.py` add ZIP detection (research R4): an existing
   file starting with `PK\x03\x04` → `ZipSource` whatever its extension (`x.bin`); an empty ZIP
   (`PK\x05\x06`) → `ZipSource`; `README.md` → `BadInput("not a directory or ZIP archive: ...")`; `--ref`
   with a ZIP → `BadInput`.
-- [ ] T029 [P] [US2] In `backend/tests/golden/test_ingest_equivalence.py` add, for every fixture:
+- [X] T029 [P] [US2] In `backend/tests/golden/test_ingest_equivalence.py` add, for every fixture:
   `zip_of_dir(repo, prefix="proj")` and `zip_of_dir(repo)` (no prefix) written to `tmp_path/proj.zip`;
   `run_analyze` output equals the folder output after replacing the document and edge snapshot strings;
   the ZIP snapshot matches `^content:[0-9a-f]{16}$`; two runs give identical bytes (US2 scenarios 1–3).
   Add one case where the ZIP contains `.git/HEAD` and `.git/config`: the snapshot is still `content:...`
   (research R9).
-- [ ] T030 [P] [US2] In `backend/tests/integration/test_ingest_cli.py` add: `PK\x03\x04garbage` →
+- [X] T030 [P] [US2] In `backend/tests/integration/test_ingest_cli.py` add: `PK\x03\x04garbage` →
   status `4` "invalid ZIP archive"; a ZIP larger than `--max-archive-bytes` → `3`; success prints
   `graphora: info: extracted proj.zip`.
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Extend `parse_source` in `backend/src/graphora/ingest/source.py`: an existing regular
+- [X] T031 [US2] Extend `parse_source` in `backend/src/graphora/ingest/source.py`: an existing regular
   file whose first 4 bytes are `PK\x03\x04` or `PK\x05\x06` → `ZipSource(path)`; read only those 4 bytes.
-- [ ] T032 [US2] Implement the `ZipSource` branch of `fetch_snapshot` in
+- [X] T032 [US2] Implement the `ZipSource` branch of `fetch_snapshot` in
   `backend/src/graphora/ingest/fetch.py`: temp folder as in T026, `extract_zip`, yield
   `FetchedSnapshot(root, path.name.rsplit(".", 1)[0] if "." in path.name else path.name, None, skipped)`
   (research R13; `snapshot=None` so `build()` computes `content:<hash>`, FR-005).
-- [ ] T033 [US2] In `backend/src/graphora/cli/__init__.py` print `graphora: info: extracted <file name>`
+- [X] T033 [US2] In `backend/src/graphora/cli/__init__.py` print `graphora: info: extracted <file name>`
   for a ZIP source.
 
 **Checkpoint**: all four stories work independently.
@@ -348,17 +348,17 @@ apart from the snapshot id.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T034 Create `backend/tests/integration/test_ingest_cleanup.py` (SC-004, FR-011, US3 scenario 4):
+- [X] T034 Create `backend/tests/integration/test_ingest_cleanup.py` (SC-004, FR-011, US3 scenario 4):
   set `TMPDIR` to `tmp_path / "tmp"` (and reset `tempfile.tempdir`) and, for a successful GitHub run, a
   successful ZIP run, and each failure (404, rate limit, stall, archive limit, extract limit, unsafe entry,
   invalid ZIP, and a `KeyboardInterrupt` raised from inside `build` via monkeypatch), assert that no
   `graphora-*` entry remains and that the interrupt case returns `130` with `graphora: error: interrupted`.
-- [ ] T035 [P] Create `backend/tests/integration/test_safety_ingest.py` (existing safety tests stay
+- [X] T035 [P] Create `backend/tests/integration/test_safety_ingest.py` (existing safety tests stay
   untouched): a GitHub tarball and a ZIP containing
   `setup.py`, `conftest.py`, `package.json` with scripts and a `.git/hooks/post-checkout`, each writing a
   marker when run; after `run_analyze`, no marker exists anywhere under `tmp_path` and
   `subprocess.Popen` was never called (Principle I).
-- [ ] T036 [P] Update `CLAUDE.md` § Commands with
+- [X] T036 [P] Update `CLAUDE.md` § Commands with
   `uv run graphora analyze https://github.com/<owner>/<repo> [--ref <ref>] --out graph.json` and
   `uv run graphora analyze <file.zip> --out graph.json`.
 - [ ] T037 Run `uv run pytest` with no network (the T001 guard enforces it) and confirm that no file under
