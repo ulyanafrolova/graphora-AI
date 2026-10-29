@@ -55,6 +55,9 @@ class Deadline:
         if elapsed >= self.seconds:
             raise LimitExceeded("seconds", self.seconds, round(elapsed, 1))
 
+    def remaining(self) -> float:
+        return max(0.0, self.seconds - (time.monotonic() - self._start))
+
 
 @dataclass(frozen=True)
 class WalkResult:

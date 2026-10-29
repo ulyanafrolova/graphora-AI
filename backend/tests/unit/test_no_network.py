@@ -1,12 +1,10 @@
-"""The suite runs offline: any network connection fails the test (002 research § R10)."""
-
-from __future__ import annotations
+"""Network guard in conftest (specs/002-repo-ingest research.md § R10)."""
 
 import urllib.request
 
 import pytest
 
 
-def test_network_access_fails() -> None:
+def test_network_access_fails():
     with pytest.raises(AssertionError, match="network access in tests"):
         urllib.request.urlopen("https://example.com")
