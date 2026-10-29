@@ -161,30 +161,30 @@ Write all of these in `backend/tests/unit/test_archive.py`, each case for both t
 format can express it. Each test runs the extractor into `tmp_path / "x"` and also asserts that
 `tmp_path` contains nothing except `x` (no file outside).
 
-- [ ] T012 [P] [US3] Path rejection tests (FR-007, US3 scenario 1): entries `/etc/x`, `C:/x`, `c:x`,
+- [X] T012 [P] [US3] Path rejection tests (FR-007, US3 scenario 1): entries `/etc/x`, `C:/x`, `c:x`,
   `a\\b`, `a/../../x`, `..`, `a//b`, `./a`, a name with NUL, and a non-UTF-8 name (ZIP without the UTF-8
   flag and bytes `b"\xff.py"`; tar with a raw `b"\xff"` name). Each raises `UnsafeArchive` whose message
   contains the entry name.
-- [ ] T013 [P] [US3] Link and special-entry tests (FR-008, clarification 4): a symlink `link.py →
+- [X] T013 [P] [US3] Link and special-entry tests (FR-008, clarification 4): a symlink `link.py →
   ../../etc/passwd` is not created and is returned in the skipped list as `Skipped("link.py", "symlink")`;
   a hardlink entry raises `UnsafeArchive` naming it; character device and FIFO entries raise
   `UnsafeArchive`; an entry `link.py/inner.py` after (and, in another test, before) a symlink `link.py`
   raises `UnsafeArchive`.
-- [ ] T014 [P] [US3] Collision tests (spec Edge Cases): duplicate `a.py` twice; `A.py` and `a.py`;
+- [X] T014 [P] [US3] Collision tests (spec Edge Cases): duplicate `a.py` twice; `A.py` and `a.py`;
   `café.py` in NFC and in NFD; a file `a` and an entry `a/b.py` — each raises `UnsafeArchive` naming both
   entries, on every OS.
-- [ ] T015 [P] [US3] Limit tests (FR-009, SC-005, US3 scenario 3): `bomb_zip(100 * limit)` and
+- [X] T015 [P] [US3] Limit tests (FR-009, SC-005, US3 scenario 3): `bomb_zip(100 * limit)` and
   `bomb_tar_gz(100 * limit)` with `max_extract_bytes=1_000_000` raise `LimitExceeded("extract_bytes",
   ...)`, and the total size of files under `tmp_path` never exceeded `1_000_000` (measure with a
   monkeypatched write counter, not only after the fact); `max_entries=10` with 11 files raises
   `LimitExceeded("entries", ...)` — for ZIP before any file is created; a tar.gz stream longer than
   `max_archive_bytes` raises `LimitExceeded("archive_bytes", ...)`; an expired `Deadline(0)` raises
   `LimitExceeded("seconds", ...)`.
-- [ ] T016 [P] [US3] Content-safety tests (FR-010, US3 scenario 5): files with modes `0o755` and `0o4755`
+- [X] T016 [P] [US3] Content-safety tests (FR-010, US3 scenario 5): files with modes `0o755` and `0o4755`
   in the archive are written with mode `0o644`; folders get `0o755`; a `setup.py` that writes a marker file
   when run, and a `package.json` with a `postinstall` script, produce no marker; no subprocess is started
   (monkeypatch `subprocess.Popen` and `os.system` to fail).
-- [ ] T017 [P] [US3] Marker and root tests (research R9, FR-013): entries under `node_modules/`, `.venv/`
+- [X] T017 [P] [US3] Marker and root tests (research R9, FR-013): entries under `node_modules/`, `.venv/`
   and `a/.git/` are not written but `node_modules/`, `.venv/` and `a/.git` exist empty; a root `.git/HEAD`
   entry leaves an empty `.git/` folder; `x.min.js` exists with size `0`; an archive whose entries all sit
   under `proj/` yields root `.../proj`, and with an extra top-level `README` yields the extraction folder;
@@ -194,7 +194,7 @@ format can express it. Each test runs the extractor into `tmp_path / "x"` and al
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Create `backend/src/graphora/ingest/archive.py` with the shared writer (research R5, R9):
+- [X] T018 [US3] Create `backend/src/graphora/ingest/archive.py` with the shared writer (research R5, R9):
   - `class _Writer(dest: Path, limits: IngestLimits, deadline: Deadline)` that owns the counters, the
     collision table keyed by `unicodedata.normalize("NFC", path).casefold()`, the set of symlink paths
     and the list of recorded `Skipped(path, "symlink")`;
@@ -213,7 +213,7 @@ format can express it. Each test runs the extractor into `tmp_path / "x"` and al
   - `finish() -> tuple[Path, tuple[Skipped, ...]]`: choose the root (FR-013: exactly one folder and
     nothing else, counting symlinks), make skipped paths relative to it, drop symlinks the walk would not
     reach (under an excluded folder, or under a folder that contains a `.git` marker), sort by path.
-- [ ] T019 [US3] In `backend/src/graphora/ingest/archive.py` add the two readers (research R5, R6):
+- [X] T019 [US3] In `backend/src/graphora/ingest/archive.py` add the two readers (research R5, R6):
   - `extract_tar_gz(stream: BinaryIO, dest, limits, deadline, expected_sha: str | None) -> (root,
     skipped)`: `tarfile.open(fileobj=stream, mode="r|gz")`; regular → `add_file` via `extractfile`;
     dir → `add_dir`; symlink → `add_symlink`; hardlink, chr, blk, fifo, sparse, other → `UnsafeArchive`;
