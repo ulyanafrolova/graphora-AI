@@ -19,6 +19,7 @@ graphora = "graphora.cli:main"
 dev = [
     "pytest==9.1.1",
     "jsonschema==4.26.0",
+    "ruff==0.14.0",
 ]
 
 [build-system]
@@ -31,3 +32,13 @@ packages = ["src/graphora"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["slow: long-running tests (deselect with -m 'not slow')"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+# E501: long lines exist in the merged code; tighten with a formatting pass agreed by both.
+# E731: lambda assignments are used in tests.
+ignore = ["E501", "E731"]
