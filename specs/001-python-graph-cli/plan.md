@@ -29,7 +29,7 @@ How it works:
 
 **Language/Version**: Python ≥ 3.12, developed on 3.14
 
-**Primary Dependencies**: `tree-sitter==0.26.0`, `tree-sitter-python==0.25.0` and `dulwich==1.2.19`. Dev
+**Primary Dependencies**: `tree-sitter==0.25.2` (0.26.0 corrupted memory, issue #8), `tree-sitter-python==0.25.0` and `dulwich==1.2.19`. Dev
 only: `pytest==9.1.1` and `jsonschema==4.26.0`. Research: [R1–R9](research.md)
 
 **Storage**: None. The output is one JSON file

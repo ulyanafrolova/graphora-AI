@@ -10,7 +10,7 @@ here (snapshot, coverage structure, path rules, Python resolution) is unchanged.
 | Field | Change |
 |---|---|
 | `schema_version` | Always `2` |
-| `extractors` | Adds `js-adapter`, `js-resolver` and `node-builtins`, for example `{"js-adapter": "0.2.0", "js-resolver": "0.2.0", "node-builtins": "26.0.0", "python-adapter": "0.3.0", "python-resolver": "0.2.0", "python-stdlib": "3.14.0"}`. Both Python versions are bumped because their output changes (new edge fields, ecosystem ids). All six are always present, even when a repository has no files of one language |
+| `extractors` | Adds `js-adapter`, `js-resolver` and `node-builtins`, for example `{"js-adapter": "0.2.0", "js-resolver": "0.2.0", "node-builtins": "26.0.0", "python-adapter": "0.3.0", "python-resolver": "0.3.0", "python-stdlib": "3.14.0"}`. Both Python versions are bumped because their output changes (new edge fields, ecosystem ids). All six are always present, even when a repository has no files of one language |
 | `edges` | Sorted by `(source, line, column, target, symbol ?? "", alias ?? "", type)` |
 
 ## Node
@@ -170,7 +170,7 @@ resolved `file:` edge: it is a fact in the code. Only heuristic cross-language l
 | Starts with `./` or `../`, or is `.` / `..` | `p` = normalize(importer folder + specifier). `outside`: reason `not_found`, and the reference is the specifier as written. Else `try(p)`, or reason `not_found` with the reference `p` |
 | Starts with `/`, or is a URL (`<scheme>:` other than `node:`), or starts with `#` | Reason `not_found`, and the reference is the specifier as written |
 | `node:<name>` | If the top segment of `<name>` is a bare built-in, the target is `ext:npm:<top>` with category `builtin` (`node:fs` and `fs` share `ext:npm:fs`). If it is prefix-only, the target is `ext:npm:node:<top>`, keeping the prefix so that it never collides with an npm package of the same bare name (`node:test` vs `test`). Otherwise reason `not_found` |
-| Bare, matching a `paths` pattern | Patterns are tried most specific first (an exact pattern first, then the longest prefix before `*`). For the first matching pattern, each target with `*` replaced is tried with `try` in listed order. The first hit wins. No hit: reason `not_found`, and the reference is the specifier as written. Patterns after the first match are not tried |
+| Bare, matching a `paths` pattern | Patterns are tried most specific first (an exact pattern first, then the longest prefix before `*`). For the first matching pattern, each target with `*` replaced is tried with `try` in listed order. The first hit wins. No hit: continue with the `baseUrl` row and below, as TypeScript does. Patterns after the first match are not tried |
 | Bare, with a `baseUrl` set | `try(normalize(baseUrl + specifier))`. A hit wins. No hit: continue below (unlike `paths`, `baseUrl` is only one of several places to look) |
 | Bare, package name in `W` | Reason `workspace_package`, and the reference is the specifier as written |
 | Bare, top segment in the built-in list and not prefix-only | `ext:npm:<top>`, category `builtin` |

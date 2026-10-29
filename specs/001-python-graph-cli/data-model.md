@@ -155,6 +155,11 @@ root that has the name wins. Within one root, `.py` wins over `.pyi`.
 
 **Locality.** A top-level name `t` is local when `t` is in the index or in `NS` for some root.
 
+**Defined below the roots.** `NESTED` holds every module or package name that appears as a path part after
+the first one (`backend/app/models.py` gives `app` and `models`). A name in `NESTED` that is not local and not
+in the standard-library list is treated like a local name that was not found: reason `not_found`, never
+`ext:`. The subproject's root is unknown, so the import cannot be proved external.
+
 **Home root and base package.** A file's *home root* is the most specific root containing it, so a file
 under `src/` uses `src`. Its *module name* is computed under that root. Its *package* is:
 
@@ -163,7 +168,7 @@ under `src/` uses `src`. Its *module name* is computed under that root. Its *pac
 
 | Import | Result |
 |---|---|
-| `import a.b.c` | The edge goes to the index entry for `a.b.c` if there is one. Otherwise, if `a.b.c` is in `NS` the reason is `namespace_package`. Otherwise, if `a` is local the reason is `not_found`. Otherwise the edge goes to `ext:a` |
+| `import a.b.c` | The edge goes to the index entry for `a.b.c` if there is one. Otherwise, if `a.b.c` is in `NS` the reason is `namespace_package`. Otherwise, if `a` is local, or defined below the roots, the reason is `not_found`. Otherwise the edge goes to `ext:a` |
 | `from M import n` (absolute) | Resolve `M` as above. If `M.n` is in the index, the edge goes to it, with symbol `n`. Otherwise, if `M` is a file, the edge goes to it, with symbol `n`. Otherwise, if `M` is in `NS` and `M.n` is not in the index, the reason is `not_found`. If `M` is external, the edge goes to `ext:<top of M>`, with symbol `n` |
 | `from .X import n` (level k) | The base is the file's package with `k-1` trailing parts removed. If there are not enough parts, or the package is empty, the reason is `relative_beyond_top`. Otherwise `M` is `base.X` (or `base` when `X` is empty) and is resolved like an absolute import, with one difference: a missing local name is never external. It gets reason `not_found`, and the reference is the dotted name |
 | `importlib.import_module("a.b")`, `import_module("a.b")`, `__import__("a.b")` | Resolved like `import a.b`, with symbol `null` |

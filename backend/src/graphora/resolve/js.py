@@ -15,7 +15,7 @@ from importlib import resources
 from graphora.adapters.js.extract import ImportRecord
 from graphora.resolve.tsconfig import Configs
 
-RESOLVER_VERSION = "0.2.0"  # 0.2.0: `.`, `..` and a trailing `/` resolve to a folder index only
+RESOLVER_VERSION = "0.2.0"  # 0.2.0: `.`, `..`, trailing `/` resolve to a folder index; a `paths` miss falls through
 BUILTINS_VERSION = "26.0.0"
 
 EXTENSIONS = (".ts", ".tsx", ".d.ts", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json")
@@ -139,7 +139,7 @@ class JsResolver:
                 hit = self._try(candidate) if candidate is not None else None
                 if hit:
                     return self._target(hit), None
-            return f"unresolved:npm:{specifier}", "not_found"
+            break  # as in TypeScript: a `paths` miss falls through to baseUrl and packages; later patterns are not tried
         if effective.base_url is not None:
             candidate = _inside(posixpath.join(effective.base_url, specifier))
             hit = self._try(candidate) if candidate else None

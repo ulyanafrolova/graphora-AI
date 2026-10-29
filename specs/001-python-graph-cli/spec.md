@@ -204,8 +204,10 @@ absolute paths, and compare the output files byte by byte.
   Edges with the same reference share one placeholder node. Placeholder nodes have kind `unresolved`.
 - **FR-015**: Resolution MUST search these source roots in this order: the analyzed folder itself, then
   `src/` if it exists. A local match MUST win over an external classification. Absolute imports that match
-  no local module MUST be classified as external. Relative imports and dynamic imports that match no local
-  module MUST be `unresolved`.
+  no local module MUST be classified as external, unless their top-level name is a module or package that
+  exists only below the roots (for example `backend/app/` in a monorepo, imported as `app`) and is not a
+  standard-library name: such imports MUST be `unresolved` with reason `not_found`, because the subproject's
+  own root is not known. Relative imports and dynamic imports that match no local module MUST be `unresolved`.
 
 **Snapshot and determinism**
 

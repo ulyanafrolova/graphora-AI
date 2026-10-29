@@ -35,7 +35,7 @@ Paths are relative to the repository root. Python code lives in `backend/src/gra
 
 - [X] T001 Create `backend/pyproject.toml` for a uv project:
   - name `graphora`, version `0.1.0`, `requires-python = ">=3.12"`, src layout;
-  - dependencies `tree-sitter==0.26.0`, `tree-sitter-python==0.25.0` and `dulwich==1.2.19`;
+  - dependencies `tree-sitter==0.25.2` (was 0.26.0; issue #8), `tree-sitter-python==0.25.0` and `dulwich==1.2.19`;
   - dev dependency group with `pytest==9.1.1` and `jsonschema==4.26.0`;
   - console script `graphora = "graphora.cli:main"`;
   - `[tool.pytest.ini_options] testpaths = ["tests"]`.

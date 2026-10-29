@@ -1,8 +1,9 @@
 {
   "js-adapter@0.2.0": "304728d2dfb0086c",
-  "js-resolver@0.2.0": "153a96fd0782fde3",
+  "js-resolver@0.2.0": "9649adb21d4b1e91",
   "node-builtins@26.0.0": "4df16d189277975c",
   "python-adapter@0.3.0": "caa8701ef965c23c",
   "python-resolver@0.2.0": "943cf01a00722f15",
+  "python-resolver@0.3.0": "690fc5c29d23c96a",
   "python-stdlib@3.14.0": "0c38532c2850724d"
 }

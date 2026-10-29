@@ -175,10 +175,23 @@ def test_paths_targets_in_order():
     assert _resolve(resolver, "@/x") == ("file:b/x.ts", None)
 
 
-def test_paths_miss_is_not_found_and_stops():
+def test_paths_miss_falls_through_but_tries_no_later_pattern():
     configs = _tsconfig(".", {"@app/*": ["src/*"], "*": ["fallback/*"]})
-    resolver = _resolver(["fallback/@app/missing.ts"], configs=configs)
-    assert _resolve(resolver, "@app/missing") == ("unresolved:npm:@app/missing", "not_found")
+    resolver = _resolver(["fallback/@app/missing.ts", "src/x.ts"], configs=configs)
+    assert _resolve(resolver, "@app/missing") == ("ext:npm:@app/missing", None)
+    assert _resolve(resolver, "@app/x") == ("file:src/x.ts", None)
+
+
+def test_catch_all_paths_keep_packages_and_builtins():
+    resolver = _resolver(["types/foo.d.ts"], configs=_tsconfig(None, {"*": ["types/*"]}))
+    assert _resolve(resolver, "foo") == ("file:types/foo.d.ts", None)
+    assert _resolve(resolver, "react") == ("ext:npm:react", None)
+    assert _resolve(resolver, "fs/promises") == ("ext:npm:fs", None)
+
+
+def test_paths_miss_then_base_url_hit():
+    resolver = _resolver(["src/util.ts"], configs=_tsconfig("src", {"*": ["types/*"]}))
+    assert _resolve(resolver, "util") == ("file:src/util.ts", None)
 
 
 def test_base_url_hit_and_fall_through():
