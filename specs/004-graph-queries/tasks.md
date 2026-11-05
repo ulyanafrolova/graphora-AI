@@ -109,7 +109,7 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Write `backend/tests/unit/test_dependents.py` on synthetic documents:
+- [X] T008 [P] [US1] Write `backend/tests/unit/test_dependents.py` on synthetic documents:
   - spec US1 scenarios 1–3: direct dependent with its edge; `c → b → a` impact gives `b` at 1 and `c` at 2
     with chain `c → b → a`; `max_depth=1` gives only `b` and `cut: true`; `cut: false` when nothing lies
     beyond the limit;
@@ -127,14 +127,14 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
   - every answer carries `snapshot`, `question`, resolved `target`, all options with effective values, and
     `completeness`;
   - calling twice gives equal `dumps` bytes.
-- [ ] T009 [P] [US1] Write `fixtures/repos/<name>/queries.json` by hand for every existing fixture
+- [X] T009 [P] [US1] Write `fixtures/repos/<name>/queries.json` by hand for every existing fixture
   (`js-commonjs`, `mixed-fullstack`, `py-dynamic`, `py-flat`, `py-src-layout`, `ts-app`, `ts-monorepo`), in the
   projection format of contracts/answers.md § Golden projection. Per fixture at least: `dependents` of the
   most imported project file, `impact` of a file with dependents at distance ≥ 2 where one exists, one
   `dependencies` question, and for `ts-app` and `js-commonjs` `dependents` of an npm package. Include
   `completeness` for `py-dynamic` (it has unresolved imports). Derive every answer from the fixture sources
   and its `expected.json` edges, not from the tool.
-- [ ] T010 [US1] Write `backend/tests/golden/test_queries.py` (fails until T011–T013):
+- [X] T010 [US1] Write `backend/tests/golden/test_queries.py` (fails until T011–T013):
   - parametrized over every fixture with a `queries.json` and every entry in it: load
     `analyzed_graph(name)`, run the question through `queries.py` with the options, project the answer
     (helper `project_answer` in the test file, contracts/answers.md § Golden projection) and compare with
@@ -142,33 +142,33 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
   - SC-002 for every answer: every edge in every link has an `id` present in the graph document and is
     equal to that edge dict; every chain is a connected walk ending at the target;
   - determinism: the same question twice gives identical `dumps` bytes.
-- [ ] T011 [P] [US1] Write `backend/tests/integration/test_query_cli.py` (fails until T014): `run_query` on a
+- [X] T011 [P] [US1] Write `backend/tests/integration/test_query_cli.py` (fails until T014): `run_query` on a
   graph written to `tmp_path` and on stdin (`-`, by patching `sys.stdin` with a `TextIOWrapper` over bytes):
   `--format json` output equals `results.dumps` of the same query; text output contains `file:line` chains
   and the footer; exit 2 for an unknown question, a missing target, a target given to `cycles`, a
-  negative `--limit` and a missing graph file; exit 6 for `{}` and for a schema-version-1 document; exit 7
+  negative `--limit` and a missing graph file; exit 7 for `{}` and for a schema-version-1 document; exit 8
   with message `x.py is not in snapshot <id>` and with `... is detected_only (not analyzed)`; stdout empty
   on every error.
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement `dependencies(ix, target, *, include_type_only=True, limit=None)` and
+- [X] T012 [US1] Implement `dependencies(ix, target, *, include_type_only=True, limit=None)` and
   `dependents(ix, target, *, symbol=None, include_type_only=True, follow_barrels=False, limit=None)` in
   `backend/src/graphora/graph/queries.py` (contracts/queries-api.md). Items have a one-link `chain`. Order
   by node id. `follow_barrels=True` raises `NotImplementedError` until US4.
-- [ ] T013 [US1] Implement `impact(ix, target, *, max_depth=None, include_type_only=True,
+- [X] T013 [US1] Implement `impact(ix, target, *, max_depth=None, include_type_only=True,
   follow_barrels=False, limit=None)` in `backend/src/graphora/graph/queries.py` (research R5):
   breadth-first over reversed links, only through `file:` nodes; next hop = smallest id at distance `d-1`;
   items ordered by (distance, id); `cut` as in data-model.md.
-- [ ] T014 [US1] Add the `query` subcommand to `backend/src/graphora/cli/__init__.py` (contracts/cli.md):
+- [X] T014 [US1] Add the `query` subcommand to `backend/src/graphora/cli/__init__.py` (contracts/cli.md):
   register it in `_parser()` with `graph`, `question` (choices `dependencies`, `dependents`, `impact`,
   `neighbors`, `cycles`, `key-files`), optional `target`, `--format` (`text`/`json`, default `text`),
   `--limit`, `--no-type-only`, `--symbol`, `--max-depth`, `--follow-barrels`; dispatch from `main()` to a new
   `_query(args)` function kept separate from `_analyze` (plan.md § Coordination). Add
-  `EXIT_GRAPH, EXIT_NOT_FOUND = 6, 7`. Read the graph from the path or `sys.stdin.buffer` for `-`; map
-  `OSError` → 2, `InvalidGraph` → 6, `NodeNotFound` → 7 with messages from contracts/cli.md, `ValueError`
+  `EXIT_GRAPH, EXIT_NOT_FOUND = 7, 8` (6 is 005's `EXIT_STORE`). Read the graph from the path or `sys.stdin.buffer` for `-`; map
+  `OSError` → 2, `InvalidGraph` → 7, `NodeNotFound` → 8 with messages from contracts/cli.md, `ValueError`
   → 2. Questions not implemented yet return 2 with `not implemented yet` until their phase.
-- [ ] T015 [US1] Add `render_text` for `dependencies`, `dependents` and `impact` in
+- [X] T015 [US1] Add `render_text` for `dependencies`, `dependents` and `impact` in
   `backend/src/graphora/graph/results.py`: one line per item, `path  [distance]  a.py:3 → b.py:7 → target`,
   suffixes `(likely)` and `(type-only)`, unresolved imports as `line N: <reference> (unresolved: reason)`,
   then the footer and `cut at depth N` when cut.

@@ -115,6 +115,6 @@ The limit is applied after sorting. For neighbors it applies to `incoming` and `
 
 | Error | When | CLI exit code |
 |---|---|---|
-| `InvalidGraph(message)` | `loads` fails (R2) | 6 |
-| `NodeNotFound(target, status)` | target does not resolve (R10); `status` is `detected_only`, `not_code`, a skip reason, `ambiguous` or `not_in_snapshot` | 7 |
+| `InvalidGraph(message)` | `loads` fails (R2) | 7 |
+| `NodeNotFound(target, status)` | target does not resolve (R10); `status` is `detected_only`, `not_code`, a skip reason, `ambiguous`, `invalid_path` (backslash, absolute or `..`) or `not_in_snapshot` | 8 |
 | `ValueError` | bad option value (negative limit, `max_depth < 1`) | 2 |

@@ -1,0 +1,97 @@
+[
+  {
+    "question": "dependents",
+    "target": "plugins/alpha.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:loader.py",
+          "chain": [
+            "loader.py:8"
+          ]
+        },
+        {
+          "node": "file:typing_stuff.py",
+          "chain": [
+            "typing_stuff.py:4"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 3,
+        "not_analyzed_files": 1,
+        "files_with_errors": 2
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "plugins/alpha.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:loader.py",
+          "chain": [
+            "loader.py:8"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:typing_stuff.py",
+          "chain": [
+            "typing_stuff.py:4"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 2,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 3,
+        "not_analyzed_files": 1,
+        "files_with_errors": 2
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "loader.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:python:importlib",
+          "chain": [
+            "loader.py:1"
+          ]
+        },
+        {
+          "node": "ext:python:json",
+          "chain": [
+            "loader.py:9"
+          ]
+        },
+        {
+          "node": "file:plugins/alpha.py",
+          "chain": [
+            "loader.py:8"
+          ]
+        }
+      ],
+      "unresolved": [
+        "loader.py:7 dynamic",
+        "loader.py:10 dynamic",
+        "loader.py:11 dynamic"
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 3,
+        "not_analyzed_files": 1,
+        "files_with_errors": 2
+      }
+    }
+  }
+]

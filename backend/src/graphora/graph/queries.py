@@ -9,7 +9,7 @@ from typing import TypeVar
 import networkx as nx
 
 from graphora.graph.model import CoverageFile, Edge, GraphDocument, Node, UnresolvedNode
-from graphora.graph.results import Completeness, Link, strongest
+from graphora.graph.results import Answer, Completeness, Item, Link, Question, strongest, weakest
 from graphora.graph.serialize import edge_sort_key
 
 T = TypeVar("T")
@@ -57,14 +57,7 @@ class GraphIndex:
         )
 
     def link(self, source: str, target: str, include_type_only: bool = True) -> Link:
-        edges = _links(self, include_type_only).edges[source, target]["edges"]
-        return Link(
-            source=source,
-            target=target,
-            edges=edges,
-            confidence=strongest(e.confidence for e in edges),
-            type_only=all(e.type_only for e in edges),
-        )
+        return _make_link(source, target, _links(self, include_type_only).edges[source, target]["edges"])
 
 
 def _digraph(nodes: list[str], pairs: dict[tuple[str, str], tuple[Edge, ...]]) -> nx.DiGraph:
@@ -138,3 +131,132 @@ def resolve(ix: GraphIndex, target: str) -> str:
     if reason is not None:
         raise NodeNotFound(target, reason, f"{target} is skipped ({reason})")
     raise NodeNotFound(target, "not_in_snapshot", f"{target} is not in snapshot {ix.doc.snapshot}")
+
+
+# --- questions ----------------------------------------------------------------------------------------------
+
+
+def _kind(node_id: str) -> str:
+    return {"file": "file", "ext": "external", "asset": "asset"}[node_id.split(":", 1)[0]]
+
+
+def _make_link(source: str, target: str, edges: tuple[Edge, ...]) -> Link:
+    return Link(source, target, edges, strongest(e.confidence for e in edges), all(e.type_only for e in edges))
+
+
+def _item(node: str, chain: tuple[Link, ...], distance: int | None = None) -> Item:
+    return Item(
+        node=node,
+        kind=_kind(node),
+        chain=chain,
+        confidence=weakest(link.confidence for link in chain),
+        type_only=any(link.type_only for link in chain),
+        distance=distance,
+    )
+
+
+def _check_depth(max_depth: int | None) -> None:
+    if max_depth is not None and max_depth < 1:
+        raise ValueError(f"max_depth must be 1 or more, got {max_depth}")
+
+
+def _answer(ix: GraphIndex, question: Question, target: str | None, options: dict, items: list[Item], limit: int | None, **extra) -> Answer:
+    shown, total, truncated = _limit(items, limit)
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question=question,
+        target=target,
+        options=options,
+        total=total,
+        truncated=truncated,
+        items=tuple(shown),
+        completeness=ix.completeness,
+        **extra,
+    )
+
+
+def dependencies(ix: GraphIndex, target: str, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
+    """What the node imports or re-exports, one item per target in id order (FR-004)."""
+    _limit([], limit)
+    node = resolve(ix, target)
+    g = _links(ix, include_type_only)
+    items = [_item(dep, (ix.link(node, dep, include_type_only),)) for dep in sorted(g.successors(node))]
+    unresolved = tuple(e for e in ix.unresolved.get(node, ()) if include_type_only or not e.type_only)
+    options = {"include_type_only": include_type_only, "limit": limit}
+    return _answer(ix, "dependencies", node, options, items, limit, unresolved=unresolved)
+
+
+def _matches(e: Edge, symbol: str) -> bool:
+    return e.symbol == symbol or (e.type == "reexports" and e.alias == symbol)
+
+
+def dependents(
+    ix: GraphIndex,
+    target: str,
+    *,
+    symbol: str | None = None,
+    include_type_only: bool = True,
+    follow_barrels: bool = False,
+    limit: int | None = None,
+) -> Answer:
+    """The files that import or re-export the node, one item per file in id order (FR-005)."""
+    _limit([], limit)
+    if follow_barrels:
+        raise NotImplementedError("follow_barrels arrives with user story 4")
+    node = resolve(ix, target)
+    g = _links(ix, include_type_only)
+    items = []
+    for dep in sorted(g.predecessors(node)):
+        edges = g.edges[dep, node]["edges"]
+        if symbol is not None:
+            edges = tuple(e for e in edges if _matches(e, symbol))
+            if not edges:
+                continue
+        items.append(_item(dep, (_make_link(dep, node, edges),)))
+    options = {"follow_barrels": follow_barrels, "include_type_only": include_type_only, "limit": limit, "symbol": symbol}
+    return _answer(ix, "dependents", node, options, items, limit)
+
+
+def impact(
+    ix: GraphIndex,
+    target: str,
+    *,
+    max_depth: int | None = None,
+    include_type_only: bool = True,
+    follow_barrels: bool = False,
+    limit: int | None = None,
+) -> Answer:
+    """Every file that depends on the node transitively, nearest first, each with one chain to it (FR-006,
+    research § R5). Links are walked backwards from the target; only files have dependents, so `ext:` and
+    `asset:` nodes are never passed through."""
+    _limit([], limit)
+    _check_depth(max_depth)
+    if follow_barrels:
+        raise NotImplementedError("follow_barrels arrives with user story 4")
+    node = resolve(ix, target)
+    g = _links(ix, include_type_only)
+
+    distance = {node: 0}
+    level = [node]
+    depth = 0
+    while level and (max_depth is None or depth < max_depth):
+        depth += 1
+        level = sorted({dep for n in level for dep in g.predecessors(n) if dep not in distance})
+        for dep in level:
+            distance[dep] = depth
+    cut = max_depth is not None and any(dep not in distance for n in level for dep in g.predecessors(n))
+
+    def next_hop(n: str) -> str:
+        return min(s for s in g.successors(n) if distance.get(s) == distance[n] - 1)
+
+    items = []
+    for dep in sorted((n for n in distance if n != node), key=lambda n: (distance[n], n)):
+        chain = []
+        current = dep
+        while current != node:
+            hop = next_hop(current)
+            chain.append(ix.link(current, hop, include_type_only))
+            current = hop
+        items.append(_item(dep, tuple(chain), distance[dep]))
+    options = {"follow_barrels": follow_barrels, "include_type_only": include_type_only, "limit": limit, "max_depth": max_depth}
+    return _answer(ix, "impact", node, options, items, limit, cut=cut)

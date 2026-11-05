@@ -1,0 +1,128 @@
+[
+  {
+    "question": "dependents",
+    "target": "packages/ui/src/types.ts",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:packages/ui/src/index.ts",
+          "chain": [
+            "packages/ui/src/index.ts:4"
+          ],
+          "type_only": true
+        },
+        {
+          "node": "file:packages/ui/src/log.ts",
+          "chain": [
+            "packages/ui/src/log.ts:1"
+          ],
+          "type_only": true
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "packages/ui/src/types.ts",
+    "options": {
+      "include_type_only": false
+    },
+    "expected": {
+      "items": [],
+      "total": 0,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "packages/ui/src/x.ts",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:packages/ui/src/math.ts",
+          "chain": [
+            "packages/ui/src/math.ts:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:packages/ui/src/index.ts",
+          "chain": [
+            "packages/ui/src/index.ts:1",
+            "packages/ui/src/math.ts:1"
+          ],
+          "distance": 2
+        },
+        {
+          "node": "file:packages/app/src/main.ts",
+          "chain": [
+            "packages/app/src/main.ts:2",
+            "packages/ui/src/index.ts:1",
+            "packages/ui/src/math.ts:1"
+          ],
+          "distance": 3
+        }
+      ],
+      "total": 3,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "packages/ui/src/index.ts",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:packages/ui/src/format.ts",
+          "chain": [
+            "packages/ui/src/index.ts:3"
+          ]
+        },
+        {
+          "node": "file:packages/ui/src/log.ts",
+          "chain": [
+            "packages/ui/src/index.ts:2"
+          ]
+        },
+        {
+          "node": "file:packages/ui/src/math.ts",
+          "chain": [
+            "packages/ui/src/index.ts:1"
+          ]
+        },
+        {
+          "node": "file:packages/ui/src/types.ts",
+          "chain": [
+            "packages/ui/src/index.ts:4"
+          ],
+          "type_only": true
+        }
+      ],
+      "unresolved": [],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

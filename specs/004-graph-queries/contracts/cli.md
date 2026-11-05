@@ -24,19 +24,20 @@ graphora query <graph> <question> [target] [options]
 Output:
 
 - `--format json`: exactly `results.dumps(answer)` on standard output ([answers.md](answers.md)).
-- `--format text`: `results.render_text(answer)`. One line per item: path, distance or counts, then the chain
+- `--format text`: `results.render_text(answer)`. A first line `<question> <target> @ <snapshot>`, then one line per item: path, distance or counts, then the chain
   as `a.py:3 → b.py:7 → target.py`. Heuristic items end with `(likely)`, type-only items with `(type-only)`.
   The last lines give `total`, truncation, `cut` and the completeness note.
 - Standard error carries only errors, as `graphora: error: …`.
 
-Exit codes (existing codes keep their meaning):
+Exit codes (existing codes keep their meaning; 6 is taken by 005 for an unavailable store, so the query codes are 7
+and 8):
 
 | Code | Meaning |
 |---|---|
 | 0 | answer written (an empty answer is still 0) |
 | 2 | usage error: unknown question, missing or extra target, bad option value, unreadable graph file |
-| 6 | invalid graph document (`InvalidGraph`): not JSON, wrong schema version, broken references |
-| 7 | target not found (`NodeNotFound`); the message names the reason, for example `src/gen.go is detected_only (not analyzed)`, `node_modules is skipped (excluded_dir)` or `x.py is not in snapshot <id>` |
+| 7 | invalid graph document (`InvalidGraph`): not JSON, wrong schema version, broken references |
+| 8 | target not found (`NodeNotFound`); the message names the reason, for example `src/gen.go is detected_only (not analyzed)`, `node_modules is skipped (excluded_dir)` or `x.py is not in snapshot <id>` |
 
 Examples:
 

@@ -148,14 +148,49 @@ def dumps(answer: Answer) -> bytes:
     return (text + "\n").encode("utf-8")
 
 
-# Per-question body lines; each question adds its renderer in its own phase (tasks.md T015, T019, T023).
-_RENDERERS: dict[str, Callable[[Answer], list[str]]] = {}
+def _name(node_id: str) -> str:
+    """`file:a.py` and `asset:x.css` read as paths; `ext:npm:react` as `npm:react`."""
+    return node_id.partition(":")[2]
+
+
+def _chain_text(chain: tuple[Link, ...]) -> str:
+    steps = [f"{_name(link.source)}:{link.edges[0].line}" for link in chain]
+    return " → ".join(steps + [_name(chain[-1].target)])
+
+
+def _marks(item: Item) -> str:
+    return (" (likely)" if item.confidence == "heuristic" else "") + (" (type-only)" if item.type_only else "")
+
+
+def _item_lines(answer: Answer) -> list[str]:
+    lines = []
+    for item in answer.items or ():
+        distance = f"  [{item.distance}]" if item.distance is not None else ""
+        lines.append(f"{_name(item.node)}{distance}  {_chain_text(item.chain)}{_marks(item)}")
+    for e in answer.unresolved or ():
+        reference = e.target.split(":", 2)[2]
+        lines.append(f"line {e.line}: {reference} (unresolved: {e.reason})")
+    return lines
+
+
+def _header(answer: Answer) -> list[str]:
+    target = f" {_name(answer.target)}" if answer.target else ""
+    return [f"{answer.question}{target} @ {answer.snapshot}"]
+
+
+_RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
+    "dependencies": _item_lines,
+    "dependents": _item_lines,
+    "impact": _item_lines,
+}
 
 
 def _footer(answer: Answer) -> list[str]:
     lines = [f"total: {answer.total}"]
     if answer.truncated:
         lines.append(f"truncated (limit {answer.options.get('limit')})")
+    if answer.cut:
+        lines.append(f"cut at depth {answer.options.get('max_depth')}")
     if answer.completeness is not None:
         c = answer.completeness
         lines.append(
@@ -167,4 +202,4 @@ def _footer(answer: Answer) -> list[str]:
 
 def render_text(answer: Answer) -> str:
     body = _RENDERERS[answer.question](answer) if answer.question in _RENDERERS else []
-    return "\n".join(body + _footer(answer)) + "\n"
+    return "\n".join(_header(answer) + body + _footer(answer)) + "\n"

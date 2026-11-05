@@ -1,4 +1,5 @@
-"""`graphora analyze` and `graphora serve` (contracts/cli.md; 005: specs/005-storage-http-api/contracts/cli.md)."""
+"""`graphora analyze`, `graphora serve` and `graphora query` (contracts/cli.md; 005:
+specs/005-storage-http-api/contracts/cli.md; 004: specs/004-graph-queries/contracts/cli.md)."""
 
 from __future__ import annotations
 
@@ -21,6 +22,7 @@ from graphora.ingest.walk import Deadline, LimitExceeded
 
 EXIT_OK, EXIT_USAGE, EXIT_LIMIT = 0, 2, 3
 EXIT_ARCHIVE, EXIT_REMOTE, EXIT_STORE, EXIT_INTERRUPTED = 4, 5, 6, 130
+EXIT_GRAPH, EXIT_NOT_FOUND = 7, 8
 
 _LIMIT_MESSAGES = {
     "files": "file limit exceeded: at least {observed} files > --max-files {value}",
@@ -83,7 +85,22 @@ def _parser() -> argparse.ArgumentParser:
     serve.add_argument("--database", help="PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
+    query = commands.add_parser("query", help="answer one question about a graph document")
+    query.add_argument("graph", help="a graph JSON written by `graphora analyze`, or - for standard input")
+    query.add_argument("question", choices=_QUESTIONS)
+    query.add_argument("target", nargs="?", help="a node id, a file path or an external package name")
+    query.add_argument("--format", choices=("text", "json"), default="text")
+    query.add_argument("--limit", type=int)
+    query.add_argument("--no-type-only", action="store_true", help="leave out type-only links")
+    query.add_argument("--symbol", help="dependents: only edges of this imported name")
+    query.add_argument("--max-depth", type=int, help="impact: stop at this distance")
+    query.add_argument("--follow-barrels", action="store_true", help="dependents and impact: see through re-exports")
     return parser
+
+
+_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files")
+_WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors")
+_OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
 
 
 def _database_url(given: str | None) -> str | None:
@@ -113,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
         return int(exc.code or 0)
     if args.command == "serve":
         return _serve(args)
+    if args.command == "query":
+        return _query(args)
 
     # SIGTERM must also unwind through fetch_snapshot so the temp folder is removed (research § R11).
     in_main_thread = threading.current_thread() is threading.main_thread()
@@ -122,6 +141,61 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if in_main_thread:
             signal.signal(signal.SIGTERM, previous)
+
+
+def _query(args: argparse.Namespace) -> int:
+    """One question about a graph document (specs/004-graph-queries contracts/cli.md). Kept apart from `_analyze`."""
+    from graphora.graph import queries
+    from graphora.graph.load import InvalidGraph, loads
+    from graphora.graph.results import dumps, render_text
+
+    question = args.question
+    if question in _WITH_TARGET and args.target is None:
+        _log("error", f"{question} needs a target")
+        return EXIT_USAGE
+    if question not in _WITH_TARGET and args.target is not None:
+        _log("error", f"{question} takes no target")
+        return EXIT_USAGE
+    for option, allowed in _OPTION_QUESTIONS.items():
+        if getattr(args, option) not in (None, False) and question not in allowed:
+            _log("error", f"--{option.replace('_', '-')} is only for {' and '.join(allowed)}")
+            return EXIT_USAGE
+
+    options: dict[str, object] = {"include_type_only": not args.no_type_only, "limit": args.limit}
+    if question == "dependents":
+        options.update(symbol=args.symbol, follow_barrels=args.follow_barrels)
+    elif question == "impact":
+        options.update(max_depth=args.max_depth, follow_barrels=args.follow_barrels)
+    asks = {"dependencies": queries.dependencies, "dependents": queries.dependents, "impact": queries.impact}
+    if question not in asks:
+        _log("error", f"{question} is not implemented yet")
+        return EXIT_USAGE
+
+    try:
+        data = sys.stdin.buffer.read() if args.graph == "-" else Path(args.graph).read_bytes()
+    except OSError as exc:
+        _log("error", f"cannot read {args.graph}: {exc.strerror or exc}")
+        return EXIT_USAGE
+    try:
+        ix = queries.index(loads(data))
+        answer = asks[question](ix, args.target, **options)
+    except InvalidGraph as exc:
+        _log("error", f"invalid graph: {exc.message}")
+        return EXIT_GRAPH
+    except queries.NodeNotFound as exc:
+        _log("error", exc.message)
+        return EXIT_NOT_FOUND
+    except NotImplementedError as exc:
+        _log("error", f"not implemented yet: {exc}")
+        return EXIT_USAGE
+    except ValueError as exc:
+        _log("error", str(exc))
+        return EXIT_USAGE
+
+    out = dumps(answer) if args.format == "json" else render_text(answer).encode("utf-8")
+    sys.stdout.buffer.write(out)
+    sys.stdout.flush()
+    return EXIT_OK
 
 
 def _serve(args: argparse.Namespace) -> int:

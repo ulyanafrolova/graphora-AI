@@ -1,0 +1,157 @@
+[
+  {
+    "question": "dependents",
+    "target": "pkg/a.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:main.py",
+          "chain": [
+            "main.py:4"
+          ]
+        },
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:pkg/b.py",
+          "chain": [
+            "pkg/b.py:1"
+          ]
+        },
+        {
+          "node": "file:pkg/c.py",
+          "chain": [
+            "pkg/c.py:3"
+          ]
+        }
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "pkg/b.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:pkg/a.py",
+          "chain": [
+            "pkg/a.py:3"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:main.py",
+          "chain": [
+            "main.py:4",
+            "pkg/a.py:3"
+          ],
+          "distance": 2
+        },
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:1",
+            "pkg/a.py:3"
+          ],
+          "distance": 2
+        },
+        {
+          "node": "file:pkg/c.py",
+          "chain": [
+            "pkg/c.py:3",
+            "pkg/a.py:3"
+          ],
+          "distance": 2
+        }
+      ],
+      "total": 4,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "pkg/b.py",
+    "options": {
+      "max_depth": 1
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:pkg/a.py",
+          "chain": [
+            "pkg/a.py:3"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 1,
+      "cut": true,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "pkg/c.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:python:json",
+          "chain": [
+            "pkg/c.py:4"
+          ]
+        },
+        {
+          "node": "ext:python:requests",
+          "chain": [
+            "pkg/c.py:7"
+          ]
+        },
+        {
+          "node": "file:pkg/a.py",
+          "chain": [
+            "pkg/c.py:3"
+          ]
+        },
+        {
+          "node": "file:pkg/sub/__init__.py",
+          "chain": [
+            "pkg/c.py:6"
+          ]
+        }
+      ],
+      "unresolved": [
+        "pkg/c.py:1 not_found",
+        "pkg/c.py:2 relative_beyond_top",
+        "pkg/c.py:5 not_found"
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

@@ -1,0 +1,95 @@
+[
+  {
+    "question": "dependents",
+    "target": "src/app/core.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/app/api/routes.py",
+          "chain": [
+            "src/app/api/routes.py:1"
+          ]
+        },
+        {
+          "node": "file:tests/test_core.py",
+          "chain": [
+            "tests/test_core.py:1"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "src/app/core.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/app/api/routes.py",
+          "chain": [
+            "src/app/api/routes.py:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:tests/test_core.py",
+          "chain": [
+            "tests/test_core.py:1"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 2,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "tests/test_core.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:python:pytest",
+          "chain": [
+            "tests/test_core.py:3"
+          ]
+        },
+        {
+          "node": "file:src/app/core.py",
+          "chain": [
+            "tests/test_core.py:1"
+          ]
+        },
+        {
+          "node": "file:src/nsp/plugin.py",
+          "chain": [
+            "tests/test_core.py:4"
+          ]
+        }
+      ],
+      "unresolved": [
+        "tests/test_core.py:5 namespace_package"
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]
