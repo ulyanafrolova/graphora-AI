@@ -20,6 +20,8 @@ _QUESTIONS = {
     "dependents": queries.dependents,
     "impact": queries.impact,
     "cycles": queries.cycles,
+    "neighbors": queries.neighbors,
+    "key_files": queries.key_files,
 }
 
 
@@ -39,22 +41,28 @@ def _chain(chain: list[dict]) -> list[str]:
     return [f"{_path(link['source'])}:{link['edges'][0]['line']}" for link in chain]
 
 
+def _items(items: list[dict]) -> list[dict]:
+    out = []
+    for i in items:
+        item = {"node": i["node"], "chain": _chain(i["chain"])}
+        for key in ("distance", "transitive_dependents", "direct_dependents"):
+            if key in i:
+                item[key] = i[key]
+        if i["type_only"]:
+            item["type_only"] = True
+        if i["confidence"] != "resolved":
+            item["confidence"] = i["confidence"]
+        out.append(item)
+    return out
+
+
 def project_answer(answer: dict) -> dict:
     out: dict = {"total": answer["total"]}
     if answer["truncated"]:
         out["truncated"] = True
-    if "items" in answer:
-        items = []
-        for i in answer["items"]:
-            item = {"node": i["node"], "chain": _chain(i["chain"])}
-            if "distance" in i:
-                item["distance"] = i["distance"]
-            if i["type_only"]:
-                item["type_only"] = True
-            if i["confidence"] != "resolved":
-                item["confidence"] = i["confidence"]
-            items.append(item)
-        out["items"] = items
+    for key in ("items", "outgoing", "incoming"):
+        if key in answer:
+            out[key] = _items(answer[key])
     if "groups" in answer:
         out["groups"] = [{"files": g["files"], "cycle": _chain(g["cycle"]), "type_only": g["type_only"]} for g in answer["groups"]]
     if "unresolved" in answer:
@@ -76,7 +84,7 @@ def test_matches_hand_written_answer(name, i, entry):
 def test_cited_edges_are_graph_edges_and_chains_connect(name, i, entry):
     graph_edges = {e["id"]: e for e in json.loads(analyzed_graph(name))["edges"]}
     answer = json.loads(dumps(_ask(name, entry)))
-    for item in answer.get("items", []):
+    for item in answer.get("items", []) + answer.get("outgoing", []) + answer.get("incoming", []):
         for link in item["chain"]:
             for e in link["edges"] + link["via"]:
                 assert graph_edges[e["id"]] == e
@@ -84,7 +92,7 @@ def test_cited_edges_are_graph_edges_and_chains_connect(name, i, entry):
         for a, b in zip(chain, chain[1:], strict=False):
             assert a["target"] == b["source"]
         if chain:
-            end = item["node"] if answer["question"] == "dependencies" else answer["target"]
+            end = item["node"] if item in answer.get("outgoing", []) or answer["question"] == "dependencies" else answer["target"]
             assert chain[-1]["target"] == end
     for group in answer.get("groups", []):
         cycle = group["cycle"]

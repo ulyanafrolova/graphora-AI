@@ -321,3 +321,54 @@ def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None 
         truncated=truncated,
         groups=tuple(shown),
     )
+
+
+def neighbors(ix: GraphIndex, target: str, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
+    """What the node imports and what imports it, together (FR-007). The limit cuts each list on its own."""
+    _limit([], limit)
+    out = dependencies(ix, target, include_type_only=include_type_only)
+    into = dependents(ix, target, include_type_only=include_type_only)
+    outgoing, out_total, out_cut = _limit(list(out.items or ()), limit)
+    incoming, in_total, in_cut = _limit(list(into.items or ()), limit)
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="neighbors",
+        target=out.target,
+        options={"include_type_only": include_type_only, "limit": limit},
+        total=out_total + in_total,
+        truncated=out_cut or in_cut,
+        outgoing=tuple(outgoing),
+        incoming=tuple(incoming),
+        unresolved=out.unresolved,
+        completeness=ix.completeness,
+    )
+
+
+def key_files(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = 10) -> Answer:
+    """Project files ranked by transitive dependents, then direct dependents, then path (FR-009, research § R7).
+
+    Each file's dependents are counted once on the condensation (every loop squeezed into one node), walked in
+    topological order; sets of files are Python ints used as bitsets, one bit per file in id order. Files in one
+    loop share the set and never count themselves."""
+    _limit([], limit)
+    links = _links(ix, include_type_only)
+    files = links.subgraph(n for n in links.nodes if n.startswith("file:"))
+    bit = {f: 1 << i for i, f in enumerate(sorted(files.nodes))}
+    dag = nx.condensation(files)
+    members = {c: sum(bit[f] for f in dag.nodes[c]["members"]) for c in dag.nodes}
+    reach: dict[int, int] = {}
+    for c in nx.topological_sort(dag):
+        reach[c] = 0
+        for p in dag.predecessors(c):
+            reach[c] |= reach[p] | members[p]
+
+    items = []
+    for f in files.nodes:
+        component = dag.graph["mapping"][f]
+        transitive = ((reach[component] | members[component]) & ~bit[f]).bit_count()
+        if transitive == 0:
+            continue
+        direct = sum(1 for p in files.predecessors(f) if p != f)
+        items.append(Item(node=f, kind="file", transitive_dependents=transitive, direct_dependents=direct))
+    items.sort(key=lambda i: (-(i.transitive_dependents or 0), -(i.direct_dependents or 0), i.node))
+    return _answer(ix, "key_files", None, {"include_type_only": include_type_only, "limit": limit}, items, limit)

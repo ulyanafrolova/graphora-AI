@@ -173,6 +173,20 @@ def _item_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _neighbor_lines(answer: Answer) -> list[str]:
+    lines = ["imports:"]
+    lines += [f"  {_chain_text(i.chain)}{_marks(i)}" for i in answer.outgoing or ()]
+    lines.append("imported by:")
+    lines += [f"  {_chain_text(i.chain)}{_marks(i)}" for i in answer.incoming or ()]
+    return lines + _item_lines(answer)
+
+
+def _key_file_lines(answer: Answer) -> list[str]:
+    return [
+        f"{_name(i.node)}  transitive {i.transitive_dependents}  direct {i.direct_dependents}" for i in answer.items or ()
+    ]
+
+
 def _group_lines(answer: Answer) -> list[str]:
     lines = []
     for n, group in enumerate(answer.groups or (), start=1):
@@ -192,6 +206,8 @@ _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
     "dependents": _item_lines,
     "impact": _item_lines,
     "cycles": _group_lines,
+    "neighbors": _neighbor_lines,
+    "key_files": _key_file_lines,
 }
 
 

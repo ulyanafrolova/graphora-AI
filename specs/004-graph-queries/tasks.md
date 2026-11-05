@@ -223,19 +223,19 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
 
 ### Tests for User Story 3
 
-- [ ] T020 [P] [US3] Add `neighbors` and `key_files` entries to `fixtures/repos/py-flat/queries.json`,
+- [X] T020 [P] [US3] Add `neighbors` and `key_files` entries to `fixtures/repos/py-flat/queries.json`,
   `fixtures/repos/py-cycles/queries.json` and `fixtures/repos/ts-app/queries.json`. In `py-cycles` the files
   of `loop/` share one transitive set: each counts the other two plus `user.py`, never itself.
-- [ ] T021 [P] [US3] Write `backend/tests/unit/test_neighbors.py` on synthetic documents: spec US3 scenarios
+- [X] T021 [P] [US3] Write `backend/tests/unit/test_neighbors.py` on synthetic documents: spec US3 scenarios
   1–3; files with zero dependents are not ranked; ties by direct count then path; limit default 10;
   `limit` on neighbors cuts `incoming` and `outgoing` separately with `total` = both full lengths.
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Implement `neighbors(ix, target, *, include_type_only=True, limit=None)` in
+- [X] T022 [US3] Implement `neighbors(ix, target, *, include_type_only=True, limit=None)` in
   `backend/src/graphora/graph/queries.py`: `outgoing` as dependencies, `incoming` as dependents, plus
   `unresolved`.
-- [ ] T023 [US3] Implement `key_files(ix, *, include_type_only=True, limit=10)` in
+- [X] T023 [US3] Implement `key_files(ix, *, include_type_only=True, limit=10)` in
   `backend/src/graphora/graph/queries.py` (research R7): `networkx.condensation`, topological order,
   ancestor sets as Python `int` bitsets over file positions in sorted order; direct count = distinct files
   with a link to the file. Enable both questions in the CLI and add their `render_text`

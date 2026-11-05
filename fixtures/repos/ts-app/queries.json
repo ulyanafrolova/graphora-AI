@@ -151,5 +151,98 @@
       ],
       "total": 1
     }
+  },
+  {
+    "question": "neighbors",
+    "target": "src/lib/index.ts",
+    "options": {},
+    "expected": {
+      "outgoing": [
+        {
+          "node": "file:src/cycle/a.ts",
+          "chain": [
+            "src/lib/index.ts:1"
+          ]
+        }
+      ],
+      "incoming": [
+        {
+          "node": "file:src/main.ts",
+          "chain": [
+            "src/main.ts:2"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "key_files",
+    "target": null,
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/cycle/a.ts",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:src/cycle/b.ts",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/models.ts",
+          "chain": [],
+          "transitive_dependents": 2,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:src/util.ts",
+          "chain": [],
+          "transitive_dependents": 2,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:src/config.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/lib/index.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/polyfill.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/shapes.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        }
+      ],
+      "total": 8,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
   }
 ]

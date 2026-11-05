@@ -171,10 +171,11 @@ def _query(args: argparse.Namespace) -> int:
         "dependents": queries.dependents,
         "impact": queries.impact,
         "cycles": queries.cycles,
+        "neighbors": queries.neighbors,
+        "key-files": queries.key_files,
     }
-    if question not in asks:
-        _log("error", f"{question} is not implemented yet")
-        return EXIT_USAGE
+    if question == "key-files" and args.limit is None:
+        options["limit"] = 10
 
     try:
         data = sys.stdin.buffer.read() if args.graph == "-" else Path(args.graph).read_bytes()

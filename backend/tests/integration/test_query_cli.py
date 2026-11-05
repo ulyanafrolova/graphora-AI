@@ -106,3 +106,13 @@ def test_cycles(graph):
     assert "cycle 1: pkg/a.py, pkg/b.py" in text
     assert "pkg/a.py:3 → pkg/b.py:1 → pkg/a.py" in text
     assert "completeness" not in text
+
+
+def test_neighbors_and_key_files(graph):
+    text = run_query(graph, "neighbors", "pkg/b.py")[1].decode("utf-8")
+    assert "imports:\n  pkg/b.py:1 → pkg/a.py" in text
+    assert "imported by:\n  pkg/a.py:3 → pkg/b.py" in text
+    text = run_query(graph, "key-files")[1].decode("utf-8")
+    assert text.splitlines()[1] == "pkg/a.py  transitive 4  direct 4"
+    answer = json.loads(run_query(graph, "key-files", "--format", "json")[1])
+    assert answer["options"]["limit"] == 10
