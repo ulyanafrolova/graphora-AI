@@ -330,7 +330,7 @@ file text or line ranges only from the store.
   `conftest.py` additions from T004.
 - [X] T027 Run `make lint` and fix findings in new files; run `quickstart.md` steps 1–6 by hand and record
   the result in the PR description.
-- [ ] T028 Open a separate shared-files PR **before this feature's PR is marked ready**, agreed with Anna
+- [X] T028 Open a separate shared-files PR **before this feature's PR is marked ready**, agreed with Anna
   (team-workflow.md § Rules): add to `CLAUDE.md` Commands `make db`, `export GRAPHORA_TEST_DATABASE_URL=…`,
   `uv run pytest -m "not db"`, `analyze … --store`, `graphora serve`; note in `docs/product/team-workflow.md`
   that `make check` needs `make db` from 005 on. Also make the `Makefile` `test` target print a one-line hint
