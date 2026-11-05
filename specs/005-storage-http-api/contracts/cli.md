@@ -26,6 +26,20 @@ Behaviour with `--store`:
 - **Info line**, after the existing ones and before the summary:
   `graphora: info: stored <repository> <snapshot>`, `graphora: info: replaced <repository> <snapshot>` or
   `graphora: info: reused <repository> <snapshot>`.
+- **stderr on a GitHub reuse** (nothing downloaded, no analysis run), in this order:
+  1. no `fetched … at <sha>` line, because nothing was fetched;
+  2. `graphora: info: reused github.com/<owner>/<repo> <sha>`;
+  3. one `graphora: warning: ignoring <path>: not valid JSON-with-comments` line per stored warning, in
+     stored (sorted) order — the same lines the original run printed;
+  4. the usual summary `graphora: info: analyzed N files, M edges (U unresolved), snapshot <sha>`, computed
+     from the stored graph bytes (`coverage.files` with status `analyzed`, `edges`, edges with confidence
+     `unresolved`). It equals the summary of the original run.
+  For a local folder or ZIP that is reused after analysis, stderr is the normal output plus the `reused`
+  line.
+- **Store failure after analysis.** If `Store.put` raises `StoreUnavailable` (or any error), nothing is
+  written to stdout or `--out`, the transaction is rolled back, the temp folder is removed, and the exit
+  status is `6` (`StoreUnavailable`) or the existing status for the error. `--store` never falls back to
+  output without storing.
 - **Order.** The store write happens inside the fetch block (the temp folder still exists, but is not read
   again, R4); `--out` is written after the store transaction commits.
 

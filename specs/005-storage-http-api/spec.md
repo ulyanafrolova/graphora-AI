@@ -116,6 +116,8 @@ read operation. Compare the graph with the CLI output and the file text with the
   MUST have at most one stored analysis.
 - **FR-002**: Repository names MUST follow the rules of feature 002: `github.com/<owner>/<repo>` in lower
   case for GitHub, the file name without its last extension for ZIP, and the folder name for a local folder.
+  A name longer than 300 characters MUST be rejected with a message naming the limit, and nothing is
+  stored.
 - **FR-003**: A stored analysis MUST contain the graph document exactly as serialized (the same bytes the
   CLI writes), the schema version, the extractor names and versions, and the run's warnings.
 - **FR-004**: A stored analysis MUST contain the text of every file listed in the coverage report of its
@@ -186,8 +188,8 @@ read operation. Compare the graph with the CLI output and the file text with the
   change stored data.
 - **SC-006**: 0 partial analyses are visible after any failed or interrupted run in the test suite, and no
   temporary files remain.
-- **SC-007**: All tests that existed before this feature pass unchanged, and the full suite passes with the
-  network disabled.
+- **SC-007**: All tests that existed before this feature pass unchanged, and the full suite passes with no
+  connection outside the local machine (the local test database is the only connection allowed).
 
 ## Assumptions
 
