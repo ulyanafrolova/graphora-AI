@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import io
-import tokenize
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 
 from graphora.adapters import js, python
 from graphora.adapters.js import extract as js_extract
 from graphora.adapters.python import extract as py_extract
+from graphora.adapters.text import decode_python as _decode
 from graphora.detect.languages import classify
 from graphora.graph.model import (
     AssetNode,
@@ -28,13 +30,26 @@ from graphora.resolve import python as py_resolve
 from graphora.resolve.tsconfig import load_configs
 
 
-def _decode(data: bytes) -> str | None:
-    """Decode by PEP 263 rules without executing anything; None if the file is not valid text."""
-    try:
-        encoding, _ = tokenize.detect_encoding(io.BytesIO(data).readline)
-        return data.decode(encoding)
-    except (SyntaxError, LookupError, UnicodeDecodeError):
-        return None
+@dataclass(frozen=True)
+class Analysis:
+    """One analysis run: the document, its warnings, and the exact bytes read for each readable walked file
+    (specs/005-storage-http-api/research.md § R4). Files that could not be opened have no entry."""
+
+    doc: GraphDocument
+    warnings: tuple[str, ...]
+    contents: Mapping[str, bytes]
+
+
+def current_extractors() -> dict[str, str]:
+    """The extractor versions this code writes into every document (005 research § R6)."""
+    return {
+        "js-adapter": js.VERSION,
+        "js-resolver": js_resolve.RESOLVER_VERSION,
+        "node-builtins": js_resolve.BUILTINS_VERSION,
+        "python-adapter": python.VERSION,
+        "python-resolver": py_resolve.RESOLVER_VERSION,
+        "python-stdlib": py_resolve.STDLIB_VERSION,
+    }
 
 
 def _python_graph(facts: dict[str, py_extract.FileFacts | None], snapshot: str, nodes: dict[str, Node], edges: list[Edge]) -> None:
@@ -116,6 +131,12 @@ def build(
 
     A given `snapshot` (e.g. the commit SHA of a fetched tarball) is used as is (specs/002-repo-ingest FR-014).
     """
+    result = analyze(root, max_files, max_bytes, deadline, snapshot)
+    return result.doc, result.warnings
+
+
+def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snapshot: str | None = None) -> Analysis:
+    """`build()` plus the bytes it read, so a store keeps exactly what was analyzed."""
     walked = walk(root, max_files, max_bytes, deadline)
     contents: dict[str, bytes] = {}
     for path in walked.files:
@@ -168,18 +189,11 @@ def build(
 
     doc = GraphDocument(
         snapshot=snapshot,
-        extractors={
-            "js-adapter": js.VERSION,
-            "js-resolver": js_resolve.RESOLVER_VERSION,
-            "node-builtins": js_resolve.BUILTINS_VERSION,
-            "python-adapter": python.VERSION,
-            "python-resolver": py_resolve.RESOLVER_VERSION,
-            "python-stdlib": py_resolve.STDLIB_VERSION,
-        },
+        extractors=current_extractors(),
         nodes=tuple(nodes.values()),
         # `import os, os.path` or `from m import f, f` repeat one fact; keeping both would repeat an edge id
         edges=tuple(dict.fromkeys(edges)),
         files=tuple(coverage),
         skipped=tuple(walked.skipped),
     )
-    return doc, configs.invalid
+    return Analysis(doc, configs.invalid, MappingProxyType(contents))

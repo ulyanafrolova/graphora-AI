@@ -8,6 +8,20 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: graphora
+          POSTGRES_PASSWORD: graphora
+          POSTGRES_DB: graphora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U graphora -d graphora_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -18,4 +32,6 @@ jobs:
       - name: Lint
         run: cd backend && uv run ruff check src tests scripts
       - name: Test
+        env:
+          GRAPHORA_TEST_DATABASE_URL: postgresql://graphora:graphora@127.0.0.1:5432/graphora_test
         run: cd backend && uv run pytest

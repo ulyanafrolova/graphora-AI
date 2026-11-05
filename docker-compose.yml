@@ -1,0 +1,22 @@
+# Local PostgreSQL for the analysis store (specs/005-storage-http-api/research.md § R12).
+# Bound to 127.0.0.1 only. Start with `make db`, stop with `make db-down`.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: graphora
+      POSTGRES_PASSWORD: graphora
+      POSTGRES_DB: graphora
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - graphora-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graphora -d graphora"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  graphora-pgdata:
