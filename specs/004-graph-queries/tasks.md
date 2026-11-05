@@ -282,13 +282,13 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T028 [P] Write `backend/tests/integration/test_query_performance.py`, marked `slow` (SC-004): build a
+- [X] T028 [P] Write `backend/tests/integration/test_query_performance.py`, marked `slow` (SC-004): build a
   synthetic 5,000-file document in memory with `graph/model.py` types (about 20,000 edges, a few loops),
   `serialize.dumps` it, then assert `loads` + `index` take < 2 s and each of the six questions (impact and
   dependents on the most depended-on file, cycles, key files with no limit) takes < 1 s.
-- [ ] T029 [P] Run every quickstart.md scenario by hand and fix any mismatch between the CLI and
+- [X] T029 [P] Run every quickstart.md scenario by hand and fix any mismatch between the CLI and
   contracts/cli.md; update `specs/004-graph-queries/quickstart.md` if a command changed.
-- [ ] T030 Run `make check` from the repository root; then mark the PR ready only after rebasing on `main`
+- [X] T030 Run `make check` from the repository root; then mark the PR ready only after rebasing on `main`
   if 005 has been merged (plan.md § Coordination).
 
 **Commit** `add query performance test and polish`, push.

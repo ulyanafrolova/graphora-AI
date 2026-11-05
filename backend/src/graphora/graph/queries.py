@@ -88,9 +88,13 @@ def _links(ix: GraphIndex, include_type_only: bool) -> nx.DiGraph:
     return ix._runtime_links
 
 
-def _limit(items: list[T], limit: int | None) -> tuple[list[T], int, bool]:
+def _check_limit(limit: int | None) -> None:
     if limit is not None and limit < 0:
         raise ValueError(f"limit must be 0 or more, got {limit}")
+
+
+def _limit(items: list[T], limit: int | None) -> tuple[list[T], int, bool]:
+    _check_limit(limit)
     total = len(items)
     if limit is None:
         return items, total, False
@@ -178,7 +182,7 @@ def _answer(ix: GraphIndex, question: Question, target: str | None, options: dic
 
 def dependencies(ix: GraphIndex, target: str, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
     """What the node imports or re-exports, one item per target in id order (FR-004)."""
-    _limit([], limit)
+    _check_limit(limit)
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
     items = [_item(dep, (ix.link(node, dep, include_type_only),)) for dep in sorted(g.successors(node))]
@@ -202,7 +206,7 @@ def dependents(
 ) -> Answer:
     """The files that import or re-export the node, one item per file in id order (FR-005). With
     `follow_barrels`, also the files that import a name the node defines through re-exporting files (FR-010)."""
-    _limit([], limit)
+    _check_limit(limit)
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
     found = {}
@@ -234,7 +238,7 @@ def impact(
     """Every file that depends on the node transitively, nearest first, each with one chain to it (FR-006,
     research § R5). Links are walked backwards from the target; only files have dependents, so `ext:` and
     `asset:` nodes are never passed through."""
-    _limit([], limit)
+    _check_limit(limit)
     _check_depth(max_depth)
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
@@ -385,7 +389,7 @@ def _shortest_cycle(g: nx.DiGraph, start: str, members: set[str]) -> list[str]:
 
 def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
     """Every group of files that depend on each other in a loop, with one example cycle each (FR-008)."""
-    _limit([], limit)
+    _check_limit(limit)
     links = _links(ix, include_type_only)
     files = links.subgraph(n for n in links.nodes if n.startswith("file:"))
     runtime = _links(ix, include_type_only=False)
@@ -415,7 +419,7 @@ def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None 
 
 def neighbors(ix: GraphIndex, target: str, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
     """What the node imports and what imports it, together (FR-007). The limit cuts each list on its own."""
-    _limit([], limit)
+    _check_limit(limit)
     out = dependencies(ix, target, include_type_only=include_type_only)
     into = dependents(ix, target, include_type_only=include_type_only)
     outgoing, out_total, out_cut = _limit(list(out.items or ()), limit)
@@ -440,7 +444,7 @@ def key_files(ix: GraphIndex, *, include_type_only: bool = True, limit: int | No
     Each file's dependents are counted once on the condensation (every loop squeezed into one node), walked in
     topological order; sets of files are Python ints used as bitsets, one bit per file in id order. Files in one
     loop share the set and never count themselves."""
-    _limit([], limit)
+    _check_limit(limit)
     links = _links(ix, include_type_only)
     files = links.subgraph(n for n in links.nodes if n.startswith("file:"))
     bit = {f: 1 << i for i, f in enumerate(sorted(files.nodes))}

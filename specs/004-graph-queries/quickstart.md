@@ -34,8 +34,8 @@ uv run graphora analyze ../fixtures/repos/ts-barrels/repo --out /tmp/barrels.jso
 | 3 | `uv run graphora query /tmp/barrels.json dependents <defining file>` then add `--follow-barrels` | without the flag only the barrel is listed; with it the real importers appear, each with the import line and the re-export lines |
 | 4 | `uv run graphora query /tmp/barrels.json cycles --no-type-only` | the loop through type-only imports disappears |
 | 5 | `uv run graphora query /tmp/cycles.json key-files --format json` | JSON as in `answers.md`; running it twice gives identical bytes (`cmp`) |
-| 6 | `uv run graphora query /tmp/cycles.json dependents no/such.py` | exit 7, message `no/such.py is not in snapshot …` |
-| 7 | `echo '{}' \| uv run graphora query - cycles` | exit 6, invalid graph document |
+| 6 | `uv run graphora query /tmp/cycles.json dependents no/such.py` | exit 8, message `no/such.py is not in snapshot …` |
+| 7 | `echo '{}' \| uv run graphora query - cycles` | exit 7, invalid graph document |
 | 8 | `uv run graphora analyze ../fixtures/repos/ts-app/repo \| uv run graphora query - dependents react` | files importing `react`, each with its import lines |
 
 ## Done when
