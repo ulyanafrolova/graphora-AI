@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
+import re
 import tempfile
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
@@ -38,14 +39,30 @@ def with_skipped(doc: GraphDocument, extra: tuple[Skipped, ...]) -> GraphDocumen
     return dataclasses.replace(doc, skipped=tuple(sorted(doc.skipped + extra, key=lambda s: s.path)))
 
 
+_SHA = re.compile(r"[0-9a-f]{40}")
+
+
 @contextmanager
-def fetch_snapshot(source: Source, limits: IngestLimits, deadline: Deadline) -> Iterator[FetchedSnapshot]:
-    """Valid inside the `with` block; a temp folder is removed when the block exits."""
+def fetch_snapshot(
+    source: Source, limits: IngestLimits, deadline: Deadline, sha: str | None = None
+) -> Iterator[FetchedSnapshot]:
+    """Valid inside the `with` block; a temp folder is removed when the block exits.
+
+    `sha`, only for a GitHub source: a commit SHA the caller already resolved (e.g. to check a store first,
+    specs/005-storage-http-api research § R6). It replaces the ref lookup, so no `api.github.com` request is
+    made. `sha=None` keeps the 002 behaviour.
+    """
+    if sha is not None:
+        if not isinstance(source, GitHubSource):
+            raise ValueError("sha is allowed only for a GitHub source")
+        if not _SHA.fullmatch(sha):
+            raise ValueError(f"sha must be 40 lower-case hex characters: {sha!r}")
     if isinstance(source, LocalSource):
         root = source.path.resolve()
         yield FetchedSnapshot(root=root, repository=root.name, snapshot=None, skipped=())
     elif isinstance(source, GitHubSource):
-        sha = github.resolve_sha(source, deadline)
+        if sha is None:
+            sha = github.resolve_sha(source, deadline)
         with tempfile.TemporaryDirectory(prefix="graphora-") as tmp:
             with closing(github.open_tarball(source, sha, limits, deadline)) as stream:
                 root, skipped = extract_tar_gz(stream, Path(tmp), limits, deadline, expected_sha=sha)

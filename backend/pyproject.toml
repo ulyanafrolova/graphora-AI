@@ -10,6 +10,10 @@ dependencies = [
     "tree-sitter-typescript==0.23.2",
     "tree-sitter-javascript==0.25.0",
     "dulwich==1.2.19",
+    "psycopg[binary]==3.3.8",
+    "fastapi==0.162.0",
+    "uvicorn==0.54.0",
+    "jsonschema==4.26.0",
 ]
 
 [project.scripts]
@@ -17,8 +21,8 @@ graphora = "graphora.cli:main"
 
 [dependency-groups]
 dev = [
+    "httpx==0.28.1",
     "pytest==9.1.1",
-    "jsonschema==4.26.0",
     "ruff==0.14.0",
 ]
 
@@ -31,7 +35,10 @@ packages = ["src/graphora"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["slow: long-running tests (deselect with -m 'not slow')"]
+markers = [
+    "slow: long-running tests (deselect with -m 'not slow')",
+    "db: needs PostgreSQL via GRAPHORA_TEST_DATABASE_URL (deselect with -m 'not db')",
+]
 
 [tool.ruff]
 line-length = 120
