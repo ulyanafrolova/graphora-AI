@@ -221,16 +221,51 @@ File contents are stored once per hash, so re-analyzing a commit or a similar co
 
 ## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/). Python projects only for now.
+Requires [uv](https://docs.astral.sh/uv/). Python and TypeScript/JavaScript projects are fully analyzed;
+other languages are detected and listed in the coverage report.
 
 ```
 cd backend && uv sync
 uv run graphora analyze path/to/project --out graph.json
+uv run graphora analyze https://github.com/<owner>/<repo> --ref <ref> --out graph.json
+uv run graphora analyze project.zip --out graph.json
 ```
 
-The output is a deterministic JSON graph: one node per file and external package, one edge per import
-with `file:line@snapshot`, a confidence level and a snippet hash, plus a coverage report. The format is
-defined by [schema/graph.schema.json](schema/graph.schema.json). Analyzed code is never executed.
+Ask questions about a graph:
+
+```
+uv run graphora query graph.json dependents src/app/auth.py
+uv run graphora query graph.json impact src/app/auth.py --max-depth 3 --follow-barrels
+uv run graphora query graph.json cycles
+uv run graphora query graph.json key-files --format json
+```
+
+Questions: `dependencies`, `dependents`, `impact`, `neighbors`, `cycles`, `key-files`.
+
+### Store and HTTP API
+
+```
+make db                                   # PostgreSQL 17 in docker compose
+export GRAPHORA_DATABASE_URL=postgresql://graphora:graphora@127.0.0.1:5432/graphora
+uv run graphora analyze <source> --store  # save, or reuse a stored analysis
+uv run graphora serve                     # http://127.0.0.1:8000
+```
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/v1/repositories` | Stored repositories and their snapshots |
+| `GET /api/v1/graph?repository=&snapshot=` | The graph document, as stored |
+| `GET /api/v1/file?repository=&snapshot=&path=[&start=&end=]` | Source lines for the viewer |
+
+### Tests
+
+```
+uv run pytest -m "not db"   # without PostgreSQL
+uv run pytest               # all, needs GRAPHORA_TEST_DATABASE_URL
+```
+
+Golden fixtures in [fixtures/repos/](fixtures/repos) (`py-*`, `ts-*`, `js-commonjs`, `mixed-fullstack`)
+have hand-written `expected.json` files as ground truth.
 
 ## Authors
 
