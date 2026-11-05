@@ -1,0 +1,248 @@
+[
+  {
+    "question": "dependents",
+    "target": "src/util.ts",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/broken.ts",
+          "chain": [
+            "src/broken.ts:1"
+          ]
+        },
+        {
+          "node": "file:src/main.ts",
+          "chain": [
+            "src/main.ts:1"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "react",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/components/Button.tsx",
+          "chain": [
+            "src/components/Button.tsx:1"
+          ]
+        },
+        {
+          "node": "file:src/main.ts",
+          "chain": [
+            "src/main.ts:11"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "src/cycle/a.ts",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/cycle/b.ts",
+          "chain": [
+            "src/cycle/b.ts:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:src/lib/index.ts",
+          "chain": [
+            "src/lib/index.ts:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:src/main.ts",
+          "chain": [
+            "src/main.ts:2",
+            "src/lib/index.ts:1"
+          ],
+          "distance": 2
+        }
+      ],
+      "total": 3,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/main.ts",
+    "options": {
+      "limit": 3
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "asset:src/data.json",
+          "chain": [
+            "src/main.ts:13"
+          ]
+        },
+        {
+          "node": "asset:src/styles.css",
+          "chain": [
+            "src/main.ts:12"
+          ]
+        },
+        {
+          "node": "ext:npm:@app/missing",
+          "chain": [
+            "src/main.ts:16"
+          ]
+        }
+      ],
+      "unresolved": [
+        "src/main.ts:14 not_found",
+        "src/main.ts:15 not_found"
+      ],
+      "total": 12,
+      "truncated": true,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {},
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "file:src/cycle/a.ts",
+            "file:src/cycle/b.ts"
+          ],
+          "cycle": [
+            "src/cycle/a.ts:1",
+            "src/cycle/b.ts:1"
+          ],
+          "type_only": false
+        }
+      ],
+      "total": 1
+    }
+  },
+  {
+    "question": "neighbors",
+    "target": "src/lib/index.ts",
+    "options": {},
+    "expected": {
+      "outgoing": [
+        {
+          "node": "file:src/cycle/a.ts",
+          "chain": [
+            "src/lib/index.ts:1"
+          ]
+        }
+      ],
+      "incoming": [
+        {
+          "node": "file:src/main.ts",
+          "chain": [
+            "src/main.ts:2"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "key_files",
+    "target": null,
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/cycle/a.ts",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:src/cycle/b.ts",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/models.ts",
+          "chain": [],
+          "transitive_dependents": 2,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:src/util.ts",
+          "chain": [],
+          "transitive_dependents": 2,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:src/config.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/lib/index.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/polyfill.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:src/shapes.ts",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        }
+      ],
+      "total": 8,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  }
+]

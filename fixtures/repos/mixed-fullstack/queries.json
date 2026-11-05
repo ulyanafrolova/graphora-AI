@@ -1,0 +1,101 @@
+[
+  {
+    "question": "dependents",
+    "target": "backend/app/models.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:backend/app/api.py",
+          "chain": [
+            "backend/app/api.py:3"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "ext:python:yaml",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:backend/app/api.py",
+          "chain": [
+            "backend/app/api.py:1"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "backend/app/models.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:backend/app/api.py",
+          "chain": [
+            "backend/app/api.py:3"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 1,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "frontend/src/main.tsx",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:npm:react",
+          "chain": [
+            "frontend/src/main.tsx:1"
+          ]
+        },
+        {
+          "node": "ext:npm:yaml",
+          "chain": [
+            "frontend/src/main.tsx:2"
+          ]
+        },
+        {
+          "node": "file:frontend/src/api.ts",
+          "chain": [
+            "frontend/src/main.tsx:3"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

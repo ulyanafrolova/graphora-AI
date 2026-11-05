@@ -1,0 +1,43 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "file:src/app.ts", "kind": "file", "language": "typescript", "definitions": [],
+     "exports": [{"name": "app", "local": "app", "line": 3}]},
+    {"id": "file:src/components/Button.tsx", "kind": "file", "language": "typescript",
+     "definitions": [{"kind": "function", "name": "Button", "line": 1, "exported_as": ["Button"]}], "exports": []},
+    {"id": "file:src/components/Card.tsx", "kind": "file", "language": "typescript",
+     "definitions": [{"kind": "function", "name": "Card", "line": 1, "exported_as": ["Card"]}], "exports": []},
+    {"id": "file:src/components/index.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": []},
+    {"id": "file:src/components/more.ts", "kind": "file", "language": "typescript", "definitions": [], "exports": []},
+    {"id": "file:src/types/a.ts", "kind": "file", "language": "typescript",
+     "definitions": [{"kind": "interface", "name": "A", "line": 3, "exported_as": ["A"]}], "exports": []},
+    {"id": "file:src/types/b.ts", "kind": "file", "language": "typescript",
+     "definitions": [{"kind": "interface", "name": "B", "line": 3, "exported_as": ["B"]}], "exports": []}
+  ],
+  "edges": [
+    {"source": "file:src/app.ts", "line": 1, "type": "imports", "form": "static", "target": "file:src/components/index.ts", "symbol": "Button", "confidence": "resolved", "reason": null},
+    {"source": "file:src/app.ts", "line": 1, "type": "imports", "form": "static", "target": "file:src/components/index.ts", "symbol": "Card", "confidence": "resolved", "reason": null},
+    {"source": "file:src/app.ts", "line": 1, "type": "imports", "form": "static", "target": "file:src/components/index.ts", "symbol": "Missing", "confidence": "resolved", "reason": null},
+    {"source": "file:src/app.ts", "line": 1, "type": "imports", "form": "static", "target": "file:src/components/index.ts", "symbol": "Panel", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/components/index.ts", "line": 1, "type": "reexports", "form": "static", "target": "file:src/components/Button.tsx", "symbol": "Button", "confidence": "resolved", "reason": null},
+    {"source": "file:src/components/index.ts", "line": 2, "type": "reexports", "form": "static", "target": "file:src/components/more.ts", "symbol": "*", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/components/more.ts", "line": 1, "type": "reexports", "form": "static", "target": "file:src/components/Card.tsx", "symbol": "*", "confidence": "resolved", "reason": null},
+    {"source": "file:src/components/more.ts", "line": 2, "type": "reexports", "form": "static", "target": "file:src/components/Card.tsx", "symbol": "Card", "alias": "Panel", "confidence": "resolved", "reason": null},
+
+    {"source": "file:src/types/a.ts", "line": 1, "type": "imports", "form": "static", "type_only": true, "target": "file:src/types/b.ts", "symbol": "B", "confidence": "resolved", "reason": null},
+    {"source": "file:src/types/b.ts", "line": 1, "type": "imports", "form": "static", "type_only": true, "target": "file:src/types/a.ts", "symbol": "A", "confidence": "resolved", "reason": null}
+  ],
+  "coverage": [
+    {"path": "package.json", "language": "typescript", "status": "not_code", "flags": []},
+    {"path": "src/app.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/components/Button.tsx", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/components/Card.tsx", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/components/index.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/components/more.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/types/a.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "src/types/b.ts", "language": "typescript", "status": "analyzed", "flags": []}
+  ],
+  "skipped": []
+}

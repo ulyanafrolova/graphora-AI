@@ -1,0 +1,179 @@
+[
+  {
+    "question": "dependents",
+    "target": "src/components/Button.tsx",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/components/index.ts",
+          "chain": [
+            "src/components/index.ts:1"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 0,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/components/Button.tsx",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/app.ts",
+          "chain": [
+            "src/app.ts:1",
+            "src/components/index.ts:1"
+          ]
+        },
+        {
+          "node": "file:src/components/index.ts",
+          "chain": [
+            "src/components/index.ts:1"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 0,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/components/Card.tsx",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/components/more.ts",
+          "chain": [
+            "src/components/more.ts:1"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 0,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/components/Card.tsx",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/app.ts",
+          "chain": [
+            "src/app.ts:1",
+            "src/components/index.ts:2",
+            "src/components/more.ts:1"
+          ]
+        },
+        {
+          "node": "file:src/components/more.ts",
+          "chain": [
+            "src/components/more.ts:1"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 0,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "src/components/Card.tsx",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/app.ts",
+          "chain": [
+            "src/app.ts:1",
+            "src/components/index.ts:2",
+            "src/components/more.ts:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:src/components/more.ts",
+          "chain": [
+            "src/components/more.ts:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:src/components/index.ts",
+          "chain": [
+            "src/components/index.ts:2",
+            "src/components/more.ts:1"
+          ],
+          "distance": 2
+        }
+      ],
+      "total": 3,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 0,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {},
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "file:src/types/a.ts",
+            "file:src/types/b.ts"
+          ],
+          "cycle": [
+            "src/types/a.ts:1",
+            "src/types/b.ts:1"
+          ],
+          "type_only": true
+        }
+      ],
+      "total": 1
+    }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {
+      "include_type_only": false
+    },
+    "expected": {
+      "groups": [],
+      "total": 0
+    }
+  }
+]

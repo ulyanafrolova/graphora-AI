@@ -1,0 +1,150 @@
+[
+  {
+    "question": "dependents",
+    "target": "lib/config.cjs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:esm/entry.mjs",
+          "chain": [
+            "esm/entry.mjs:2"
+          ]
+        },
+        {
+          "node": "file:index.js",
+          "chain": [
+            "index.js:3"
+          ]
+        },
+        {
+          "node": "file:sub/widget.js",
+          "chain": [
+            "sub/widget.js:1"
+          ]
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "lodash",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:index.js",
+          "chain": [
+            "index.js:7"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "lib/helpers.js",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:esm/entry.mjs",
+          "chain": [
+            "esm/entry.mjs:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:index.js",
+          "chain": [
+            "index.js:2"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 2,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "index.js",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:npm:lodash",
+          "chain": [
+            "index.js:7"
+          ]
+        },
+        {
+          "node": "ext:npm:node:test",
+          "chain": [
+            "index.js:9"
+          ]
+        },
+        {
+          "node": "ext:npm:path",
+          "chain": [
+            "index.js:1"
+          ]
+        },
+        {
+          "node": "ext:npm:test",
+          "chain": [
+            "index.js:8"
+          ]
+        },
+        {
+          "node": "file:lib/config.cjs",
+          "chain": [
+            "index.js:3"
+          ]
+        },
+        {
+          "node": "file:lib/helpers.js",
+          "chain": [
+            "index.js:2"
+          ]
+        },
+        {
+          "node": "file:lib/template.js",
+          "chain": [
+            "index.js:4"
+          ]
+        }
+      ],
+      "unresolved": [
+        "index.js:6 dynamic",
+        "index.js:10 not_found",
+        "index.js:11 not_found",
+        "index.js:12 not_found",
+        "index.js:15 dynamic"
+      ],
+      "total": 7,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

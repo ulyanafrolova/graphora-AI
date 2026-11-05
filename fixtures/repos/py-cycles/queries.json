@@ -1,0 +1,189 @@
+[
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {},
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "file:loop/a.py",
+            "file:loop/b.py",
+            "file:loop/c.py"
+          ],
+          "cycle": [
+            "loop/a.py:1",
+            "loop/b.py:1",
+            "loop/c.py:1"
+          ],
+          "type_only": false
+        },
+        {
+          "files": [
+            "file:pair/x.py",
+            "file:pair/y.py"
+          ],
+          "cycle": [
+            "pair/x.py:1",
+            "pair/y.py:1"
+          ],
+          "type_only": false
+        },
+        {
+          "files": [
+            "file:self_ref.py"
+          ],
+          "cycle": [
+            "self_ref.py:1"
+          ],
+          "type_only": false
+        }
+      ],
+      "total": 3
+    }
+  },
+  {
+    "question": "impact",
+    "target": "loop/a.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:loop/c.py",
+          "chain": [
+            "loop/c.py:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:user.py",
+          "chain": [
+            "user.py:1"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "file:loop/b.py",
+          "chain": [
+            "loop/b.py:1",
+            "loop/c.py:1"
+          ],
+          "distance": 2
+        }
+      ],
+      "total": 3,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "neighbors",
+    "target": "loop/a.py",
+    "options": {},
+    "expected": {
+      "outgoing": [
+        {
+          "node": "file:loop/b.py",
+          "chain": [
+            "loop/a.py:1"
+          ]
+        }
+      ],
+      "incoming": [
+        {
+          "node": "file:loop/c.py",
+          "chain": [
+            "loop/c.py:1"
+          ]
+        },
+        {
+          "node": "file:user.py",
+          "chain": [
+            "user.py:1"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "neighbors",
+    "target": "user.py",
+    "options": {},
+    "expected": {
+      "outgoing": [
+        {
+          "node": "file:loop/a.py",
+          "chain": [
+            "user.py:1"
+          ]
+        }
+      ],
+      "incoming": [],
+      "unresolved": [
+        "user.py:2 not_found"
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "key_files",
+    "target": null,
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:loop/a.py",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 2
+        },
+        {
+          "node": "file:loop/b.py",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:loop/c.py",
+          "chain": [],
+          "transitive_dependents": 3,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:pair/x.py",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        },
+        {
+          "node": "file:pair/y.py",
+          "chain": [],
+          "transitive_dependents": 1,
+          "direct_dependents": 1
+        }
+      ],
+      "total": 5,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]
