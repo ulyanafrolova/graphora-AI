@@ -61,11 +61,6 @@ def test_symbol_filter_matches_reexport_alias():
     assert nodes(dependents(ix, "log.ts", symbol="Logger")) == ["file:index.ts"]
 
 
-def test_follow_barrels_not_yet():
-    with pytest.raises(NotImplementedError):
-        dependents(index(make_doc([edge("b.py", "a.py")])), "a.py", follow_barrels=True)
-
-
 # --- confidence ---------------------------------------------------------------------------------------------
 
 

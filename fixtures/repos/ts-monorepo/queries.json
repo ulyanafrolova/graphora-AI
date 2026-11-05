@@ -124,5 +124,35 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "dependents",
+    "target": "packages/ui/src/log.ts",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:packages/app/src/main.ts",
+          "chain": [
+            "packages/app/src/main.ts:2",
+            "packages/ui/src/index.ts:2"
+          ]
+        },
+        {
+          "node": "file:packages/ui/src/index.ts",
+          "chain": [
+            "packages/ui/src/index.ts:2"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

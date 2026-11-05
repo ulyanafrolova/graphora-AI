@@ -8,7 +8,7 @@ from typing import TypeVar
 
 import networkx as nx
 
-from graphora.graph.model import CoverageFile, Edge, GraphDocument, Node, UnresolvedNode
+from graphora.graph.model import CoverageFile, Edge, FileNode, GraphDocument, Node, UnresolvedNode
 from graphora.graph.results import Answer, Completeness, CycleGroup, Item, Link, Question, strongest, weakest
 from graphora.graph.serialize import edge_sort_key
 
@@ -48,6 +48,7 @@ class GraphIndex:
             {pair: tuple(sorted(edges, key=edge_sort_key)) for pair, edges in pairs.items()},
         )
         self._runtime_links: nx.DiGraph | None = None
+        self._barrels: dict[bool, dict[tuple[str, str], Link]] = {}
 
         flagged = sum(1 for f in doc.files if f.status == "analyzed" and f.flags)
         self.completeness = Completeness(
@@ -199,20 +200,24 @@ def dependents(
     follow_barrels: bool = False,
     limit: int | None = None,
 ) -> Answer:
-    """The files that import or re-export the node, one item per file in id order (FR-005)."""
+    """The files that import or re-export the node, one item per file in id order (FR-005). With
+    `follow_barrels`, also the files that import a name the node defines through re-exporting files (FR-010)."""
     _limit([], limit)
-    if follow_barrels:
-        raise NotImplementedError("follow_barrels arrives with user story 4")
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
-    items = []
-    for dep in sorted(g.predecessors(node)):
+    found = {}
+    for dep in g.predecessors(node):
         edges = g.edges[dep, node]["edges"]
         if symbol is not None:
             edges = tuple(e for e in edges if _matches(e, symbol))
             if not edges:
                 continue
-        items.append(_item(dep, (_make_link(dep, node, edges),)))
+        found[dep] = _make_link(dep, node, edges)
+    if follow_barrels:
+        for (dep, defining), link in _barrel_links(ix, include_type_only, symbol).items():
+            if defining == node and dep not in found:
+                found[dep] = link
+    items = [_item(dep, (found[dep],)) for dep in sorted(found)]
     options = {"follow_barrels": follow_barrels, "include_type_only": include_type_only, "limit": limit, "symbol": symbol}
     return _answer(ix, "dependents", node, options, items, limit)
 
@@ -231,23 +236,34 @@ def impact(
     `asset:` nodes are never passed through."""
     _limit([], limit)
     _check_depth(max_depth)
-    if follow_barrels:
-        raise NotImplementedError("follow_barrels arrives with user story 4")
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
+    barrels = _barrel_links(ix, include_type_only) if follow_barrels else {}
+    barrel_preds: dict[str, set[str]] = defaultdict(set)
+    barrel_succs: dict[str, set[str]] = defaultdict(set)
+    for dep, defining in barrels:
+        barrel_preds[defining].add(dep)
+        barrel_succs[dep].add(defining)
+
+    def preds(n: str) -> set[str]:
+        return set(g.predecessors(n)) | barrel_preds[n] if n in g else barrel_preds[n]
 
     distance = {node: 0}
     level = [node]
     depth = 0
     while level and (max_depth is None or depth < max_depth):
         depth += 1
-        level = sorted({dep for n in level for dep in g.predecessors(n) if dep not in distance})
+        level = sorted({dep for n in level for dep in preds(n) if dep not in distance})
         for dep in level:
             distance[dep] = depth
-    cut = max_depth is not None and any(dep not in distance for n in level for dep in g.predecessors(n))
+    cut = max_depth is not None and any(dep not in distance for n in level for dep in preds(n))
 
     def next_hop(n: str) -> str:
-        return min(s for s in g.successors(n) if distance.get(s) == distance[n] - 1)
+        succs = set(g.successors(n)) | barrel_succs[n]
+        return min(s for s in succs if distance.get(s) == distance[n] - 1)
+
+    def link(a: str, b: str) -> Link:
+        return ix.link(a, b, include_type_only) if g.has_edge(a, b) else barrels[(a, b)]
 
     items = []
     for dep in sorted((n for n in distance if n != node), key=lambda n: (distance[n], n)):
@@ -255,11 +271,85 @@ def impact(
         current = dep
         while current != node:
             hop = next_hop(current)
-            chain.append(ix.link(current, hop, include_type_only))
+            chain.append(link(current, hop))
             current = hop
         items.append(_item(dep, tuple(chain), distance[dep]))
     options = {"follow_barrels": follow_barrels, "include_type_only": include_type_only, "limit": limit, "max_depth": max_depth}
     return _answer(ix, "impact", node, options, items, limit, cut=cut)
+
+
+def _defines(node: FileNode, name: str) -> bool:
+    return any(name in (d.exported_as or ()) for d in node.definitions) or any(x.name == name for x in node.exports or ())
+
+
+def _trace(
+    ix: GraphIndex, reexports: dict[str, list[Edge]], file_id: str, name: str, seen: frozenset[str]
+) -> tuple[str, tuple[Edge, ...]] | None:
+    """Where `name`, as exported by `file_id`, is defined, and the re-export edges that lead there (research § R8).
+    Only TS/JS files are followed (Python files carry no export records); a file already on the path stops it."""
+    node = ix.nodes.get(file_id)
+    if not isinstance(node, FileNode) or node.exports is None:
+        return None
+    if _defines(node, name):
+        return file_id, ()
+    seen = seen | {file_id}
+    for r in reexports.get(file_id, ()):
+        if r.target in seen:
+            continue
+        if r.symbol == "*" and r.alias == name:  # export * as name from "./x": the whole module
+            return r.target, (r,)
+        if r.symbol != "*" and (r.alias or r.symbol) == name:
+            found = _trace(ix, reexports, r.target, r.symbol, seen)
+            if found is not None:
+                return found[0], (r,) + found[1]
+    for r in reexports.get(file_id, ()):
+        if r.symbol == "*" and r.alias is None and r.target not in seen:
+            found = _trace(ix, reexports, r.target, name, seen)
+            if found is not None:
+                return found[0], (r,) + found[1]
+    return None
+
+
+def _barrel_links(ix: GraphIndex, include_type_only: bool, symbol: str | None = None) -> dict[tuple[str, str], Link]:
+    """Derived links (importer, defining file) for names imported from re-exporting files. `edges` are the
+    import edges, `via` the re-export edges of the first of them; a pair already linked directly is left out."""
+    if symbol is None and include_type_only in ix._barrels:
+        return ix._barrels[include_type_only]
+    kept = [e for e in sorted(ix.doc.edges, key=edge_sort_key) if e.confidence != "unresolved" and (include_type_only or not e.type_only)]
+    reexports: dict[str, list[Edge]] = defaultdict(list)
+    for e in kept:
+        if e.type == "reexports" and e.target.startswith("file:"):
+            reexports[e.source].append(e)
+
+    found: dict[tuple[str, str], tuple[list[Edge], tuple[Edge, ...]]] = {}
+    for e in kept:
+        if e.type != "imports" or e.symbol in (None, "*") or (symbol is not None and e.symbol != symbol):
+            continue
+        traced = _trace(ix, reexports, e.target, e.symbol, frozenset())
+        if traced is None or traced[0] in (e.target, e.source):
+            continue
+        pair = (e.source, traced[0])
+        if pair not in found:
+            found[pair] = ([], traced[1])
+        found[pair][0].append(e)
+
+    direct = _links(ix, include_type_only)
+    out = {}
+    for pair in sorted(found):
+        if direct.has_edge(*pair):
+            continue
+        edges, via = tuple(found[pair][0]), found[pair][1]
+        out[pair] = Link(
+            source=pair[0],
+            target=pair[1],
+            edges=edges,
+            confidence=weakest([strongest(e.confidence for e in edges)] + [v.confidence for v in via]),
+            type_only=all(e.type_only for e in edges) or any(v.type_only for v in via),
+            via=via,
+        )
+    if symbol is None:
+        ix._barrels[include_type_only] = out
+    return out
 
 
 def _loops(g: nx.DiGraph) -> list[tuple[str, ...]]:

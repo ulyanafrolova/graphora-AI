@@ -116,3 +116,10 @@ def test_neighbors_and_key_files(graph):
     assert text.splitlines()[1] == "pkg/a.py  transitive 4  direct 4"
     answer = json.loads(run_query(graph, "key-files", "--format", "json")[1])
     assert answer["options"]["limit"] == 10
+
+
+def test_follow_barrels(tmp_path):
+    path = tmp_path / "g.json"
+    path.write_bytes(analyzed_graph("ts-barrels"))
+    text = run_query(str(path), "dependents", "src/components/Card.tsx", "--follow-barrels")[1].decode("utf-8")
+    assert "src/app.ts  src/app.ts:1 → src/components/index.ts:2 → src/components/more.ts:1 → src/components/Card.tsx" in text

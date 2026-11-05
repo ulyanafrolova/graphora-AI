@@ -154,7 +154,11 @@ def _name(node_id: str) -> str:
 
 
 def _chain_text(chain: tuple[Link, ...]) -> str:
-    steps = [f"{_name(link.source)}:{link.edges[0].line}" for link in chain]
+    """`a.py:3 → b.py:7 → target.py`; a barrel link adds its re-export lines (`app.ts:1 → index.ts:2 → Card.tsx`)."""
+    steps = []
+    for link in chain:
+        steps.append(f"{_name(link.source)}:{link.edges[0].line}")
+        steps += [f"{_name(e.source)}:{e.line}" for e in link.via]
     return " → ".join(steps + [_name(chain[-1].target)])
 
 

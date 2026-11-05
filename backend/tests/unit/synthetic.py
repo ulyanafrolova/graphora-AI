@@ -17,7 +17,9 @@ def edge(source, target, line=1, *, column=1, symbol=None, confidence="resolved"
 def _node(node_id: str):
     kind, _, rest = node_id.partition(":")
     if kind == "file":
-        return FileNode(rest, "typescript" if rest.endswith((".ts", ".tsx")) else "python")
+        if rest.endswith((".ts", ".tsx")):
+            return FileNode(rest, "typescript", (), ())
+        return FileNode(rest, "python")
     if kind == "ext":
         ecosystem, _, name = rest.partition(":")
         return ExternalNode(name, ecosystem, "third_party")
@@ -27,10 +29,12 @@ def _node(node_id: str):
     return AssetNode(rest)
 
 
-def make_doc(edges, files=(), coverage=(), skipped=()):
-    """A synthetic document: nodes for every edge end and every extra file path; coverage defaults to analyzed."""
-    ids = {e.source for e in edges} | {e.target for e in edges} | {f"file:{p}" for p in files}
-    nodes = tuple(_node(i) for i in sorted(ids))
+def make_doc(edges, files=(), coverage=(), skipped=(), nodes=()):
+    """A synthetic document: nodes for every edge end and every extra file path; coverage defaults to analyzed.
+    `nodes` replaces the generated node of the same id (to give a file definitions or exports)."""
+    given = {n.id: n for n in nodes}
+    ids = {e.source for e in edges} | {e.target for e in edges} | {f"file:{p}" for p in files} | set(given)
+    nodes = tuple(given.get(i) or _node(i) for i in sorted(ids))
     covered = {c.path for c in coverage}
     analyzed = tuple(
         CoverageFile(n.path, n.language, "analyzed") for n in nodes if isinstance(n, FileNode) and n.path not in covered

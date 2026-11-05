@@ -38,7 +38,11 @@ def _path(node_id: str) -> str:
 
 
 def _chain(chain: list[dict]) -> list[str]:
-    return [f"{_path(link['source'])}:{link['edges'][0]['line']}" for link in chain]
+    steps = []
+    for link in chain:
+        steps.append(f"{_path(link['source'])}:{link['edges'][0]['line']}")
+        steps += [f"{_path(e['source'])}:{e['line']}" for e in link["via"]]
+    return steps
 
 
 def _items(items: list[dict]) -> list[dict]:

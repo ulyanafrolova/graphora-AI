@@ -254,7 +254,7 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
 
 ### Tests for User Story 4
 
-- [ ] T024 [P] [US4] Create the fixture `fixtures/repos/ts-barrels/repo/` (TypeScript, no `node_modules`):
+- [X] T024 [P] [US4] Create the fixture `fixtures/repos/ts-barrels/repo/` (TypeScript, no `node_modules`):
   `src/components/Button.tsx` (exports `Button`), `src/components/Card.tsx` (exports `Card`),
   `src/components/index.ts` with `export { Button } from "./Button"` and `export * from "./more"`,
   `src/components/more.ts` with `export * from "./Card"` and `export { Card as Panel } from "./Card"`,
@@ -262,15 +262,15 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
   type-only imports `src/types/a.ts ↔ src/types/b.ts` (`import type`). Write `expected.json` and
   `queries.json` by hand: `dependents` of `Button.tsx` and `Card.tsx` with and without `--follow-barrels`,
   `impact` of `Card.tsx` with barrels, and `cycles` with and without type-only links.
-- [ ] T025 [P] [US4] Add a `dependents --follow-barrels` entry to `fixtures/repos/ts-monorepo/queries.json`.
-- [ ] T026 [P] [US4] Write `backend/tests/unit/test_barrels.py` on synthetic documents: spec US4 scenarios
+- [X] T025 [P] [US4] Add a `dependents --follow-barrels` entry to `fixtures/repos/ts-monorepo/queries.json`.
+- [X] T026 [P] [US4] Write `backend/tests/unit/test_barrels.py` on synthetic documents: spec US4 scenarios
   1–3; renamed re-export (`alias`); a definition with the name in `exported_as` stops the chain in the
   barrel itself; a re-export loop between two barrels stops; Python edges are never followed; `symbol`
   filter applies to the name at the import edge; the barrel stays listed as a dependent too.
 
 ### Implementation for User Story 4
 
-- [ ] T027 [US4] Implement barrel following in `backend/src/graphora/graph/queries.py` (research R8): a
+- [X] T027 [US4] Implement barrel following in `backend/src/graphora/graph/queries.py` (research R8): a
   helper `_trace(ix, file_id, name, seen) -> tuple[str, tuple[Edge, ...]] | None` returning the defining
   file and the re-export edges in order; `dependents` and `impact` add derived links with `via` when
   `follow_barrels=True`. Remove the `NotImplementedError`. Add `via` to `render_text` as

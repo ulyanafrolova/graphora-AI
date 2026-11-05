@@ -192,9 +192,6 @@ def _query(args: argparse.Namespace) -> int:
     except queries.NodeNotFound as exc:
         _log("error", exc.message)
         return EXIT_NOT_FOUND
-    except NotImplementedError as exc:
-        _log("error", f"not implemented yet: {exc}")
-        return EXIT_USAGE
     except ValueError as exc:
         _log("error", str(exc))
         return EXIT_USAGE
