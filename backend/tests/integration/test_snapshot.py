@@ -4,6 +4,7 @@ import json
 import os
 import re
 
+import pytest
 from dulwich import porcelain
 
 from conftest import run_analyze
@@ -58,6 +59,18 @@ def test_change_inside_skipped_dir_stays_clean(tmp_path):
     (root / ".venv" / "lib" / "x.py").write_text("x = 2\n")
     (root / ".venv" / "new.py").write_text("y = 1\n")
     assert _snapshot(root) == sha
+
+
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root reads everything")
+def test_unreadable_dir_is_left_out_like_other_skipped_dirs(tmp_path):
+    """Issue #10: committed files under an unreadable_dir folder are not compared, as for any skipped folder."""
+    root = tmp_path / "r"
+    sha = _repo(root, {"a.py": "import os\n", "locked/x.py": "x = 1\n"})
+    (root / "locked").chmod(0)
+    try:
+        assert _snapshot(root) == sha
+    finally:
+        (root / "locked").chmod(0o755)
 
 
 def test_git_file_gives_content(tmp_path):

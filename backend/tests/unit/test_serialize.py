@@ -74,8 +74,8 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_2():
-    assert to_dict(_doc())["schema_version"] == 2
+def test_schema_version_3():
+    assert to_dict(_doc())["schema_version"] == 3
 
 
 def test_sort_orders():

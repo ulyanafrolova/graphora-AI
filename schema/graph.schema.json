@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://graphora.dev/schema/graph.schema.json",
   "title": "Graphora graph document",
-  "description": "Schema version 2. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript and JavaScript.",
+  "description": "Schema version 3. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript and JavaScript.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "snapshot", "extractors", "nodes", "edges", "coverage"],
   "properties": {
-    "schema_version": { "const": 2 },
+    "schema_version": { "const": 3 },
     "snapshot": { "$ref": "#/$defs/snapshot" },
     "extractors": {
       "type": "object",
@@ -227,7 +227,7 @@
       "required": ["path", "reason"],
       "properties": {
         "path": { "$ref": "#/$defs/relpath" },
-        "reason": { "enum": ["excluded_dir", "nested_repository", "symlink", "minified"] }
+        "reason": { "enum": ["excluded_dir", "nested_repository", "symlink", "minified", "unreadable_dir"] }
       }
     }
   }

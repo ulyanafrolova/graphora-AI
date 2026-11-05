@@ -137,6 +137,7 @@ These rules apply to edges:
 | `nested_repository` | A folder below the root that contains `.git` |
 | `symlink` | A file or folder symlink. It is never followed |
 | `minified` | A file named `*.min.js` or `*.min.css` |
+| `unreadable_dir` | A folder below the root that cannot be listed (for example, no read permission). Added in schema v3 (issue #10) |
 
 Skipped items do not count toward the limits and are not included in the content hash.
 

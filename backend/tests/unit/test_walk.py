@@ -44,6 +44,20 @@ def test_nested_repository(tmp_path):
     assert [(s.path, s.reason) for s in result.skipped] == [("vendor/lib", "nested_repository")]
 
 
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root reads everything")
+def test_unreadable_dir_skipped(tmp_path):
+    _touch(tmp_path / "a" / "locked" / "x.py")
+    _touch(tmp_path / "a" / "keep.py")
+    locked = tmp_path / "a" / "locked"
+    locked.chmod(0)
+    try:
+        result = walk(tmp_path, BIG, BIG)
+    finally:
+        locked.chmod(0o755)
+    assert result.files == ["a/keep.py"]
+    assert [(s.path, s.reason) for s in result.skipped] == [("a/locked", "unreadable_dir")]
+
+
 def test_symlinks_not_followed(tmp_path):
     outside = tmp_path / "outside"
     _touch(outside / "secret.py")

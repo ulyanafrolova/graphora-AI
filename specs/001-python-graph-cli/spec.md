@@ -121,8 +121,9 @@ absolute paths, and compare the output files byte by byte.
 - **Symbolic links**: never followed. They are reported as skipped.
 - **Files that cannot be decoded as text**: listed in coverage with reason `unreadable`, and no edges.
 - **Files that cannot be read** (for example, no read permission): listed in coverage with the `unreadable`
-  flag, no edges, and left out of the content hash. A folder that cannot be listed stops the run with a clear
-  error and exit status 2, because its files could not be accounted for.
+  flag, no edges, and left out of the content hash. A folder below the root that cannot be listed is skipped
+  with reason `unreadable_dir` (schema v3, issue #10), so its absence is visible in the coverage report. An
+  analyzed root that cannot be listed stops the run with a clear error and exit status 2.
 - **Special files** (FIFOs, sockets, device files): listed in coverage with the `unreadable` flag and never
   opened, since reading a FIFO can block forever.
 - **Empty folder or a folder with no Python files**: a valid graph with only coverage entries. Exit status is
@@ -263,7 +264,7 @@ absolute paths, and compare the output files byte by byte.
 - **Coverage file**: a walked, non-skipped file with its language, status and flags (`parse_error`,
   `unreadable`).
 - **Skipped entry**: a skipped folder or file with its reason (`excluded_dir`, `nested_repository`,
-  `symlink`, `minified`).
+  `symlink`, `minified`, `unreadable_dir`).
 - **Graph document**: the schema version, snapshot id, extractor versions, nodes, edges and coverage
   report, as one file.
 

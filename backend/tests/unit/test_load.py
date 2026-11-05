@@ -55,7 +55,7 @@ def test_not_an_object():
     _invalid(b"[1, 2]", "object")
 
 
-@pytest.mark.parametrize("version", [1, 3])
+@pytest.mark.parametrize("version", [1, 2, 4])
 def test_schema_version(version):
     doc = _doc()
     doc["schema_version"] = version

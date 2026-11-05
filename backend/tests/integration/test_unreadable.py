@@ -44,14 +44,29 @@ def test_unreadable_files_are_flagged_not_fatal(tmp_path):
     assert [(e["source"], e["target"]) for e in doc["edges"]] == [("file:a.py", "file:b.py")]
 
 
-def test_unreadable_folder_is_a_clear_error(tmp_path):
+def test_unreadable_folder_is_skipped(tmp_path):
+    """Issue #10: a folder that cannot be listed is reported in coverage, not fatal and not silently dropped."""
+    (tmp_path / "a.py").write_text("import os\n")
     (tmp_path / "locked").mkdir()
     (tmp_path / "locked" / "x.py").write_text("")
-    out_file = tmp_path.parent / f"{tmp_path.name}-graph.json"
     with _no_permission(tmp_path / "locked"):
-        code, out, err = run_analyze(tmp_path, "--out", str(out_file))
+        code, out, err = run_analyze(tmp_path)
 
-    assert code == 2 and "cannot read folder locked" in err and "Traceback" not in err
+    assert code == 0, err
+    doc = json.loads(out)
+    assert doc["coverage"]["skipped"] == [{"path": "locked", "reason": "unreadable_dir"}]
+    assert [f["path"] for f in doc["coverage"]["files"]] == ["a.py"]
+
+
+def test_unreadable_root_is_a_clear_error(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "x.py").write_text("")
+    out_file = tmp_path / "graph.json"
+    with _no_permission(root):
+        code, out, err = run_analyze(root, "--out", str(out_file))
+
+    assert code == 2 and "cannot read folder" in err and "Traceback" not in err
     assert not out_file.exists()
 
 
