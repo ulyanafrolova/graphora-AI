@@ -107,3 +107,45 @@ def validator():
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     return Draft202012Validator(schema)
+
+
+# --- 005 analysis store (specs/005-storage-http-api/research.md § R12) -------------------------------------
+
+DEFAULT_LIMITS = (5000, 50 * 1024 * 1024)
+
+
+@pytest.fixture(scope="session")
+def database_url() -> str:
+    import os
+
+    url = os.environ.get("GRAPHORA_TEST_DATABASE_URL")
+    if not url:
+        pytest.fail(
+            "GRAPHORA_TEST_DATABASE_URL is not set: run `make db` and export "
+            "GRAPHORA_TEST_DATABASE_URL=postgresql://graphora:graphora@127.0.0.1:5432/graphora_test, "
+            "or deselect store tests with -m 'not db'",
+            pytrace=False,
+        )
+    return url
+
+
+@pytest.fixture
+def store(database_url):
+    """An empty store. psycopg's libpq connects outside Python's `socket`, so `_no_network` stays on."""
+    from graphora.store import Store
+
+    s = Store.open(database_url)
+    s._conn.execute("TRUNCATE files, analyses, blobs")
+    yield s
+    s.close()
+
+
+def analyze_fixture(name: str):
+    return analyze_dir(FIXTURES / name / "repo")
+
+
+def analyze_dir(root: Path):
+    from graphora.graph.build import analyze
+    from graphora.ingest.walk import Deadline
+
+    return analyze(root, *DEFAULT_LIMITS, Deadline(300))

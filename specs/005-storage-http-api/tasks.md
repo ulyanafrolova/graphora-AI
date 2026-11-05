@@ -36,21 +36,21 @@ Paths are relative to the repository root. Code lives in `backend/src/graphora/`
 
 **Purpose**: Dependencies, a local PostgreSQL, CI and the test fixture every store test uses.
 
-- [ ] T001 Update `backend/pyproject.toml` (research R1, R8, R9): add runtime dependencies
+- [X] T001 Update `backend/pyproject.toml` (research R1, R8, R9): add runtime dependencies
   `psycopg[binary]`, `fastapi`, `uvicorn`, and move `jsonschema==4.26.0` from the `dev` group to runtime;
   add `httpx` to the `dev` group. Pin each new package to an exact version (`==`) with `uv add`, as for
   tree-sitter, and commit `backend/uv.lock`. Add the marker
   `"db: needs PostgreSQL via GRAPHORA_TEST_DATABASE_URL (deselect with -m 'not db')"` next to `slow`.
-- [ ] T002 [P] Create `docker-compose.yml` at the repository root with one service `postgres`: image
+- [X] T002 [P] Create `docker-compose.yml` at the repository root with one service `postgres`: image
   `postgres:17`, port `127.0.0.1:5432:5432` (never `0.0.0.0`), env `POSTGRES_USER=graphora`,
   `POSTGRES_PASSWORD=graphora`, `POSTGRES_DB=graphora`, a named volume for data, and an init script
   `docker/postgres-init.sql` (create it) that runs `CREATE DATABASE graphora_test;`. Add `db` (`docker compose
   up -d --wait postgres`) and `db-down` (`docker compose down`) targets to `Makefile` and to its `.PHONY`
   line.
-- [ ] T003 [P] Update `.github/workflows/checks.yml`: add a `services.postgres` block (image `postgres:17`,
+- [X] T003 [P] Update `.github/workflows/checks.yml`: add a `services.postgres` block (image `postgres:17`,
   the same user/password, `POSTGRES_DB=graphora_test`, port `5432:5432`, health check `pg_isready`) and set
   `GRAPHORA_TEST_DATABASE_URL=postgresql://graphora:graphora@127.0.0.1:5432/graphora_test` on the Test step.
-- [ ] T004 Add to `backend/tests/conftest.py` (after T001, research R12):
+- [X] T004 Add to `backend/tests/conftest.py` (after T001, research R12):
   - a session fixture `database_url` that returns `os.environ["GRAPHORA_TEST_DATABASE_URL"]`, or calls
     `pytest.fail("GRAPHORA_TEST_DATABASE_URL is not set: run `make db` and export it, or deselect with -m 'not db'")`
     when it is missing — never `pytest.skip`;
@@ -72,13 +72,13 @@ Paths are relative to the repository root. Code lives in `backend/src/graphora/`
 
 ### Tests
 
-- [ ] T005 [P] Create `backend/tests/unit/test_build_analyze.py` (research R4, R6):
+- [X] T005 [P] Create `backend/tests/unit/test_build_analyze.py` (research R4, R6):
   - for every fixture in `fixtures/repos/`, `dumps(analyze(...).doc) == dumps(build(...)[0])` and the warnings
     are equal;
   - `analysis.contents` keys are exactly the `coverage.files` paths without the `unreadable` flag, and each
     value equals the file's bytes on disk;
   - `current_extractors() == analyze(...).doc.extractors` for a Python-only, a TS-only and a mixed fixture.
-- [ ] T006 [P] Create `backend/tests/unit/test_store_text.py` for `graphora.store.text` (research R5):
+- [X] T006 [P] Create `backend/tests/unit/test_store_text.py` for `graphora.store.text` (research R5):
   - `split_lines(b"a\nb\r\nc\rd")` gives `("a", "b", "c", "d")`; a trailing `\n` adds no empty line;
     `b""` gives `()`; `b"\n"` gives `("",)`;
   - `decode("x.py", data)` follows PEP 263: a `# -*- coding: latin-1 -*-` file with byte `0xe9` decodes;
@@ -95,19 +95,19 @@ Paths are relative to the repository root. Code lives in `backend/src/graphora/`
 
 ### Implementation
 
-- [ ] T007 In `backend/src/graphora/graph/build.py` add a frozen dataclass `Analysis(doc, warnings, contents)`
+- [X] T007 In `backend/src/graphora/graph/build.py` add a frozen dataclass `Analysis(doc, warnings, contents)`
   with `contents: Mapping[str, bytes]` (a `types.MappingProxyType`), and a function `analyze(root, max_files,
   max_bytes, deadline, snapshot=None) -> Analysis` holding the current body of `build()`; `contents` is the
   existing local `contents` dict (bytes as read, before decoding). Make `build()` call `analyze()` and return
   `(a.doc, a.warnings)`. Add `current_extractors() -> dict[str, str]` returning the same map `build()` writes
   into `GraphDocument.extractors`, and make `build()` use it so the two cannot drift. Makes T005 pass.
-- [ ] T008 [P] Create `backend/src/graphora/store/text.py` (research R5): `split_lines(data: bytes) ->
+- [X] T008 [P] Create `backend/src/graphora/store/text.py` (research R5): `split_lines(data: bytes) ->
   tuple[bytes, ...]` splitting on `\r\n`, lone `\r` and `\n`; `decode(path: str, data: bytes) -> str | None`
   using `tokenize.detect_encoding` for paths ending in `.py` and strict UTF-8 otherwise, returning `None` on
   any decode error or a NUL byte; `text_lines(path, data) -> tuple[str, ...] | None` that decodes, splits
   and strips a leading `﻿` from line 1. Reuse the PEP 263 logic from `graph/build.py::_decode` by moving
   it here and importing it in `build.py` (one implementation). Makes T006 pass.
-- [ ] T009 Create `backend/src/graphora/store/schema.sql` exactly as in data-model.md § PostgreSQL tables:
+- [X] T009 Create `backend/src/graphora/store/schema.sql` exactly as in data-model.md § PostgreSQL tables:
   `store_meta(key text PRIMARY KEY, value text NOT NULL)`; `analyses` with `PRIMARY KEY (repository,
   snapshot)` and a `CHECK (snapshot ~ '^([0-9a-f]{40}(\+dirty:[0-9a-f]{16})?|content:[0-9a-f]{16})$')` and
   `CHECK (char_length(repository) BETWEEN 1 AND 300)`; `blobs(sha256 text PRIMARY KEY, content bytea NOT
@@ -116,7 +116,7 @@ Paths are relative to the repository root. Code lives in `backend/src/graphora/`
   `FOREIGN KEY (repository, snapshot) REFERENCES analyses ON DELETE CASCADE`. Every statement uses
   `IF NOT EXISTS`; the file ends with `INSERT INTO store_meta VALUES ('store_version', '1') ON CONFLICT DO
   NOTHING`. No timestamps, serials or defaults that depend on time.
-- [ ] T010 Create `backend/src/graphora/store/__init__.py` and `backend/src/graphora/store/store.py` with the
+- [X] T010 Create `backend/src/graphora/store/__init__.py` and `backend/src/graphora/store/store.py` with the
   types from data-model.md (`StoredAnalysis`, `FileText`, `StoreResult(action, analysis)` with action
   `"stored" | "replaced" | "reused"`), `class StoreUnavailable(Exception)` with a `reason` attribute, and
   `Store.open(url) -> Store` / `Store.close()` (research R2): connect with `psycopg.connect(url)`, apply
@@ -144,7 +144,7 @@ one download in total.
 
 ### Tests for User Story 1
 
-- [ ] T011 [P] [US1] Add `db` tests to `backend/tests/integration/test_store.py` for `Store.put`,
+- [X] T011 [P] [US1] Add `db` tests to `backend/tests/integration/test_store.py` for `Store.put`,
   `find_reusable`, `get_analysis` (FR-001 … FR-009, contracts/store-api.md):
   - first `put` → `"stored"`; `get_analysis` returns the `dumps(doc)` bytes, `schema_version == 2`,
     `extractors == current_extractors()`, the warnings sorted;
@@ -166,7 +166,7 @@ one download in total.
   - a `contents` map with an extra or missing path → `ValueError`, nothing stored;
   - a temp folder holding only `README.md` → stored with zero nodes and edges and one `files` row
     (`has_text = true`).
-- [ ] T012 [P] [US1] Create `backend/tests/integration/test_store_cli.py` with `db` tests via `run_analyze`
+- [X] T012 [P] [US1] Create `backend/tests/integration/test_store_cli.py` with `db` tests via `run_analyze`
   (contracts/cli.md):
   - `--store` on `py-flat`: stdout is byte-identical to a run without `--store`; stderr has
     `graphora: info: stored repo content:<hash>`; a second run prints `reused` and identical stdout;
@@ -190,17 +190,17 @@ one download in total.
   - `--database x` without `--store` → exit `2`, `graphora: error: --database requires --store`;
   - without `--store`, monkeypatch `psycopg.connect` to raise → a plain run still succeeds (no connection
     attempted).
-- [ ] T013 [P] [US1] Create `backend/tests/unit/test_fetch_sha.py` (new file; do not edit existing tests),
+- [X] T013 [P] [US1] Create `backend/tests/unit/test_fetch_sha.py` (new file; do not edit existing tests),
   using `FakeGitHub`: `fetch_snapshot(GitHubSource,
   …, sha=<40 hex>)` makes no `api.github.com` request and downloads that SHA; `sha="abc"` → `ValueError`;
   `sha` with a `LocalSource` or `ZipSource` → `ValueError`; `sha=None` behaves as in 002.
-- [ ] T014 [P] [US1] Create `backend/tests/golden/test_store_roundtrip.py` (`db`, SC-001): for every fixture,
+- [X] T014 [P] [US1] Create `backend/tests/golden/test_store_roundtrip.py` (`db`, SC-001): for every fixture,
   store it, read it back with `get_analysis`, and assert the bytes equal `run_analyze(fixture)` stdout; repeat
   the whole loop 3 times on a truncated store and assert all runs equal.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implement `Store.find_reusable`, `Store.get_analysis` and `Store.put` in
+- [X] T015 [US1] Implement `Store.find_reusable`, `Store.get_analysis` and `Store.put` in
   `backend/src/graphora/store/store.py` (research R3, R6, R7, R8):
   - reusable means `schema_version == SCHEMA_VERSION and extractors == current_extractors()`; `extractors`
     and `warnings` are stored as `json.dumps(..., sort_keys=True, separators=(",", ":"))`;
@@ -216,13 +216,13 @@ one download in total.
     order; return `"stored"` or `"replaced"`;
   - every database error → `StoreUnavailable` (connection) or re-raise (others) after rollback.
   Makes T011 pass.
-- [ ] T016 [US1] Add the optional `sha: str | None = None` parameter to `fetch_snapshot` in
+- [X] T016 [US1] Add the optional `sha: str | None = None` parameter to `fetch_snapshot` in
   `backend/src/graphora/ingest/fetch.py` (contracts/store-api.md): for a `GitHubSource`, a given `sha` must
   match `^[0-9a-f]{40}$` and replaces the `github.resolve_sha` call; for any other source a non-`None` `sha`
   raises `ValueError`. Update the module docstring. Do not edit
   `specs/002-repo-ingest/contracts/ingest-api.md` (other owner); note the change in the PR description and
   request Anna's review. Makes T013 pass.
-- [ ] T017 [US1] Add `--store` and `--database` to `graphora analyze` in
+- [X] T017 [US1] Add `--store` and `--database` to `graphora analyze` in
   `backend/src/graphora/cli/__init__.py` (contracts/cli.md, research R13):
   - `EXIT_STORE = 6`; `--database` without `--store` → usage error `--database requires --store`, exit 2;
   - with `--store`: resolve the URL (`--database`, else `GRAPHORA_DATABASE_URL`, else `StoreUnavailable("no
