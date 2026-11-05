@@ -89,8 +89,11 @@ def walk(root: Path, max_files: int, max_bytes: int, deadline: Deadline | None =
             with os.scandir(root / rel_dir if rel_dir else root) as it:
                 entries = sorted(it, key=lambda e: e.name)
         except OSError as exc:
-            # A folder that cannot be listed would silently drop files; schema v2 has no skip reason for it.
-            raise BadInput(f"cannot read folder {rel_dir or '.'}: {exc.strerror or exc}") from exc
+            if not rel_dir:
+                raise BadInput(f"cannot read folder .: {exc.strerror or exc}") from exc
+            # Listed in coverage instead of silently dropping its files (issue #10).
+            skipped.append(Skipped(rel_dir, "unreadable_dir"))
+            continue
         subdirs = []
         for entry in entries:
             if deadline is not None:
