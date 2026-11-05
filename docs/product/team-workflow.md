@@ -44,7 +44,8 @@ Changing a module you do not own: open the pull request and request the owner's 
 2. `/speckit-specify`, then open a draft pull request with `spec.md` only. The other person reviews the
    spec before planning: fixing an idea here costs minutes.
 3. `/speckit-clarify` if needed, then `/speckit-plan`, `/speckit-tasks` and `/speckit-analyze`.
-4. `/speckit-implement`. `make check` must pass locally.
+4. `/speckit-implement`. `make check` must pass locally. From feature 005 on it needs PostgreSQL: run
+   `make db` and export `GRAPHORA_TEST_DATABASE_URL` (see `CLAUDE.md`), or store tests fail.
 5. Mark the pull request ready, get it reviewed by the other person, and merge to `main`.
 
 ## Rules
