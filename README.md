@@ -40,6 +40,21 @@ More screens in [docs/demo](docs/demo).
 
 </details>
 
+## Status
+
+Done and merged into `main` (features 001–005, graph schema v3):
+
+| # | Feature | What it gives |
+|---|---|---|
+| 001 | Python graph CLI | `graphora analyze <dir>`: file nodes, import edges with provenance, coverage report, deterministic JSON |
+| 002 | Repository ingest | Analyze a public GitHub URL (pinned to a commit) or a ZIP; safe extraction, size and time limits |
+| 003 | TS/JS analysis | ESM, CommonJS, dynamic imports, `tsconfig` paths, monorepo workspaces, re-exports |
+| 004 | Graph queries | dependencies, dependents, impact, neighbors, cycles, key files (`graphora query`) |
+| 005 | Storage and HTTP API | PostgreSQL store per (repository, snapshot), read-only API (`graphora serve`) |
+
+Next on the roadmap: MCP server, end-to-end pipeline, claim verifier and agents, `/ask` with
+streaming, hotspots, web UI, frontend ↔ backend bridge, benchmark.
+
 ## Quick start
 
 Requires [uv](https://docs.astral.sh/uv/). Python projects only for now.
