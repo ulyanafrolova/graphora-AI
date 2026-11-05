@@ -9,7 +9,7 @@ from typing import TypeVar
 import networkx as nx
 
 from graphora.graph.model import CoverageFile, Edge, GraphDocument, Node, UnresolvedNode
-from graphora.graph.results import Answer, Completeness, Item, Link, Question, strongest, weakest
+from graphora.graph.results import Answer, Completeness, CycleGroup, Item, Link, Question, strongest, weakest
 from graphora.graph.serialize import edge_sort_key
 
 T = TypeVar("T")
@@ -260,3 +260,64 @@ def impact(
         items.append(_item(dep, tuple(chain), distance[dep]))
     options = {"follow_barrels": follow_barrels, "include_type_only": include_type_only, "limit": limit, "max_depth": max_depth}
     return _answer(ix, "impact", node, options, items, limit, cut=cut)
+
+
+def _loops(g: nx.DiGraph) -> list[tuple[str, ...]]:
+    """Groups of files in a loop: components of two or more files, and single files that import themselves."""
+    groups = []
+    for component in nx.strongly_connected_components(g):
+        files = tuple(sorted(component))
+        if len(files) > 1 or g.has_edge(files[0], files[0]):
+            groups.append(files)
+    return sorted(groups)
+
+
+def _shortest_cycle(g: nx.DiGraph, start: str, members: set[str]) -> list[str]:
+    """Nodes of the shortest cycle through `start`, inside the group, by breadth-first search with neighbours in
+    id order; the first node found that links back to `start` closes it (research § R6)."""
+    if g.has_edge(start, start):
+        return [start]
+    parent = {start: start}
+    queue = [start]
+    for current in queue:
+        for nxt in sorted(g.successors(current)):
+            if nxt not in members or nxt in parent:
+                continue
+            parent[nxt] = current
+            if g.has_edge(nxt, start):
+                path = [nxt]
+                while path[-1] != start:
+                    path.append(parent[path[-1]])
+                return path[::-1]
+            queue.append(nxt)
+    raise AssertionError(f"{start} is in a loop but no cycle was found")
+
+
+def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
+    """Every group of files that depend on each other in a loop, with one example cycle each (FR-008)."""
+    _limit([], limit)
+    links = _links(ix, include_type_only)
+    files = links.subgraph(n for n in links.nodes if n.startswith("file:"))
+    runtime = _links(ix, include_type_only=False)
+    groups = []
+    for members in _loops(files):
+        path = _shortest_cycle(files, members[0], set(members))
+        cycle = tuple(ix.link(a, b, include_type_only) for a, b in zip(path, path[1:] + path[:1], strict=True))
+        groups.append(
+            CycleGroup(
+                files=members,
+                cycle=cycle,
+                type_only=not _loops(runtime.subgraph(members)),
+                confidence=weakest(link.confidence for link in cycle),
+            )
+        )
+    shown, total, truncated = _limit(groups, limit)
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="cycles",
+        target=None,
+        options={"include_type_only": include_type_only, "limit": limit},
+        total=total,
+        truncated=truncated,
+        groups=tuple(shown),
+    )

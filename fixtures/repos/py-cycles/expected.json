@@ -1,0 +1,43 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "file:loop/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:loop/a.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:loop/b.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:loop/c.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:pair/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:pair/x.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:pair/y.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:self_ref.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:user.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "main", "line": 5}
+    ]},
+    {"id": "unresolved:python:loop.missing", "kind": "unresolved", "ecosystem": "python"}
+  ],
+  "edges": [
+    {"source": "file:loop/a.py", "line": 1, "type": "imports", "form": "static", "target": "file:loop/b.py", "symbol": "b", "confidence": "resolved", "reason": null},
+    {"source": "file:loop/b.py", "line": 1, "type": "imports", "form": "static", "target": "file:loop/c.py", "symbol": "c", "confidence": "resolved", "reason": null},
+    {"source": "file:loop/c.py", "line": 1, "type": "imports", "form": "static", "target": "file:loop/a.py", "symbol": "a", "confidence": "resolved", "reason": null},
+
+    {"source": "file:pair/x.py", "line": 1, "type": "imports", "form": "static", "target": "file:pair/y.py", "symbol": "y", "confidence": "resolved", "reason": null},
+    {"source": "file:pair/x.py", "line": 2, "type": "imports", "form": "static", "target": "file:pair/y.py", "symbol": "value", "confidence": "resolved", "reason": null},
+    {"source": "file:pair/y.py", "line": 1, "type": "imports", "form": "static", "target": "file:pair/x.py", "symbol": "x", "confidence": "resolved", "reason": null},
+
+    {"source": "file:self_ref.py", "line": 1, "type": "imports", "form": "static", "target": "file:self_ref.py", "symbol": null, "confidence": "resolved", "reason": null},
+
+    {"source": "file:user.py", "line": 1, "type": "imports", "form": "static", "target": "file:loop/a.py", "symbol": "a", "confidence": "resolved", "reason": null},
+    {"source": "file:user.py", "line": 2, "type": "imports", "form": "static", "target": "unresolved:python:loop.missing", "symbol": "z", "confidence": "unresolved", "reason": "not_found"}
+  ],
+  "coverage": [
+    {"path": "loop/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "loop/a.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "loop/b.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "loop/c.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pair/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pair/x.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "pair/y.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "self_ref.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "user.py", "language": "python", "status": "analyzed", "flags": []}
+  ],
+  "skipped": []
+}

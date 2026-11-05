@@ -97,3 +97,12 @@ def test_detected_only(tmp_path):
     code, out, err = run_query(str(path), "dependents", "tools/main.go")
     assert (code, out) == (8, b"")
     assert err == "graphora: error: tools/main.go is detected_only (not analyzed)\n"
+
+
+def test_cycles(graph):
+    code, out, err = run_query(graph, "cycles")
+    text = out.decode("utf-8")
+    assert code == 0
+    assert "cycle 1: pkg/a.py, pkg/b.py" in text
+    assert "pkg/a.py:3 → pkg/b.py:1 → pkg/a.py" in text
+    assert "completeness" not in text

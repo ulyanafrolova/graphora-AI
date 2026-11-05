@@ -15,12 +15,19 @@ CASES = [
     for p in sorted(FIXTURES.glob("*/queries.json"))
     for i, entry in enumerate(json.loads(p.read_text(encoding="utf-8")))
 ]
-_QUESTIONS = {"dependencies": queries.dependencies, "dependents": queries.dependents, "impact": queries.impact}
+_QUESTIONS = {
+    "dependencies": queries.dependencies,
+    "dependents": queries.dependents,
+    "impact": queries.impact,
+    "cycles": queries.cycles,
+}
 
 
 def _ask(name, entry):
     ix = queries.index(loads(analyzed_graph(name)))
     ask = _QUESTIONS[entry["question"]]
+    if entry["target"] is None:
+        return ask(ix, **entry["options"])
     return ask(ix, entry["target"], **entry["options"])
 
 
@@ -48,6 +55,8 @@ def project_answer(answer: dict) -> dict:
                 item["confidence"] = i["confidence"]
             items.append(item)
         out["items"] = items
+    if "groups" in answer:
+        out["groups"] = [{"files": g["files"], "cycle": _chain(g["cycle"]), "type_only": g["type_only"]} for g in answer["groups"]]
     if "unresolved" in answer:
         out["unresolved"] = [f"{_path(e['source'])}:{e['line']} {e['reason']}" for e in answer["unresolved"]]
     if "cut" in answer:
@@ -77,6 +86,14 @@ def test_cited_edges_are_graph_edges_and_chains_connect(name, i, entry):
         if chain:
             end = item["node"] if answer["question"] == "dependencies" else answer["target"]
             assert chain[-1]["target"] == end
+    for group in answer.get("groups", []):
+        cycle = group["cycle"]
+        for link in cycle:
+            for e in link["edges"]:
+                assert graph_edges[e["id"]] == e
+        for a, b in zip(cycle, cycle[1:] + cycle[:1], strict=True):
+            assert a["target"] == b["source"]
+        assert cycle[0]["source"] == group["files"][0]
     for e in answer.get("unresolved", []):
         assert graph_edges[e["id"]] == e
 

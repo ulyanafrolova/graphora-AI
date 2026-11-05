@@ -130,5 +130,26 @@
         "files_with_errors": 1
       }
     }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {},
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "file:src/cycle/a.ts",
+            "file:src/cycle/b.ts"
+          ],
+          "cycle": [
+            "src/cycle/a.ts:1",
+            "src/cycle/b.ts:1"
+          ],
+          "type_only": false
+        }
+      ],
+      "total": 1
+    }
   }
 ]

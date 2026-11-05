@@ -187,17 +187,17 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
 
 ### Tests for User Story 2
 
-- [ ] T016 [P] [US2] Create the fixture `fixtures/repos/py-cycles/repo/` (plain Python, a few lines per file):
+- [X] T016 [P] [US2] Create the fixture `fixtures/repos/py-cycles/repo/` (plain Python, a few lines per file):
   a three-file loop `loop/a.py → loop/b.py → loop/c.py → loop/a.py`; a second separate loop
   `pair/x.py ↔ pair/y.py`, where `pair/x.py` imports `pair/y.py` on two lines; `self_ref.py` importing
   itself; `user.py` importing `loop/a.py` (outside any loop); one unresolved import. Write
   `fixtures/repos/py-cycles/expected.json` by hand in the format of the other fixtures (the existing
   golden test picks it up), and `fixtures/repos/py-cycles/queries.json` with `cycles` and `impact` of
   `loop/a.py` (key files are added in US3).
-- [ ] T017 [P] [US2] Add `cycles` entries to `fixtures/repos/py-flat/queries.json` and
+- [X] T017 [P] [US2] Add `cycles` entries to `fixtures/repos/py-flat/queries.json` and
   `fixtures/repos/ts-app/queries.json` (both have a two-file loop), and a `cycles` entry with an empty
   expected list to a fixture without loops (`py-src-layout`).
-- [ ] T018 [P] [US2] Write `backend/tests/unit/test_cycles.py` on synthetic documents: spec US2 scenarios
+- [X] T018 [P] [US2] Write `backend/tests/unit/test_cycles.py` on synthetic documents: spec US2 scenarios
   1–5; the example cycle starts at the smallest path and is the shortest one through it, with a fixed choice
   between two equally short cycles; groups ordered by first file; a group whose loop exists only through
   type-only edges has `type_only: true` and disappears with `include_type_only=False`; a group with both a
@@ -205,7 +205,7 @@ match the hand-written `queries.json`; every cited edge id exists in the graph.
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Implement `cycles(ix, *, include_type_only=True, limit=None)` in
+- [X] T019 [US2] Implement `cycles(ix, *, include_type_only=True, limit=None)` in
   `backend/src/graphora/graph/queries.py` (research R6) with `networkx.strongly_connected_components` on the
   file-only links, a breadth-first search inside each group for the example cycle, and the type-only check
   on run-time links. Enable `cycles` in the CLI `_query` and add its `render_text` (one block per group:

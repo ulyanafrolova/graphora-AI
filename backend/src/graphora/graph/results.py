@@ -173,6 +173,15 @@ def _item_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _group_lines(answer: Answer) -> list[str]:
+    lines = []
+    for n, group in enumerate(answer.groups or (), start=1):
+        marks = (" (likely)" if group.confidence == "heuristic" else "") + (" (type-only)" if group.type_only else "")
+        lines.append(f"cycle {n}: {', '.join(_name(f) for f in group.files)}{marks}")
+        lines.append(f"  {_chain_text(group.cycle)}")
+    return lines
+
+
 def _header(answer: Answer) -> list[str]:
     target = f" {_name(answer.target)}" if answer.target else ""
     return [f"{answer.question}{target} @ {answer.snapshot}"]
@@ -182,6 +191,7 @@ _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
     "dependencies": _item_lines,
     "dependents": _item_lines,
     "impact": _item_lines,
+    "cycles": _group_lines,
 }
 
 

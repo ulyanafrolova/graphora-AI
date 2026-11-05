@@ -166,7 +166,12 @@ def _query(args: argparse.Namespace) -> int:
         options.update(symbol=args.symbol, follow_barrels=args.follow_barrels)
     elif question == "impact":
         options.update(max_depth=args.max_depth, follow_barrels=args.follow_barrels)
-    asks = {"dependencies": queries.dependencies, "dependents": queries.dependents, "impact": queries.impact}
+    asks = {
+        "dependencies": queries.dependencies,
+        "dependents": queries.dependents,
+        "impact": queries.impact,
+        "cycles": queries.cycles,
+    }
     if question not in asks:
         _log("error", f"{question} is not implemented yet")
         return EXIT_USAGE
@@ -178,7 +183,8 @@ def _query(args: argparse.Namespace) -> int:
         return EXIT_USAGE
     try:
         ix = queries.index(loads(data))
-        answer = asks[question](ix, args.target, **options)
+        target = (args.target,) if question in _WITH_TARGET else ()
+        answer = asks[question](ix, *target, **options)
     except InvalidGraph as exc:
         _log("error", f"invalid graph: {exc.message}")
         return EXIT_GRAPH

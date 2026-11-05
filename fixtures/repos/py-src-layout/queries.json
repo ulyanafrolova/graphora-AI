@@ -91,5 +91,14 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {},
+    "expected": {
+      "groups": [],
+      "total": 0
+    }
   }
 ]

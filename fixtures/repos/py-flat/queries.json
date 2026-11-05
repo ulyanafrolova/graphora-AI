@@ -153,5 +153,26 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {},
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "file:pkg/a.py",
+            "file:pkg/b.py"
+          ],
+          "cycle": [
+            "pkg/a.py:3",
+            "pkg/b.py:1"
+          ],
+          "type_only": false
+        }
+      ],
+      "total": 1
+    }
   }
 ]
