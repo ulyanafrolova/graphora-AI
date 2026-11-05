@@ -55,6 +55,59 @@ Done and merged into `main` (features 001–005, graph schema v3):
 Next on the roadmap: MCP server, end-to-end pipeline, claim verifier and agents, `/ask` with
 streaming, hotspots, web UI, frontend ↔ backend bridge, benchmark.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    src["Local folder<br/>GitHub URL + ref<br/>ZIP archive"]
+
+    subgraph analyze["Analysis (once per snapshot, no LLM, code never executed)"]
+        ingest["ingest/<br/>fetch, safe extract,<br/>walk + skip rules, limits"]
+        detect["detect/<br/>language by extension<br/>and marker files"]
+        adapters["adapters/<br/>Tree-sitter: imports,<br/>definitions, exports"]
+        resolve["resolve/<br/>Python packages, src layout<br/>TS/JS index, tsconfig, workspaces"]
+        build["graph/build<br/>nodes, edges, provenance,<br/>coverage, sorted output"]
+        ingest --> detect --> adapters --> resolve --> build
+    end
+
+    src --> ingest
+    build --> json[("graph.json<br/>schema v3")]
+    build --> store[("store/<br/>PostgreSQL")]
+
+    json --> queries["graph/queries<br/>NetworkX"]
+    queries --> cli["graphora query"]
+    store --> api["api/<br/>read-only HTTP"]
+
+    subgraph next["Planned"]
+        mcp["mcp/ server"]
+        agents["agents/ Explorer, Analyst, Reviewer"]
+        verify["verify/ deterministic claim check"]
+        ui["frontend/ React + Cytoscape.js"]
+    end
+
+    queries -.-> mcp
+    queries -.-> agents
+    agents -.-> verify
+    api -.-> ui
+```
+
+All graph questions are answered by code in `backend/src/graphora/graph/`; the CLI, API and (later) MCP
+server and agents only call it. The LLM will only phrase claims that the verifier has checked against the
+graph.
+
+### Modules
+
+| Folder | Role |
+|---|---|
+| `ingest/` | Source resolution (`source.py`), GitHub archive download (`github.py`, `fetch.py`), safe ZIP extraction (`archive.py`), file walk and skip rules (`walk.py`), snapshot id (`snapshot.py`) |
+| `detect/` | Language and status per file: `analyzed`, `detected_only`, `not_code` |
+| `adapters/` | Tree-sitter extractors for Python and JS/TS: import sites, definitions, exports, line and column |
+| `resolve/` | Import target resolution; never guesses — an unknown target becomes an `unresolved` node |
+| `graph/` | Model, build, canonical serialization, loading and all queries |
+| `store/` | PostgreSQL store: analyses, deduplicated file blobs |
+| `api/` | FastAPI router, read-only |
+| `cli/` | `analyze`, `query`, `serve` |
+
 ## Quick start
 
 Requires [uv](https://docs.astral.sh/uv/). Python projects only for now.
