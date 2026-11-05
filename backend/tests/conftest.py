@@ -42,6 +42,34 @@ def run_analyze(directory: Path | str, *args: str) -> tuple[int, bytes, str]:
     return code, out_buf.getvalue(), err_buf.getvalue()
 
 
+def run_query(*args: str) -> tuple[int, bytes, str]:
+    """Run `graphora query` in-process and capture stdout bytes and stderr text."""
+    from graphora.cli import main
+
+    out_buf, err_buf = io.BytesIO(), io.StringIO()
+    out = io.TextIOWrapper(out_buf, encoding="utf-8", newline="")
+    old_out, old_err = sys.stdout, sys.stderr
+    sys.stdout, sys.stderr = out, err_buf
+    try:
+        code = main(["query", *args])
+    finally:
+        out.flush()
+        sys.stdout, sys.stderr = old_out, old_err
+    return code, out_buf.getvalue(), err_buf.getvalue()
+
+
+_ANALYZED: dict[str, bytes] = {}
+
+
+def analyzed_graph(name: str) -> bytes:
+    """The graph document `graphora analyze` writes for a fixture, cached for the session (004 tasks T002)."""
+    if name not in _ANALYZED:
+        code, out, err = run_analyze(FIXTURES / name / "repo")
+        assert code == 0, err
+        _ANALYZED[name] = out
+    return _ANALYZED[name]
+
+
 def _snapshot_kind(snapshot: str) -> str:
     if snapshot.startswith("content:"):
         return "content"
