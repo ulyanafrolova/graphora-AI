@@ -21,6 +21,7 @@ unencoded `+` decodes to a space and the snapshot is then not found.
 |---|---|---|
 | 400 | `bad_request` | missing or malformed parameter, bad line range |
 | 404 | `not_found` | repository, snapshot or path not stored; names which one |
+| 405 | `method_not_allowed` | any method other than `GET` |
 | 503 | `store_unavailable` | the database cannot be reached |
 | 500 | `internal` | unexpected error; fixed message, details only in the server log |
 

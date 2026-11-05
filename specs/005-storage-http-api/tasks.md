@@ -256,13 +256,13 @@ file text or line ranges only from the store.
 
 ### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Add `db` tests to `backend/tests/integration/test_store.py` for `list_repositories` and
+- [X] T018 [P] [US2] Add `db` tests to `backend/tests/integration/test_store.py` for `list_repositories` and
   `get_file` (FR-012, FR-014, FR-015): sorted repositories and snapshots; `get_file` whole file and ranges;
   `end` past the last line is clamped; `start < 1`, `end < start`, `start > line_count` → `ValueError`; a
   `has_text = false` file returns `FileText(has_text=False, line_count=0, start=0, end=0, lines=())` and
   `start`/`end` on it → `ValueError`; empty text file → `line_count 0`, `lines ()`; unknown repository,
   snapshot or path → `None`.
-- [ ] T019 [P] [US2] Create `backend/tests/integration/test_api.py` (`db`) using
+- [X] T019 [P] [US2] Create `backend/tests/integration/test_api.py` (`db`) using
   `fastapi.testclient.TestClient(create_app(store))` (contracts/http-api.md):
   - `GET /api/v1/repositories` on an empty store → `{"repositories":[]}`; after storing `py-flat`, `ts-app`
     and a second snapshot → sorted names and snapshots, body bytes equal to the contract's compact JSON;
@@ -283,23 +283,23 @@ file text or line ranges only from the store.
     `/Users`;
   - `POST`, `PUT`, `DELETE` on every path → `405`; no other routes exist besides the three and the OpenAPI
     docs (iterate `app.routes`) (FR-018).
-- [ ] T020 [P] [US2] Add to `backend/tests/integration/test_store_cli.py`: `graphora serve` with no database
+- [X] T020 [P] [US2] Add to `backend/tests/integration/test_store_cli.py`: `graphora serve` with no database
   URL → exit 6 without listening (call `main(["serve"])` with `uvicorn.run` monkeypatched to fail the test
   if called); `serve` passes `host="127.0.0.1"`, `port=8000` to `uvicorn.run` by default and the given
   values with `--host`/`--port` (FR-020).
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Implement `Store.list_repositories` and `Store.get_file` in
+- [X] T021 [US2] Implement `Store.list_repositories` and `Store.get_file` in
   `backend/src/graphora/store/store.py` per contracts/store-api.md and data-model.md § FileText, using
   `text_lines()` on the blob for range slicing; all reads are single `SELECT`s ordered in SQL with `COLLATE
   "C"` so order does not depend on the database locale. Makes T018 pass.
-- [ ] T022 [P] [US2] Create `backend/src/graphora/api/errors.py` (research R11): `ApiError(kind, status,
+- [X] T022 [P] [US2] Create `backend/src/graphora/api/errors.py` (research R11): `ApiError(kind, status,
   message)`; `json_bytes(obj) -> bytes` with `json.dumps(obj, sort_keys=True, ensure_ascii=False,
   separators=(",", ":")).encode()`; exception handlers for `ApiError`, `RequestValidationError` (→ `400
   bad_request` naming the parameter, never echoing input), `StoreUnavailable` (→ `503`), and `Exception` (→
   `500 internal`, fixed message `internal error`, details logged with `logging.getLogger("graphora.api")`).
-- [ ] T023 [US2] Create `backend/src/graphora/api/routes.py` and `backend/src/graphora/api/__init__.py` with
+- [X] T023 [US2] Create `backend/src/graphora/api/routes.py` and `backend/src/graphora/api/__init__.py` with
   `create_app(store: Store) -> FastAPI` (contracts/http-api.md): three `GET` routes under `/api/v1`; reject
   unknown query parameters with `bad_request`; `graph` returns `Response(stored_bytes,
   media_type="application/json")`; `file` maps `None` → `404` naming the missing part (check repository,
@@ -309,7 +309,7 @@ file text or line ranges only from the store.
   local single-user service; a pool can replace it in 007 without changing the `Store` API). Add the lock
   in `backend/src/graphora/store/store.py` and a test in T019 that 8 concurrent graph requests all return
   the stored bytes. Makes T019 pass.
-- [ ] T024 [US2] Add the `serve` subcommand to `backend/src/graphora/cli/__init__.py` (contracts/cli.md):
+- [X] T024 [US2] Add the `serve` subcommand to `backend/src/graphora/cli/__init__.py` (contracts/cli.md):
   `--database`, `--host` (default `127.0.0.1`), `--port` (default `8000`); open the store first (exit 6 on
   `StoreUnavailable`), then `uvicorn.run(create_app(store), host=..., port=...)`; close the store on exit;
   return 0 after `SIGINT`/`SIGTERM`. Makes T020 pass.
@@ -320,15 +320,15 @@ file text or line ranges only from the store.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T025 [P] Add a `slow` + `db` test `backend/tests/integration/test_store_performance.py` (SC-004): build
+- [X] T025 [P] Add a `slow` + `db` test `backend/tests/integration/test_store_performance.py` (SC-004): build
   a temp project of 5,000 small Python files (reuse the generator from
   `backend/tests/integration/test_performance.py` if it has one), store it, then assert `GET /api/v1/graph`
   under 2 s and `GET /api/v1/file` with a range under 0.5 s via `TestClient`; and that a second `--store`
   run on a fake GitHub commit finishes under 2 s (SC-002).
-- [ ] T026 [P] Check every pre-005 test still passes unchanged with `uv run pytest -m "not db"` and with
+- [X] T026 [P] Check every pre-005 test still passes unchanged with `uv run pytest -m "not db"` and with
   the database (SC-007), and that `git diff main -- backend/tests fixtures` shows only new files plus the
   `conftest.py` additions from T004.
-- [ ] T027 Run `make lint` and fix findings in new files; run `quickstart.md` steps 1–6 by hand and record
+- [X] T027 Run `make lint` and fix findings in new files; run `quickstart.md` steps 1–6 by hand and record
   the result in the PR description.
 - [ ] T028 Open a separate shared-files PR **before this feature's PR is marked ready**, agreed with Anna
   (team-workflow.md § Rules): add to `CLAUDE.md` Commands `make db`, `export GRAPHORA_TEST_DATABASE_URL=…`,
@@ -402,4 +402,11 @@ Task: "T020 serve CLI tests in backend/tests/integration/test_store_cli.py"
 
 - `[P]` = different files, no dependency on unfinished tasks.
 - `ingest/fetch.py` belongs to Anna: T016 is the only change there; request her review.
+- Implementation note (T008): the decoding and line rules live in `backend/src/graphora/adapters/text.py`, not
+  `store/text.py`. `graph/build.py` needs them too, and importing `graphora.store` from `graph/` would create
+  an import cycle (`store` imports `graph.build`). One implementation, used by both.
+- Implementation note (T012): no CLI source can produce a repository name over 300 characters (file names stop
+  at 255 bytes), so the limit is tested on `Store.put` and the CLI test checks only the error handling.
+- Implementation note (T019): errors for unsupported methods use a fourth kind, `method_not_allowed` (405),
+  and unknown endpoints `not_found`, so no response uses FastAPI's default `detail` body.
 - Never edit an existing test, `expected.json` or `schema/graph.schema.json` in this feature.
