@@ -1,5 +1,5 @@
 """In-memory graph model. Field meanings are defined in specs/001-python-graph-cli/data-model.md and the v2
-changes in specs/003-ts-js-analysis/data-model.md."""
+changes in specs/003-ts-js-analysis/data-model.md. v3 adds the `unreadable_dir` skip reason (issue #10)."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ Confidence = Literal["resolved", "heuristic", "unresolved"]
 Reason = Literal["not_found", "relative_beyond_top", "namespace_package", "dynamic", "workspace_package"]
 Status = Literal["analyzed", "detected_only", "not_code"]
 Flag = Literal["parse_error", "unreadable"]
-SkipReason = Literal["excluded_dir", "nested_repository", "symlink", "minified"]
+SkipReason = Literal["excluded_dir", "nested_repository", "symlink", "minified", "unreadable_dir"]
 DefinitionKind = Literal["class", "function", "method", "interface", "type_alias", "enum"]
 Category = Literal["stdlib", "builtin", "third_party"]
 Ecosystem = Literal["python", "npm"]

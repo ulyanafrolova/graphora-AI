@@ -9,7 +9,7 @@ from typing import Any
 
 from graphora.graph.model import AssetNode, Definition, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 def _sha16(text: str) -> str:

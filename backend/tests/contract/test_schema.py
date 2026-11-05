@@ -1,4 +1,4 @@
-"""Schema v2 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
+"""Schema v3 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
 
 import copy
 
@@ -166,10 +166,17 @@ def test_unresolved_without_ecosystem_rejected(ts_doc, validator):
     assert not validator.is_valid(bad)
 
 
-def test_schema_version_1_rejected(doc, validator):
+@pytest.mark.parametrize("version", [1, 2])
+def test_old_schema_version_rejected(doc, validator, version):
     bad = copy.deepcopy(doc)
-    bad["schema_version"] = 1
+    bad["schema_version"] = version
     assert not validator.is_valid(bad)
+
+
+def test_unreadable_dir_skip_reason_accepted(doc, validator):
+    ok = copy.deepcopy(doc)
+    ok["coverage"]["skipped"] = [{"path": "locked", "reason": "unreadable_dir"}]
+    assert validator.is_valid(ok)
 
 
 def test_parent_path_rejected(ts_doc, validator):
