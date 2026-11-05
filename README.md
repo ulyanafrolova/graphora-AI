@@ -108,6 +108,117 @@ graph.
 | `api/` | FastAPI router, read-only |
 | `cli/` | `analyze`, `query`, `serve` |
 
+## Graph schema
+
+The contract between backend and frontend is [schema/graph.schema.json](schema/graph.schema.json)
+(`schema_version: 3`). One document per snapshot:
+
+```mermaid
+erDiagram
+    DOCUMENT ||--|| SNAPSHOT : "pinned to"
+    DOCUMENT ||--o{ NODE : nodes
+    DOCUMENT ||--o{ EDGE : edges
+    DOCUMENT ||--|| COVERAGE : coverage
+    EDGE }o--|| NODE : source
+    EDGE }o--|| NODE : target
+    NODE ||--o{ DEFINITION : "file: definitions"
+    NODE ||--o{ EXPORT : "file: exports"
+    COVERAGE ||--o{ COVERAGE_FILE : files
+    COVERAGE ||--o{ SKIPPED : skipped
+
+    DOCUMENT {
+        int schema_version "3"
+        string snapshot
+        map extractors "name -> semver"
+    }
+    SNAPSHOT {
+        string id "commit sha | sha+dirty:hash | content:hash"
+    }
+    NODE {
+        string id
+        enum kind "file | external | unresolved | asset"
+        string path "file, asset"
+        enum language "python | typescript | javascript"
+        string name "external"
+        enum ecosystem "python | npm"
+        enum category "stdlib | builtin | third_party"
+        string reference "unresolved"
+    }
+    EDGE {
+        string id
+        enum type "imports | reexports"
+        enum form "static | dynamic | require"
+        bool type_only
+        string symbol
+        string alias
+        int line
+        int column
+        string snapshot
+        enum confidence "resolved | heuristic | unresolved"
+        enum reason "not_found | dynamic | ..."
+        string extractor "name@version"
+        string snippet_hash
+    }
+    DEFINITION {
+        string kind
+        string name
+        int line
+        string exported_as
+    }
+    EXPORT {
+        string name
+        string local
+        int line
+    }
+    COVERAGE_FILE {
+        string path
+        string language
+        enum status "analyzed | detected_only | not_code"
+        list flags
+    }
+    SKIPPED {
+        string path
+        enum reason "excluded_dir | nested_repository | symlink | minified | unreadable_dir"
+    }
+```
+
+Every edge carries its provenance: `file:line@snapshot`, a confidence level, the extractor version and a
+hash of the source snippet. Output is byte-for-byte deterministic: everything is sorted, there are no
+timestamps.
+
+### Store schema
+
+```mermaid
+erDiagram
+    ANALYSES ||--o{ FILES : "repository, snapshot"
+    FILES }o--o| BLOBS : sha256
+
+    ANALYSES {
+        text repository PK
+        text snapshot PK
+        int schema_version
+        text extractors "canonical JSON"
+        text warnings "canonical JSON"
+        bytea graph "graph document, byte for byte"
+        text graph_sha256
+    }
+    FILES {
+        text repository PK
+        text snapshot PK
+        text path PK
+        bool has_text
+        int line_count
+        bigint size
+        text sha256 FK
+    }
+    BLOBS {
+        text sha256 PK
+        bytea content
+    }
+```
+
+File contents are stored once per hash, so re-analyzing a commit or a similar commit reuses blobs.
+
 ## Quick start
 
 Requires [uv](https://docs.astral.sh/uv/). Python projects only for now.
