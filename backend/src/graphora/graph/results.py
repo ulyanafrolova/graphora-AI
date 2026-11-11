@@ -143,7 +143,33 @@ class Answer:
         return out
 
 
-def dumps(answer: Answer) -> bytes:
+@dataclass(frozen=True)
+class Overview:
+    """What a graph covers (specs/006-mcp-server data-model.md § Overview)."""
+
+    snapshot: str
+    schema_version: int
+    extractors: dict[str, str]
+    languages: dict[str, int]
+    files: dict[str, int]
+    nodes: dict[str, int]
+    edges: int
+    unresolved_imports: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "snapshot": self.snapshot,
+            "schema_version": self.schema_version,
+            "extractors": dict(self.extractors),
+            "languages": dict(self.languages),
+            "files": dict(self.files),
+            "nodes": dict(self.nodes),
+            "edges": self.edges,
+            "unresolved_imports": self.unresolved_imports,
+        }
+
+
+def dumps(answer: Answer | Overview) -> bytes:
     text = json.dumps(answer.to_dict(), sort_keys=True, ensure_ascii=False, indent=2)
     return (text + "\n").encode("utf-8")
 
@@ -230,6 +256,25 @@ def _footer(answer: Answer) -> list[str]:
     return lines
 
 
-def render_text(answer: Answer) -> str:
+def _overview_text(o: Overview) -> str:
+    def pairs(values: dict[str, Any]) -> str:
+        return ", ".join(f"{k} {v}" for k, v in sorted(values.items())) or "none"
+
+    f, n = o.files, o.nodes
+    lines = [
+        f"overview @ {o.snapshot}",
+        f"schema {o.schema_version}, extractors: {pairs(o.extractors)}",
+        f"languages: {pairs(o.languages)}",
+        f"files: {f['analyzed']} analyzed, {f['detected_only']} detected only, {f['not_code']} not code, "
+        f"{f['skipped']} skipped",
+        f"nodes: {n['file']} file, {n['external']} external, {n['unresolved']} unresolved, {n['asset']} asset",
+        f"edges: {o.edges} ({o.unresolved_imports} unresolved imports)",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def render_text(answer: Answer | Overview) -> str:
+    if isinstance(answer, Overview):
+        return _overview_text(answer)
     body = _RENDERERS[answer.question](answer) if answer.question in _RENDERERS else []
     return "\n".join(_header(answer) + body + _footer(answer)) + "\n"

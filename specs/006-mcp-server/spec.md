@@ -107,8 +107,8 @@ graph tools and the read-lines tool, and compare with the HTTP API of feature 00
 
 ### Edge Cases
 
-- A tool is called with a missing, extra or wrongly typed argument: a tool error names the argument; the
-  server keeps running.
+- A tool is called with a missing or wrongly typed argument: a tool error names the argument; the server keeps
+  running. Unknown extra arguments are ignored (behaviour of the MCP SDK).
 - A tool result would be very large (thousands of dependents): every list tool has a default limit and a
   maximum; the result holds the total count and a "truncated" flag so the agent can ask again with a larger
   limit or a narrower question.

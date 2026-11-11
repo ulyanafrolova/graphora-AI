@@ -3,14 +3,14 @@ specs/004-graph-queries research § R3–R10). API, MCP, agents and the verifier
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import TypeVar
 
 import networkx as nx
 
-from graphora.graph.model import CoverageFile, Edge, FileNode, GraphDocument, Node, UnresolvedNode
-from graphora.graph.results import Answer, Completeness, CycleGroup, Item, Link, Question, strongest, weakest
-from graphora.graph.serialize import edge_sort_key
+from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
+from graphora.graph.results import Answer, Completeness, CycleGroup, Item, Link, Overview, Question, strongest, weakest
+from graphora.graph.serialize import SCHEMA_VERSION, edge_sort_key
 
 T = TypeVar("T")
 
@@ -466,3 +466,30 @@ def key_files(ix: GraphIndex, *, include_type_only: bool = True, limit: int | No
         items.append(Item(node=f, kind="file", transitive_dependents=transitive, direct_dependents=direct))
     items.sort(key=lambda i: (-(i.transitive_dependents or 0), -(i.direct_dependents or 0), i.node))
     return _answer(ix, "key_files", None, {"include_type_only": include_type_only, "limit": limit}, items, limit)
+
+
+def overview(ix: GraphIndex) -> Overview:
+    """What the graph covers: languages, file statuses, node kinds and unresolved imports (006 research § R9)."""
+    doc = ix.doc
+    statuses = Counter(f.status for f in doc.files)
+    kinds = Counter(type(n) for n in ix.nodes.values())
+    return Overview(
+        snapshot=doc.snapshot,
+        schema_version=SCHEMA_VERSION,
+        extractors=dict(sorted(doc.extractors.items())),
+        languages=dict(sorted(Counter(f.language for f in doc.files if f.language is not None).items())),
+        files={
+            "analyzed": statuses["analyzed"],
+            "detected_only": statuses["detected_only"],
+            "not_code": statuses["not_code"],
+            "skipped": len(doc.skipped),
+        },
+        nodes={
+            "file": kinds[FileNode],
+            "external": kinds[ExternalNode],
+            "unresolved": kinds[UnresolvedNode],
+            "asset": kinds[AssetNode],
+        },
+        edges=len(doc.edges),
+        unresolved_imports=ix.completeness.unresolved_imports,
+    )

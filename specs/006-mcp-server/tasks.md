@@ -37,10 +37,10 @@ repository root first. Phase 1 and 2 share one commit. With the spec/plan/tasks 
 
 ## Phase 1: Setup
 
-- [ ] T001 Add `"mcp==2.3.0"` to `dependencies` in `backend/pyproject.toml` (research R1) and run `uv lock`;
+- [X] T001 Add `"mcp==2.3.0"` to `dependencies` in `backend/pyproject.toml` (research R1) and run `uv lock`;
   `backend/uv.lock` must resolve with the existing `fastapi==0.162.0` and `uvicorn==0.54.0` pins unchanged.
   If it does not resolve, stop and report the conflict instead of changing other pins.
-- [ ] T002 [P] Create `backend/tests/mcp_client.py` with `list_tools(server)`, `call(server, name, **args)` and
+- [X] T002 [P] Create `backend/tests/mcp_client.py` with `list_tools(server)`, `call(server, name, **args)` and
   `instructions(server)`: each opens `mcp.client.Client(server)` in-process inside `anyio.run` and returns the
   SDK result objects. Add `canonical(structured) -> bytes` = `json.dumps(structured, sort_keys=True,
   ensure_ascii=False, indent=2) + "\n"` encoded as UTF-8.
@@ -53,32 +53,32 @@ repository root first. Phase 1 and 2 share one commit. With the spec/plan/tasks 
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 [P] Write `backend/tests/unit/test_overview.py` (fails until T004) on documents from
+- [X] T003 [P] Write `backend/tests/unit/test_overview.py` (fails until T004) on documents from
   `make_doc` in `backend/tests/unit/synthetic.py` and on `analyzed_graph("py-dynamic")`: every field of data-model.md
   § Overview; counts equal the coverage summary and the node/edge lists; `dumps` twice gives equal bytes;
   `render_text` names the snapshot and the counts.
-- [ ] T004 Add `Overview` (frozen dataclass, `to_dict()`) and `render_text` support for it to
+- [X] T004 Add `Overview` (frozen dataclass, `to_dict()`) and `render_text` support for it to
   `backend/src/graphora/graph/results.py`, and `overview(ix) -> Overview` to
   `backend/src/graphora/graph/queries.py` (research R9). Extend `dumps` to accept `Overview`.
-- [ ] T005 [P] Write `backend/tests/unit/test_mcp_served.py` (fails until T006): `from_graph_file` on a fixture
+- [X] T005 [P] Write `backend/tests/unit/test_mcp_served.py` (fails until T006): `from_graph_file` on a fixture
   graph written to `tmp_path` builds an index whose snapshot equals the document's; a missing file raises
   `OSError`; `{}` raises `InvalidGraph`.
-- [ ] T006 Create `backend/src/graphora/mcp/served.py` (data-model.md § Served): frozen dataclass `Served(index,
+- [X] T006 Create `backend/src/graphora/mcp/served.py` (data-model.md § Served): frozen dataclass `Served(index,
   repository=None, store=None)`, `from_graph_file(path) -> Served` (`load.loads` then `queries.index`).
   `from_store` is added in US3.
-- [ ] T007 Create `backend/src/graphora/mcp/server.py` and `backend/src/graphora/mcp/__init__.py` with
+- [X] T007 Create `backend/src/graphora/mcp/server.py` and `backend/src/graphora/mcp/__init__.py` with
   `create_server(served) -> MCPServer`: name `graphora`, version from `importlib.metadata.version("graphora")`,
   the fixed instructions of contracts/mcp-tools.md with the snapshot (and repository) filled in, and the
   `graph_overview` tool returning `CallToolResult(content=[TextContent(render_text(o))],
   structuredContent=o.to_dict() | {"repository": …} when in store mode)` (research R4). Tool annotations as
   in research R3. A helper `_result(answer_or_overview, extra=None)` and an `_error(message)` that returns a
   `CallToolResult` with `isError=True` are added here for the later tools.
-- [ ] T008 [P] Write `backend/tests/integration/test_mcp_cli.py` (fails until T009): `main(["mcp", …])` returns
+- [X] T008 [P] Write `backend/tests/integration/test_mcp_cli.py` (fails until T009): `main(["mcp", …])` returns
   2 for no source, for both `--graph` and `--repository`, for `--graph -`, for `--database` with `--graph`,
   for `--repository` without `--snapshot`, and for a missing file; 7 for `{}`; nothing is written to stdout in
   any of these cases. A test with `query <graph> overview --format json` equals `results.dumps(overview(ix))`;
   `overview` with a target or `--limit` returns 2.
-- [ ] T009 Add the `mcp` subcommand to `backend/src/graphora/cli/__init__.py` (contracts/cli.md): options
+- [X] T009 Add the `mcp` subcommand to `backend/src/graphora/cli/__init__.py` (contracts/cli.md): options
   `--graph`, `--repository`, `--snapshot`, `--database`; a new `_mcp(args)` function kept apart from
   `_query` and `_serve`; it validates the options, builds `Served` (errors → exit codes of research R12, via
   `_log`), then calls `create_server(served).run("stdio")` and returns 0. Store mode returns 2 with

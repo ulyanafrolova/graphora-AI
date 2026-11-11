@@ -95,10 +95,15 @@ def _parser() -> argparse.ArgumentParser:
     query.add_argument("--symbol", help="dependents: only edges of this imported name")
     query.add_argument("--max-depth", type=int, help="impact: stop at this distance")
     query.add_argument("--follow-barrels", action="store_true", help="dependents and impact: see through re-exports")
+    mcp = commands.add_parser("mcp", help="serve one snapshot to coding agents over MCP on standard input/output")
+    mcp.add_argument("--graph", help="a graph JSON written by `graphora analyze`")
+    mcp.add_argument("--repository", help="store mode: a stored repository name")
+    mcp.add_argument("--snapshot", help="store mode: a stored snapshot id")
+    mcp.add_argument("--database", help="store mode: PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
     return parser
 
 
-_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files")
+_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview")
 _WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors")
 _OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
 
@@ -132,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
         return _serve(args)
     if args.command == "query":
         return _query(args)
+    if args.command == "mcp":
+        return _mcp(args)
 
     # SIGTERM must also unwind through fetch_snapshot so the temp folder is removed (research § R11).
     in_main_thread = threading.current_thread() is threading.main_thread()
@@ -160,6 +167,9 @@ def _query(args: argparse.Namespace) -> int:
         if getattr(args, option) not in (None, False) and question not in allowed:
             _log("error", f"--{option.replace('_', '-')} is only for {' and '.join(allowed)}")
             return EXIT_USAGE
+    if question == "overview" and (args.limit is not None or args.no_type_only):
+        _log("error", "overview takes only --format")
+        return EXIT_USAGE
 
     options: dict[str, object] = {"include_type_only": not args.no_type_only, "limit": args.limit}
     if question == "dependents":
@@ -185,7 +195,7 @@ def _query(args: argparse.Namespace) -> int:
     try:
         ix = queries.index(loads(data))
         target = (args.target,) if question in _WITH_TARGET else ()
-        answer = asks[question](ix, *target, **options)
+        answer = queries.overview(ix) if question == "overview" else asks[question](ix, *target, **options)
     except InvalidGraph as exc:
         _log("error", f"invalid graph: {exc.message}")
         return EXIT_GRAPH
@@ -199,6 +209,43 @@ def _query(args: argparse.Namespace) -> int:
     out = dumps(answer) if args.format == "json" else render_text(answer).encode("utf-8")
     sys.stdout.buffer.write(out)
     sys.stdout.flush()
+    return EXIT_OK
+
+
+def _mcp(args: argparse.Namespace) -> int:
+    """`graphora mcp` (specs/006-mcp-server contracts/cli.md). Only the protocol may write to stdout."""
+    from graphora.graph.load import InvalidGraph
+    from graphora.mcp import create_server, from_graph_file
+
+    store_mode = args.repository is not None or args.snapshot is not None
+    if args.graph is None and not store_mode:
+        _log("error", "give --graph FILE, or --repository and --snapshot")
+        return EXIT_USAGE
+    if args.graph is not None and store_mode:
+        _log("error", "--graph cannot be combined with --repository or --snapshot")
+        return EXIT_USAGE
+    if store_mode and (args.repository is None or args.snapshot is None):
+        _log("error", "--repository and --snapshot go together")
+        return EXIT_USAGE
+    if args.graph == "-":
+        _log("error", "--graph - is not allowed: standard input carries the MCP protocol")
+        return EXIT_USAGE
+    if args.graph is not None and args.database is not None:
+        _log("error", "--database is only for store mode")
+        return EXIT_USAGE
+    if store_mode:
+        _log("error", "store mode is not implemented yet")
+        return EXIT_USAGE
+
+    try:
+        served = from_graph_file(args.graph)
+    except OSError as exc:
+        _log("error", f"cannot read {args.graph}: {exc.strerror or exc}")
+        return EXIT_USAGE
+    except InvalidGraph as exc:
+        _log("error", f"invalid graph: {exc.message}")
+        return EXIT_GRAPH
+    create_server(served).run("stdio")
     return EXIT_OK
 
 

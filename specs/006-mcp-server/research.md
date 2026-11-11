@@ -76,6 +76,10 @@ Decisions for [plan.md](plan.md). Each item: decision, rationale, alternatives c
   `ValueError` from the query layer and argument checks → tool error with the message; store `ValueError`
   from `get_file` → tool error; any other exception is a bug and is not caught by tools (the SDK reports it
   as an error result, and the server keeps running). Errors never contain stack traces.
+- Tools return `CallToolResult(is_error=True)` themselves, so the message reaches the client as written. Argument
+  validation is done by the SDK: a missing or wrongly typed argument gives an error result that starts with
+  `Error executing tool <name>:` and names the field; unknown extra arguments are ignored (checked on
+  2.3.0 during phase 2).
 - **Rationale**: FR-014, spec US1 scenario 4.
 
 ## R7 — Data versus instructions
