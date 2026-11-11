@@ -123,3 +123,17 @@ def test_follow_barrels(tmp_path):
     path.write_bytes(analyzed_graph("ts-barrels"))
     text = run_query(str(path), "dependents", "src/components/Card.tsx", "--follow-barrels")[1].decode("utf-8")
     assert "src/app.ts  src/app.ts:1 → src/components/index.ts:2 → src/components/more.ts:1 → src/components/Card.tsx" in text
+
+
+def test_definitions_json(graph):
+    ix = queries.index(loads(analyzed_graph("py-flat")))
+    name = next(d.name for n in ix.nodes.values() for d in getattr(n, "definitions", ()))
+    code, out, err = run_query(graph, "definitions", name, "--format", "json", "--limit", "5")
+    assert (code, err) == (0, "")
+    assert out == dumps(queries.definitions(ix, name, limit=5))
+
+
+@pytest.mark.parametrize("args", [(), ("X", "--symbol", "X"), ("X", "--no-type-only"), ("X", "--max-depth", "2")])
+def test_definitions_usage_errors(graph, args):
+    code, out, _ = run_query(graph, "definitions", *args)
+    assert (code, out) == (2, b"")

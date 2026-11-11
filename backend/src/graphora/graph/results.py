@@ -12,7 +12,7 @@ from graphora.graph.model import Edge
 from graphora.graph.serialize import _edge_dict
 
 LinkConfidence = Literal["resolved", "heuristic"]
-Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files"]
+Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions"]
 
 
 def strongest(confidences: Iterable[str]) -> LinkConfidence:
@@ -104,6 +104,24 @@ class Completeness:
 
 
 @dataclass(frozen=True)
+class DefinitionMatch:
+    """A definition found by name (specs/006-mcp-server data-model.md § DefinitionMatch)."""
+
+    file: str
+    path: str
+    line: int
+    kind: str
+    name: str
+    exported_as: tuple[str, ...] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {"file": self.file, "path": self.path, "line": self.line, "kind": self.kind, "name": self.name}
+        if self.exported_as is not None:
+            out["exported_as"] = sorted(set(self.exported_as))
+        return out
+
+
+@dataclass(frozen=True)
 class Answer:
     """`None` marks a field the question does not use; it is left out of the JSON (contracts/answers.md)."""
 
@@ -120,6 +138,7 @@ class Answer:
     groups: tuple[CycleGroup, ...] | None = None
     cut: bool | None = None
     completeness: Completeness | None = None
+    definitions: tuple[DefinitionMatch, ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -130,7 +149,7 @@ class Answer:
             "total": self.total,
             "truncated": self.truncated,
         }
-        for name in ("items", "incoming", "outgoing", "groups"):
+        for name in ("items", "incoming", "outgoing", "groups", "definitions"):
             value = getattr(self, name)
             if value is not None:
                 out[name] = [x.to_dict() for x in value]
@@ -226,8 +245,18 @@ def _group_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _definition_lines(answer: Answer) -> list[str]:
+    lines = []
+    for d in answer.definitions or ():
+        exported = f"  exported as {', '.join(sorted(set(d.exported_as)))}" if d.exported_as else ""
+        lines.append(f"{d.path}:{d.line}  {d.kind}  {d.name}{exported}")
+    return lines
+
+
 def _header(answer: Answer) -> list[str]:
     target = f" {_name(answer.target)}" if answer.target else ""
+    if answer.question == "definitions":
+        target = f" {answer.options['name']}"
     return [f"{answer.question}{target} @ {answer.snapshot}"]
 
 
@@ -238,6 +267,7 @@ _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
     "cycles": _group_lines,
     "neighbors": _neighbor_lines,
     "key_files": _key_file_lines,
+    "definitions": _definition_lines,
 }
 
 

@@ -21,9 +21,9 @@ def list_tools(server):
     return _run(server, use)
 
 
-def call(server, name, **args):
+def call(server, tool, /, **args):
     async def use(client):
-        return await client.call_tool(name, args)
+        return await client.call_tool(tool, args)
 
     return _run(server, use)
 

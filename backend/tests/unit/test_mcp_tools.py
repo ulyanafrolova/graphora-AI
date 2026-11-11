@@ -5,13 +5,13 @@ import json
 import pytest
 
 from graphora.graph.model import CoverageFile, Definition, FileNode
-from graphora.graph.queries import dependents, index, overview
+from graphora.graph.queries import definitions, dependents, index, overview
 from graphora.graph.results import dumps, render_text
 from graphora.mcp import Served, create_server
 from mcp_client import call, calls, canonical, instructions, list_tools, text
 from synthetic import SNAP, edge, make_doc
 
-GRAPH_TOOLS = ["graph_overview", "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files"]
+GRAPH_TOOLS = ["graph_overview", "find_definitions", "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files"]
 
 
 def server(*edges, **doc):
@@ -154,3 +154,11 @@ def test_repository_text_appears_only_in_results():
         assert planted_text not in listing
         assert planted_text not in instructions(srv)
     assert "ignore_previous_instructions.py" in text(call(srv, "dependents", target="b.py"))
+
+
+def test_find_definitions_tool():
+    planted = FileNode("auth/service.py", "python", (Definition("class", "AuthService", 12),))
+    srv, ix = server(edge("api/routes.py", "auth/service.py", 3), nodes=[planted])
+    result = call(srv, "find_definitions", name="AuthService")
+    assert canonical(result.structured_content) == dumps(definitions(ix, "AuthService", limit=50))
+    assert call(srv, "find_definitions", name="").is_error

@@ -52,6 +52,10 @@ DESCRIPTIONS = {
     "cycles": "Groups of files that import each other in a loop, each with one example cycle of import lines. "
     "A group marked type_only loops only through type imports and does not fail at run time. "
     + _TYPE_ONLY + _LISTS + _CONFIDENCE,
+    "find_definitions": "Where a class, function, method, interface, type or enum with this exact name is "
+    "defined: file, line, kind, full name and, for TypeScript/JavaScript, the names it is exported under. "
+    "name is case-sensitive; a method is found by its short name (write) or full name (Logger.write). "
+    "Use the file it returns as target of dependents (with symbol) or impact. " + _LISTS,
     "key_files": "The files most depended on, ranked by transitive and then direct dependents. "
     + _TYPE_ONLY + "limit (default 10, at most 500) caps the files.",
 }
@@ -87,6 +91,10 @@ def create_server(served: Served) -> MCPServer:
         if served.repository is None:
             return _result(queries.overview(ix))
         return _result(queries.overview(ix), {"repository": served.repository}, f"repository {served.repository}\n")
+
+    @server.tool(description=DESCRIPTIONS["find_definitions"], annotations=READ_ONLY)
+    def find_definitions(name: str, limit: int = DEFAULT_LIMIT) -> CallToolResult:
+        return ask(queries.definitions, name, limit=limit)
 
     @server.tool(description=DESCRIPTIONS["dependencies"], annotations=READ_ONLY)
     def dependencies(target: str, include_type_only: bool = True, limit: int = DEFAULT_LIMIT) -> CallToolResult:

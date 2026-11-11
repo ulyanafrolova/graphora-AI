@@ -88,7 +88,7 @@ def _parser() -> argparse.ArgumentParser:
     query = commands.add_parser("query", help="answer one question about a graph document")
     query.add_argument("graph", help="a graph JSON written by `graphora analyze`, or - for standard input")
     query.add_argument("question", choices=_QUESTIONS)
-    query.add_argument("target", nargs="?", help="a node id, a file path or an external package name")
+    query.add_argument("target", nargs="?", help="a node id, a file path or an external package name; for definitions, a name")
     query.add_argument("--format", choices=("text", "json"), default="text")
     query.add_argument("--limit", type=int)
     query.add_argument("--no-type-only", action="store_true", help="leave out type-only links")
@@ -103,8 +103,8 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview")
-_WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors")
+_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions")
+_WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors", "definitions")
 _OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
 
 
@@ -170,6 +170,9 @@ def _query(args: argparse.Namespace) -> int:
     if question == "overview" and (args.limit is not None or args.no_type_only):
         _log("error", "overview takes only --format")
         return EXIT_USAGE
+    if question == "definitions" and args.no_type_only:
+        _log("error", "definitions takes only --limit and --format")
+        return EXIT_USAGE
 
     options: dict[str, object] = {"include_type_only": not args.no_type_only, "limit": args.limit}
     if question == "dependents":
@@ -195,7 +198,12 @@ def _query(args: argparse.Namespace) -> int:
     try:
         ix = queries.index(loads(data))
         target = (args.target,) if question in _WITH_TARGET else ()
-        answer = queries.overview(ix) if question == "overview" else asks[question](ix, *target, **options)
+        if question == "overview":
+            answer = queries.overview(ix)
+        elif question == "definitions":
+            answer = queries.definitions(ix, args.target, limit=args.limit)
+        else:
+            answer = asks[question](ix, *target, **options)
     except InvalidGraph as exc:
         _log("error", f"invalid graph: {exc.message}")
         return EXIT_GRAPH

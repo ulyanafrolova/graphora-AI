@@ -45,3 +45,27 @@ def test_tool_equals_query(name, entry, tmp_path):
     assert canonical(first.structured_content) == as_json
     assert text(first) == as_text.decode("utf-8")
     assert canonical(second.structured_content) == as_json
+
+
+DEFINED = [
+    pytest.param(p.parent.name, id=p.parent.name)
+    for p in sorted(FIXTURES.glob("*/expected.json"))
+    if any(n.get("definitions") for n in json.loads(p.read_text(encoding="utf-8")).get("nodes", []))
+]
+
+
+@pytest.mark.parametrize("name", DEFINED)
+def test_every_expected_definition_is_found(name, tmp_path):
+    """SC-006: each definition written by hand in expected.json is found by its (short) name."""
+    graph = tmp_path / "g.json"
+    graph.write_bytes(analyzed_graph(name))
+    expected = [
+        (n["id"].removeprefix("file:"), d["line"], d["kind"], d["name"])
+        for n in json.loads((FIXTURES / name / "expected.json").read_text(encoding="utf-8"))["nodes"]
+        for d in n.get("definitions", [])
+    ]
+    names = sorted({full.rsplit(".", 1)[-1] for *_, full in expected})
+    results = calls(create_server(from_graph_file(graph)), *[("find_definitions", {"name": n, "limit": 500}) for n in names])
+    found = {(d["path"], d["line"], d["kind"], d["name"]) for r in results for d in r.structured_content["definitions"]}
+    assert expected
+    assert set(expected) <= found

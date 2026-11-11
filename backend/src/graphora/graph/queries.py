@@ -9,7 +9,18 @@ from typing import TypeVar
 import networkx as nx
 
 from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
-from graphora.graph.results import Answer, Completeness, CycleGroup, Item, Link, Overview, Question, strongest, weakest
+from graphora.graph.results import (
+    Answer,
+    Completeness,
+    CycleGroup,
+    DefinitionMatch,
+    Item,
+    Link,
+    Overview,
+    Question,
+    strongest,
+    weakest,
+)
 from graphora.graph.serialize import SCHEMA_VERSION, edge_sort_key
 
 T = TypeVar("T")
@@ -492,4 +503,31 @@ def overview(ix: GraphIndex) -> Overview:
         },
         edges=len(doc.edges),
         unresolved_imports=ix.completeness.unresolved_imports,
+    )
+
+
+def definitions(ix: GraphIndex, name: str, *, limit: int | None = None) -> Answer:
+    """Definitions whose name, or last part after the final `.`, is exactly `name`, by path and line
+    (006 research § R8). `Logger.write` is found as `write` and as `Logger.write`."""
+    _check_limit(limit)
+    if not name:
+        raise ValueError("name must not be empty")
+    matches = [
+        DefinitionMatch(node.id, node.path, d.line, d.kind, d.name, d.exported_as)
+        for node in ix.nodes.values()
+        if isinstance(node, FileNode)
+        for d in node.definitions
+        if name in (d.name, d.name.rsplit(".", 1)[-1])
+    ]
+    matches.sort(key=lambda m: (m.path, m.line, m.name))
+    shown, total, truncated = _limit(matches, limit)
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="definitions",
+        target=None,
+        options={"limit": limit, "name": name},
+        total=total,
+        truncated=truncated,
+        definitions=tuple(shown),
+        completeness=ix.completeness,
     )

@@ -143,19 +143,19 @@ canonically equals `graphora query … --format json`.
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Write `backend/tests/unit/test_definitions.py` (fails until T015) on synthetic documents:
+- [X] T014 [P] [US2] Write `backend/tests/unit/test_definitions.py` (fails until T015) on synthetic documents:
   spec US2 scenarios 1–5; order by (path, line, name); `exported_as` present for TS/JS, absent for Python;
   case-sensitive (`authservice` finds nothing); limit with `total`/`truncated`; `target` is `null`,
   `options` = `{"limit", "name"}`; completeness present; `dumps` twice equal.
-- [ ] T015 [US2] Add `DefinitionMatch`, `Answer.definitions` and `"definitions"` in `Question` to
+- [X] T015 [US2] Add `DefinitionMatch`, `Answer.definitions` and `"definitions"` in `Question` to
   `backend/src/graphora/graph/results.py` (data-model.md), its `render_text` lines
   (`path:line  kind  name  [exported as …]`), and `definitions(ix, name, *, limit=None)` to
   `backend/src/graphora/graph/queries.py` (research R8).
-- [ ] T016 [P] [US2] Add `definitions` to `query` in `backend/src/graphora/cli/__init__.py` (contracts/cli.md):
+- [X] T016 [P] [US2] Add `definitions` to `query` in `backend/src/graphora/cli/__init__.py` (contracts/cli.md):
   the name is the target and is not resolved as a node; only `--limit` and `--format`. Add CLI cases to
   `backend/tests/integration/test_query_cli.py`: JSON equals `dumps(definitions(...))`, `--symbol` is a usage
   error, missing name is a usage error.
-- [ ] T017 [US2] Add the `find_definitions` tool to `backend/src/graphora/mcp/server.py` (arguments `name`,
+- [X] T017 [US2] Add the `find_definitions` tool to `backend/src/graphora/mcp/server.py` (arguments `name`,
   `limit`) and extend `backend/tests/golden/test_mcp_queries.py` with SC-006: for every fixture, for every
   definition in `expected.json`, `find_definitions(name=<last name part>)` contains a match with that path,
   line, kind and full name. Update the expected tool list in `backend/tests/unit/test_mcp_tools.py`.
