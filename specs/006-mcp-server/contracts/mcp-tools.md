@@ -48,10 +48,11 @@ how many there are. Start with graph_overview; use find_definitions to turn a sy
 
 | Cause | Message (example) |
 |---|---|
+| missing or wrongly typed argument | `Error executing tool impact: 1 validation error …` naming the field (from the SDK) |
 | target not found | `x.py is not in snapshot <id>` / `src/gen.go is detected_only (not analyzed)` |
 | ambiguous package name | as `NodeNotFound` in 004 (lists the candidate ids) |
 | limit out of range | `limit must be between 0 and 500` |
-| `max_depth < 1` | `max_depth must be at least 1` |
+| `max_depth < 1` | `max_depth must be 1 or more, got 0` (from the query layer) |
 | bad path for `read_lines` | `invalid path: <path>` / `path not found in snapshot: <path>` / `file has no text content: <path>` |
 | range | `end must not be less than start` / `line range outside the file: <path> has N lines` |
 

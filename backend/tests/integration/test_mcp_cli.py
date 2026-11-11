@@ -3,12 +3,16 @@
 import io
 import sys
 
+import anyio
 import pytest
+from mcp import Client, StdioServerParameters
 
 from conftest import analyzed_graph, run_query
 from graphora.graph.load import loads
 from graphora.graph.queries import index, overview
 from graphora.graph.results import dumps
+from graphora.mcp import create_server, from_graph_file
+from mcp_client import call
 
 
 def run_mcp(*args):
@@ -72,3 +76,18 @@ def test_query_overview(graph):
 def test_query_overview_takes_only_format(graph, args):
     code, out, _ = run_query(graph, "overview", *args)
     assert (code, out) == (2, b"")
+
+
+def test_real_stdio_server(graph):
+    """The command itself as a subprocess: only protocol messages on stdout (research § R11)."""
+    command = "from graphora.cli import main; raise SystemExit(main())"
+    params = StdioServerParameters(command=sys.executable, args=["-c", command, "mcp", "--graph", graph])
+
+    async def use():
+        async with Client(params) as client:
+            names = [t.name for t in (await client.list_tools()).tools]
+            return names, await client.call_tool("impact", {"target": "pkg/b.py"})
+
+    names, result = anyio.run(use)
+    assert "impact" in names
+    assert result.structured_content == call(create_server(from_graph_file(graph)), "impact", target="pkg/b.py").structured_content

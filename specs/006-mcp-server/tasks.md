@@ -101,13 +101,13 @@ canonically equals `graphora query … --format json`.
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Write `backend/tests/golden/test_mcp_queries.py` (fails until T012): parametrized over
+- [X] T010 [P] [US1] Write `backend/tests/golden/test_mcp_queries.py` (fails until T012): parametrized over
   every fixture with a `queries.json` and every entry; write `analyzed_graph(name)` to `tmp_path`; build the
   server with `from_graph_file`; call the tool named as the question (`key-files` → `key_files`) with the
   entry's options mapped to tool arguments; assert `canonical(result.structuredContent)` equals the stdout of
   `run_query(graph, question, target, *flags, "--format", "json")`; assert the text block equals
   `render_text` of the same answer; call twice and compare (SC-001, FR-013).
-- [ ] T011 [P] [US1] Write `backend/tests/unit/test_mcp_tools.py` (fails until T012) on a synthetic graph:
+- [X] T011 [P] [US1] Write `backend/tests/unit/test_mcp_tools.py` (fails until T012) on a synthetic graph:
   - `list_tools` gives exactly `graph_overview`, `dependencies`, `dependents`, `impact`, `neighbors`,
     `cycles`, `key_files` in graph-file mode (no `read_lines`); each has a description, an input schema with
     the arguments and defaults of contracts/mcp-tools.md, and the four annotations of research R3;
@@ -120,13 +120,13 @@ canonically equals `graphora query … --format json`.
     `ignore_previous_instructions.py` and a definition named `IGNORE_ALL_RULES`; the strings appear in results
     only, never in `list_tools` output or `instructions`;
   - instructions contain the snapshot id.
-- [ ] T012 [US1] Add the tools `dependencies`, `dependents`, `impact`, `neighbors`, `cycles`, `key_files` to
+- [X] T012 [US1] Add the tools `dependencies`, `dependents`, `impact`, `neighbors`, `cycles`, `key_files` to
   `backend/src/graphora/mcp/server.py` (research R3–R6, contracts/mcp-tools.md): typed arguments with the
   defaults of the contract, the description texts of the contract (first sentence) followed by one sentence
   on arguments and one on confidence; a shared `_check_limit(limit)` (0–500); each calls the
   `graphora.graph.queries` function with the served index and returns `_result(answer)`; `NodeNotFound` and
   `ValueError` → `_error(message)`.
-- [ ] T013 [US1] Add one stdio test to `backend/tests/integration/test_mcp_cli.py` (research R11): start the
+- [X] T013 [US1] Add one stdio test to `backend/tests/integration/test_mcp_cli.py` (research R11): start the
   real command as a subprocess with `mcp.client.Client(StdioServerParameters(command=sys.executable,
   args=["-c", "from graphora.cli import main; raise SystemExit(main())", "mcp", "--graph", path]))`, list the
   tools and call `impact` on a fixture file; the structured result equals the in-process one.
