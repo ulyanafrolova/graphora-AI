@@ -202,7 +202,7 @@ answers as the graph file and the same lines as the 005 HTTP API.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T022 [P] Write `backend/tests/integration/test_mcp_performance.py`, marked `slow` (SC-003): a synthetic
+- [X] T022 [P] Write `backend/tests/integration/test_mcp_performance.py`, marked `slow` (SC-003): a synthetic
   5,000-file document (reuse `_graph()` from `backend/tests/integration/test_query_performance.py`) written
   to `tmp_path`; `from_graph_file` + `create_server` in < 3 s; each tool (impact and dependents on the most
   depended-on file, cycles, key files, find_definitions, graph_overview) answers through the in-process client
@@ -210,6 +210,8 @@ answers as the graph file and the same lines as the 005 HTTP API.
 - [ ] T023 [P] Run quickstart.md scenarios 1–7 and 9 by hand (scenario 8 with `make db`), including the Claude
   Code scenarios 3–5; fix any mismatch with the contracts; update `specs/006-mcp-server/quickstart.md` if a
   command changed.
+  Done by Claude on 2026-11-11: scenarios 1, 2, 6, 7 and 8 (store mode over stdio). Open: Claude Code
+  scenarios 3–5 (run by the developer).
 - [ ] T024 Run `make check`; rebase on `main` if 007 or other CLI changes were merged; update the PR
   description; mark the PR ready.
 
