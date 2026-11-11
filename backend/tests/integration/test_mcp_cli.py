@@ -91,3 +91,10 @@ def test_real_stdio_server(graph):
     names, result = anyio.run(use)
     assert "impact" in names
     assert result.structured_content == call(create_server(from_graph_file(graph)), "impact", target="pkg/b.py").structured_content
+
+
+def test_store_mode_without_database_url(monkeypatch):
+    monkeypatch.delenv("GRAPHORA_DATABASE_URL", raising=False)
+    code, out, err = run_mcp("--repository", "r", "--snapshot", "s")
+    assert (code, out) == (6, "")
+    assert "store unavailable: no database URL" in err

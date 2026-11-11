@@ -124,6 +124,7 @@ Decisions for [plan.md](plan.md). Each item: decision, rationale, alternatives c
   first with the same rules as 004 (no absolute path, backslash or `..` segment); the store matches only
   exact stored paths, so nothing outside the snapshot can be returned. The store is closed when the server
   stops.
+- `Store.open` applies `schema.sql` (create-if-missing) as `serve` does; after that the server only reads.
 - **Rationale**: FR-007, FR-016; reuses 005 without changing it (`store/` is Ulyana's module).
 
 ## R11 — Standard output hygiene

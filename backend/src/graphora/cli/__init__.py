@@ -223,7 +223,8 @@ def _query(args: argparse.Namespace) -> int:
 def _mcp(args: argparse.Namespace) -> int:
     """`graphora mcp` (specs/006-mcp-server contracts/cli.md). Only the protocol may write to stdout."""
     from graphora.graph.load import InvalidGraph
-    from graphora.mcp import create_server, from_graph_file
+    from graphora.mcp import PairNotFound, create_server, from_graph_file, from_store
+    from graphora.store import StoreUnavailable
 
     store_mode = args.repository is not None or args.snapshot is not None
     if args.graph is None and not store_mode:
@@ -241,19 +242,32 @@ def _mcp(args: argparse.Namespace) -> int:
     if args.graph is not None and args.database is not None:
         _log("error", "--database is only for store mode")
         return EXIT_USAGE
-    if store_mode:
-        _log("error", "store mode is not implemented yet")
-        return EXIT_USAGE
 
     try:
-        served = from_graph_file(args.graph)
+        if store_mode:
+            url = _database_url(args.database)
+            if url is None:
+                raise StoreUnavailable("no database URL: use --database or GRAPHORA_DATABASE_URL")
+            served = from_store(url, args.repository, args.snapshot)
+        else:
+            served = from_graph_file(args.graph)
     except OSError as exc:
         _log("error", f"cannot read {args.graph}: {exc.strerror or exc}")
         return EXIT_USAGE
+    except StoreUnavailable as exc:
+        _log("error", f"store unavailable: {exc.reason}")
+        return EXIT_STORE
     except InvalidGraph as exc:
         _log("error", f"invalid graph: {exc.message}")
         return EXIT_GRAPH
-    create_server(served).run("stdio")
+    except PairNotFound as exc:
+        _log("error", exc.message)
+        return EXIT_NOT_FOUND
+    try:
+        create_server(served).run("stdio")
+    finally:
+        if served.store is not None:
+            served.store.close()
     return EXIT_OK
 
 

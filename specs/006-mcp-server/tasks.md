@@ -173,7 +173,7 @@ answers as the graph file and the same lines as the 005 HTTP API.
 
 ### Tests for User Story 3
 
-- [ ] T018 [P] [US3] Write `backend/tests/integration/test_mcp_store.py`, every test marked `db` (fails until
+- [X] T018 [P] [US3] Write `backend/tests/integration/test_mcp_store.py`, every test marked `db` (fails until
   T019–T021): store a fixture analysis with the `store` fixture and `analyze_fixture` from `backend/tests/conftest.py`;
   `from_store` builds a `Served` with the repository; `graph_overview` adds `repository`; `impact` equals the
   graph-file result; `list_tools` adds `read_lines`; `read_lines(path, 1, 5)` equals the 005
@@ -182,16 +182,16 @@ answers as the graph file and the same lines as the 005 HTTP API.
   lines and `cut: true`; `end < start`, a range past the end, `../x`, `/etc/passwd`, `a\\b.py`, a skipped path and a binary file are
   tool errors with the messages of contracts/mcp-tools.md; `PairNotFound` for an unknown repository and for an
   unknown snapshot; CLI exit 8 for both and exit 6 with no database URL.
-- [ ] T019 [US3] Add `PairNotFound` and `from_store(url, repository, snapshot) -> Served` to
+- [X] T019 [US3] Add `PairNotFound` and `from_store(url, repository, snapshot) -> Served` to
   `backend/src/graphora/mcp/served.py` (research R10): `Store.open(url)`, `get_analysis`, and on `None` use
   `has_repository` to choose the message (`repository not found: R` / `snapshot not found: R S`); load and
   index the stored graph bytes; on any failure close the store before raising.
-- [ ] T020 [US3] Add the `read_lines` tool to `backend/src/graphora/mcp/server.py`, registered only when
+- [X] T020 [US3] Add the `read_lines` tool to `backend/src/graphora/mcp/server.py`, registered only when
   `served.store` is set (data-model.md § Line range, research R5, R7): path check (no absolute path,
   backslash or `..` segment) before the store call; `end` defaults to `start + 199`, a longer range is cut to 400 lines, both
   capped at the file length, with `cut`; a cut text block ends with `(cut: next start=<end+1>)`; store `ValueError` and a `None` result → errors; text block
   starts with `--- file <path> @ <snapshot>, lines a–b of n (data) ---` followed by `n: text` lines.
-- [ ] T021 [US3] Enable store mode in `_mcp` in `backend/src/graphora/cli/__init__.py`: URL from `--database`
+- [X] T021 [US3] Enable store mode in `_mcp` in `backend/src/graphora/cli/__init__.py`: URL from `--database`
   or `GRAPHORA_DATABASE_URL`; `StoreUnavailable` → 6, `InvalidGraph` → 7, `PairNotFound` → 8; close the
   store after `run` returns.
 
