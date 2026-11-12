@@ -27,6 +27,27 @@ def test_excluded_dirs(tmp_path, name):
     assert [(s.path, s.reason) for s in result.skipped] == [(name, "excluded_dir")]
 
 
+@pytest.mark.parametrize("name", ["bin", "obj", "Bin", "OBJ"])
+def test_build_output_next_to_a_csproj_skipped(tmp_path, name):
+    """007 research R3."""
+    _touch(tmp_path / "App" / "App.csproj")
+    _touch(tmp_path / "App" / name / "Debug" / "x.cs")
+    _touch(tmp_path / "App" / "P.cs")
+    result = walk(tmp_path, BIG, BIG)
+    assert result.files == ["App/App.csproj", "App/P.cs"]
+    assert [(s.path, s.reason) for s in result.skipped] == [(f"App/{name}", "excluded_dir")]
+
+
+def test_bin_without_a_csproj_is_walked(tmp_path):
+    _touch(tmp_path / "tools" / "bin" / "run.py")
+    _touch(tmp_path / "tools" / "App.csproj" / "not-a-file.txt")  # a folder named like a project file does not count
+    _touch(tmp_path / "Other" / "Other.csproj")
+    _touch(tmp_path / "Other" / "Sub" / "bin" / "keep.cs")  # only the project's own folder, not deeper ones
+    result = walk(tmp_path, BIG, BIG)
+    assert result.files == ["Other/Other.csproj", "Other/Sub/bin/keep.cs", "tools/App.csproj/not-a-file.txt", "tools/bin/run.py"]
+    assert result.skipped == []
+
+
 def test_fr009_list_is_complete():
     assert EXCLUDED_DIRS == {
         ".git", ".venv", "venv", "env", "node_modules", "__pycache__",

@@ -44,6 +44,12 @@
       "ecosystem": "nuget"
     },
     {
+      "id": "ext:python:sys",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "python"
+    },
+    {
       "id": "file:src/Core/Domain/Line.cs",
       "kind": "file",
       "language": "csharp",
@@ -143,6 +149,12 @@
           "line": 9
         }
       ]
+    },
+    {
+      "id": "file:tools/bin/build.py",
+      "kind": "file",
+      "language": "python",
+      "definitions": []
     },
     {
       "id": "project:src/Core/Core.csproj",
@@ -430,6 +442,16 @@
       "global_using": false
     },
     {
+      "source": "file:tools/bin/build.py",
+      "line": 1,
+      "target": "ext:python:sys",
+      "type": "imports",
+      "form": "static",
+      "symbol": null,
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
       "source": "project:src/Core/Core.csproj",
       "line": 8,
       "target": "ext:nuget:Foo",
@@ -618,7 +640,28 @@
       "language": "csharp",
       "status": "analyzed",
       "flags": []
+    },
+    {
+      "path": "tools/bin/build.py",
+      "language": "python",
+      "status": "analyzed",
+      "flags": []
+    },
+    {
+      "path": "tools/bin/run.sh",
+      "language": "shell",
+      "status": "detected_only",
+      "flags": []
     }
   ],
-  "skipped": []
+  "skipped": [
+    {
+      "path": "src/Web/bin",
+      "reason": "excluded_dir"
+    },
+    {
+      "path": "src/Web/obj",
+      "reason": "excluded_dir"
+    }
+  ]
 }

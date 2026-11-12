@@ -236,7 +236,7 @@ hand-written `expected.json` files.
 **Independent Test**: `uv run pytest tests/unit/test_walk.py tests/golden -k csharp` with the new folders in the
 fixtures.
 
-- [ ] T014 [US3] Implement the `bin`/`obj` rule in `backend/src/graphora/ingest/walk.py` (research R3): while
+- [X] T014 [US3] Implement the `bin`/`obj` rule in `backend/src/graphora/ingest/walk.py` (research R3): while
   listing a folder, if any entry is a regular file whose name ends in `.csproj` (case-insensitive), sub-folders
   named `bin` or `obj` are added to `skipped` with reason `excluded_dir` and not descended; `EXCLUDED_DIRS`,
   `is_excluded_path`, `ingest/archive.py` and `ingest/snapshot.py` stay unchanged. Add to the fixtures:

@@ -609,5 +609,14 @@
       "flags": []
     }
   ],
-  "skipped": []
+  "skipped": [
+    {
+      "path": "App/bin",
+      "reason": "excluded_dir"
+    },
+    {
+      "path": "App/obj",
+      "reason": "excluded_dir"
+    }
+  ]
 }

@@ -38,7 +38,7 @@
       "total": 4,
       "completeness": {
         "unresolved_imports": 6,
-        "not_analyzed_files": 0,
+        "not_analyzed_files": 1,
         "files_with_errors": 0
       }
     }
@@ -74,7 +74,7 @@
       "total": 3,
       "completeness": {
         "unresolved_imports": 6,
-        "not_analyzed_files": 0,
+        "not_analyzed_files": 1,
         "files_with_errors": 0
       }
     }
@@ -101,7 +101,7 @@
       "total": 2,
       "completeness": {
         "unresolved_imports": 6,
-        "not_analyzed_files": 0,
+        "not_analyzed_files": 1,
         "files_with_errors": 0
       }
     }
