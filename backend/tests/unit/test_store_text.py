@@ -43,7 +43,7 @@ def test_no_text():
     assert text_lines("empty.ts", b"") == ()
 
 
-_STATEMENT_WORDS = ("import", "from", "export", "require")
+_STATEMENT_WORDS = ("import", "from", "export", "require", "using", "Reference")  # 007: C# and .csproj
 
 
 @pytest.mark.parametrize("name", sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file()))
@@ -53,7 +53,7 @@ def test_expected_edge_lines_start_an_import(name):
     root = FIXTURES / name / "repo"
     expected = json.loads((FIXTURES / name / "expected.json").read_text(encoding="utf-8"))
     for edge in expected.get("edges", []):
-        path = edge["source"].removeprefix("file:")
+        path = edge["source"].split(":", 1)[1]  # file:… or project:…
         lines = text_lines(path, (root / path).read_bytes())
         if lines is None:
             continue  # a file without text (e.g. invalid UTF-8) has no served lines
