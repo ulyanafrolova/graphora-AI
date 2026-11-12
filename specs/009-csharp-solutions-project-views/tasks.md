@@ -138,7 +138,7 @@ CLI and MCP.
   listing `..\..\outside\X.csproj`; no process, no read outside the root, `parse_error` / `not_found` as specified.
 - [X] T012 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: after analysis, project-level
   `impact` of `P0` and `cycles` answer in under 2 s in total (SC-005).
-- [ ] T013 Docs: `README.md` (status row for 009, schema v6 diagram: solution node, `solution_member`; quick start
+- [X] T013 Docs: `README.md` (status row for 009, schema v6 diagram: solution node, `solution_member`; quick start
   example of `--level project` and `projects`), `docs/product/project-context.md` § 7 (C# complete for issue #19);
   run every scenario of `specs/009-csharp-solutions-project-views/quickstart.md` and fix drift.
 

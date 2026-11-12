@@ -32,11 +32,12 @@ uv run graphora query /tmp/multi.json cycles --level project
 
 Check:
 
-- `projects` lists every project with its solutions; one project is in no solution, and project-less files are
-  counted in the last entry;
-- `Web`'s dependencies show `Infra` and `Core` with a cited file and line, and `Tools` as
-  "(declared, not used by code)";
-- the project-level cycle between the two loop projects is reported with an example chain.
+- `projects` lists the seven projects with their solutions; `LoopB` is in no solution (a `(no project)` entry appears
+  only when there are C# files without a project, as in `csharp-edge`);
+- `Web`'s dependencies show `Core` and `Infra` with a cited file and line, `Tools` as likely (only a fallback
+  `using` links them), `nuget:Serilog` (likely, by name prefix), and `nuget:Microsoft.Extensions.Logging` as
+  "(declared, not used by code)"; `LoopA`'s dependencies show `Tools` the same way;
+- the project-level cycle between `LoopA` and `LoopB` is reported with `Alpha.cs:7 → Beta.cs:7`.
 
 ## 4. Performance
 

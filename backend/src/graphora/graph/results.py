@@ -291,14 +291,18 @@ def _definition_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _files(count: int) -> str:
+    return f"{count} file" if count == 1 else f"{count} files"
+
+
 def _project_lines(answer: Answer) -> list[str]:
     lines = []
     for p in answer.projects or ():
         if p.project is None:
-            lines.append(f"(no project)  {p.files} files")
+            lines.append(f"(no project)  {_files(p.files)}")
             continue
         solutions = ", ".join(_name(s) for s in p.solutions) or "no solution"
-        lines.append(f"{p.path}  {p.files} files  in {solutions}")
+        lines.append(f"{p.path}  {_files(p.files)}  in {solutions}")
         for label, ids in (("references", p.references), ("packages", p.packages), ("uses", p.uses), ("used by", p.used_by)):
             if ids:
                 lines.append(f"  {label}: {', '.join(_name(i) for i in ids)}")

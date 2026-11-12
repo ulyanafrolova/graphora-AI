@@ -161,7 +161,7 @@ def test_projects_summary_and_no_project_entry():
     assert (by_id[B].uses, by_id[B].used_by) == ((C,), (A, C))
     assert (by_id[None].path, by_id[None].files) == (None, 1)
     text = render_text(answer)
-    assert "a/A.csproj  2 files  in All.sln" in text and "(no project)  1 files" in text
+    assert "a/A.csproj  2 files  in All.sln" in text and "(no project)  1 file" in text
     assert "  uses: b/B.csproj" in text
 
 

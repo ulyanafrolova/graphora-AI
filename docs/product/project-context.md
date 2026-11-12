@@ -123,7 +123,8 @@ Support levels:
 - Level 1, full analysis: Python, TypeScript/JavaScript (MVP), C# (namespace symbol index, `.csproj` project references, NuGet externals; see issue #19).
   C# slice 1 (specs/007-csharp-analysis) resolves `using` directives through a per-project namespace and type
   index; slice 2 (specs/008-csharp-type-references) links files by the types they actually write, with global and
-  implicit usings, `<Using>` items and `Directory.Build.props`. `.sln` files and project views follow in slice 3.
+  implicit usings, `<Using>` items and `Directory.Build.props`. slice 3 (specs/009-csharp-solutions-project-views) adds `.sln`/`.slnx` solutions and project-level views computed
+  from the file-level facts, which completes issue #19.
 - Level 2, imports only: Go and Java if time allows, about 1–2 weeks each.
 - Level 3, detected only: everything else, shown on the map and marked as not analyzed.
 

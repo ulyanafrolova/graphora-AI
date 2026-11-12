@@ -53,12 +53,13 @@ Done and merged into `main` (features 001–006, graph schema v3):
 | 005 | Storage and HTTP API | PostgreSQL store per (repository, snapshot), read-only API (`graphora serve`) |
 | 006 | MCP server | Read-only graph tools for coding agents over stdio (`graphora mcp`), from a graph file or the store |
 
-In progress (PR #22, issue #19, graph schema v5):
+In progress (PR #22, issue #19, graph schema v6):
 
 | # | Feature | What it gives |
 |---|---|---|
 | 007 | C# analysis, slice 1 | `using` → namespace → declaring files, `.csproj` project and package references read as data, `dotnet`/`nuget` externals, `bin`/`obj` skipped next to a `.csproj` |
 | 008 | C# analysis, slice 2 | Type references give exact file → file edges; `global using`, implicit usings, `<Using>` items and `Directory.Build.props`; unresolved type names counted per file |
+| 009 | C# analysis, slice 3 | `.sln`/`.slnx` solutions in the graph; project-level `dependencies`, `dependents`, `impact`, `cycles` (`--level project`) and a `projects` summary, in the CLI and MCP |
 
 Next on the roadmap: end-to-end pipeline, claim verifier and agents, `/ask` with
 streaming, hotspots, web UI, frontend ↔ backend bridge, benchmark.
@@ -79,7 +80,7 @@ flowchart LR
     end
 
     src --> ingest
-    build --> json[("graph.json<br/>schema v5")]
+    build --> json[("graph.json<br/>schema v6")]
     build --> store[("store/<br/>PostgreSQL")]
 
     json --> queries["graph/queries<br/>NetworkX"]
@@ -119,7 +120,7 @@ graph.
 ## Graph schema
 
 The contract between backend and frontend is [schema/graph.schema.json](schema/graph.schema.json)
-(`schema_version: 5`). One document per snapshot:
+(`schema_version: 6`). One document per snapshot:
 
 ```mermaid
 erDiagram
@@ -135,7 +136,7 @@ erDiagram
     COVERAGE ||--o{ SKIPPED : skipped
 
     DOCUMENT {
-        int schema_version "5"
+        int schema_version "6"
         string snapshot
         map extractors "name -> semver"
     }
@@ -144,8 +145,8 @@ erDiagram
     }
     NODE {
         string id
-        enum kind "file | external | unresolved | asset | project"
-        string path "file, asset, project"
+        enum kind "file | external | unresolved | asset | project | solution"
+        string path "file, asset, project, solution"
         enum language "python | typescript | javascript | csharp"
         string project "C# file: owning project"
         string name "external"
@@ -155,7 +156,7 @@ erDiagram
     }
     EDGE {
         string id
-        enum type "imports | reexports | project_reference | package_reference | type_reference"
+        enum type "imports | reexports | project_reference | package_reference | type_reference | solution_member"
         enum form "static | dynamic | require"
         enum directive "C#: using | using_static | using_alias"
         bool global_using
@@ -251,6 +252,8 @@ uv run graphora query graph.json dependents src/app/auth.py
 uv run graphora query graph.json impact src/app/auth.py --max-depth 3 --follow-barrels
 uv run graphora query graph.json cycles
 uv run graphora query graph.json key-files --format json
+uv run graphora query graph.json projects                                  # C#: projects, solutions, packages
+uv run graphora query graph.json dependencies src/Web/Web.csproj --level project
 ```
 
 Questions: `dependencies`, `dependents`, `impact`, `neighbors`, `cycles`, `key-files`.
