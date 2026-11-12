@@ -172,7 +172,7 @@ across referenced projects, packages and SDK-dependent frameworks in `using` res
 **Independent Test**: `uv run pytest tests/golden -k "csharp-multiproject or csharp-edge"` matches the
 hand-written `expected.json` files.
 
-- [ ] T009 [P] [US2] Implement the `.csproj` reader in `backend/src/graphora/adapters/msbuild/__init__.py`
+- [X] T009 [P] [US2] Implement the `.csproj` reader in `backend/src/graphora/adapters/msbuild/__init__.py`
   (`VERSION = "0.1.0"`, `EXTRACTOR = "csproj-reader@0.1.0"`) and `backend/src/graphora/adapters/msbuild/csproj.py`
   (research R2):
   - `read(data: bytes) -> ProjectFacts` with expat; `StartDoctypeDeclHandler` raises → `has_error=True` and no
