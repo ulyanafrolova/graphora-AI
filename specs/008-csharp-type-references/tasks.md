@@ -125,7 +125,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 
 **Independent Test**: `uv run pytest tests/golden -k csharp-types` with the US2 part of the fixture.
 
-- [ ] T010 [P] [US2] Extend the reader in `backend/src/graphora/adapters/msbuild/csproj.py`
+- [X] T010 [P] [US2] Extend the reader in `backend/src/graphora/adapters/msbuild/csproj.py`
   (`VERSION = "0.2.0"`, research R5): `Using` items (`Include`, `Alias`, `Static` (`true` case-insensitive),
   `Remove`, conditional, position) and the `ImplicitUsings` property (`value` lower-cased and trimmed, conditional
   when it or its `PropertyGroup` has a `Condition`); values containing `$(` are kept raw for the resolver to ignore.

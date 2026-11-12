@@ -96,3 +96,44 @@ def test_refused_or_malformed(data):
 
 def test_item_is_a_value_object():
     assert Item("PackageReference", "A", False, 1, 1, "<x>") == Item("PackageReference", "A", False, 1, 1, "<x>")
+
+
+# --- 008: <Using> items and ImplicitUsings (research R5) --------------------------------------------------------
+
+
+def test_using_items_and_implicit_usings():
+    data = b"""<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings> Enable </ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="App.Shared" />
+    <Using Include="App.Models.User" Alias="U" />
+    <Using Include="System.Math" Static="True" />
+    <Using Remove="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(X)' == '1'">
+    <Using Include="App.Debug;App.Trace" />
+  </ItemGroup>
+</Project>
+"""
+    facts = read(data)
+    assert facts.implicit_usings == ("enable", False)
+    assert [(u.include, u.remove, u.alias, u.static, u.conditional, u.line) for u in facts.usings] == [
+        ("App.Shared", None, None, False, False, 6),
+        ("App.Models.User", None, "U", False, False, 7),
+        ("System.Math", None, None, True, False, 8),
+        (None, "System.Net.Http", None, False, False, 9),
+        ("App.Debug", None, None, False, True, 12),
+        ("App.Trace", None, None, False, True, 12),
+    ]
+    assert facts.items == ()
+
+
+def test_conditional_implicit_usings_and_last_value_wins():
+    data = b"""<Project>
+  <PropertyGroup><ImplicitUsings>disable</ImplicitUsings></PropertyGroup>
+  <PropertyGroup Condition="'$(A)' == ''"><ImplicitUsings>true</ImplicitUsings></PropertyGroup>
+</Project>"""
+    assert read(data).implicit_usings == ("true", True)
+    assert read(b"<Project />").implicit_usings is None

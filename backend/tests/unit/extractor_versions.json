@@ -4,6 +4,7 @@
   "csharp-resolver@0.1.0": "be0d97b2f94c7d5b",
   "csharp-resolver@0.2.0": "ee2e83c9dfb92754",
   "csproj-reader@0.1.0": "e8c184e007d666be",
+  "csproj-reader@0.2.0": "f22a41bc923f1a21",
   "dotnet-namespaces@10.0.0": "40b472df9cf289d3",
   "dotnet-types@10.0.0": "34b613bf273fdc37",
   "js-adapter@0.2.0": "304728d2dfb0086c",
