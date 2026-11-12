@@ -1,0 +1,140 @@
+[
+  {
+    "question": "dependents",
+    "target": "src/App/Services/Mailer.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/App/Web/Controllers/HomeController.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:17"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 3,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/App/Web/Controllers/HomeController.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:dotnet:System.Collections.Generic",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:1"
+          ]
+        },
+        {
+          "node": "ext:dotnet:System.Threading.Tasks",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:2"
+          ]
+        },
+        {
+          "node": "file:src/App/Checks/AuditAttribute.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:13"
+          ]
+        },
+        {
+          "node": "file:src/App/Checks/Traced.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:14"
+          ]
+        },
+        {
+          "node": "file:src/App/Extensions/StringExtensions.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:4"
+          ]
+        },
+        {
+          "node": "file:src/App/Jobs/Task.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:5"
+          ]
+        },
+        {
+          "node": "file:src/App/Legacy/Timer.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:8"
+          ]
+        },
+        {
+          "node": "file:src/App/Models/User.Rules.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:18"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:src/App/Models/User.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:18"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:src/App/Services/Mailer.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:17"
+          ]
+        },
+        {
+          "node": "file:src/App/Settings.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:22"
+          ]
+        },
+        {
+          "node": "file:src/App/Timers/Timer.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:7"
+          ]
+        }
+      ],
+      "unresolved": [
+        "src/App/Web/Controllers/HomeController.cs:9 not_found",
+        "src/App/Web/Controllers/HomeController.cs:20 ambiguous",
+        "src/App/Web/Controllers/HomeController.cs:22 ambiguous"
+      ],
+      "total": 12,
+      "completeness": {
+        "unresolved_imports": 3,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/App/Services/Clock.cs",
+    "options": {
+      "symbol": "Clock"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/App/Services/Mailer.cs",
+          "chain": [
+            "src/App/Services/Mailer.cs:5"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 3,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

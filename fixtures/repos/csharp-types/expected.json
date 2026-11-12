@@ -1,0 +1,578 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {
+      "id": "ext:dotnet:System",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:dotnet:System.Collections.Generic",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:dotnet:System.Threading.Tasks",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "file:src/App/Checks/AuditAttribute.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Checks.AuditAttribute",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Checks/Traced.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Checks.Traced",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Extensions/StringExtensions.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Extensions.StringExtensions",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "App.Extensions.StringExtensions.Shout",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Jobs/Task.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Jobs.Task",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Legacy/Timer.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Legacy.Timer",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Models/User.Rules.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Models.User",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "App.Models.User.IsValid",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Models/User.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Models.User",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Services/Clock.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Services.Clock",
+          "line": 5
+        },
+        {
+          "kind": "method",
+          "name": "App.Services.Clock.Now",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Services/Envelope.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "record",
+          "name": "App.Services.Envelope",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Services/Mailer.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Services.Mailer",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "App.Services.Mailer.Wrap",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Services/Queue.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Services.Queue",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Settings.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Settings",
+          "line": 3
+        },
+        {
+          "kind": "class",
+          "name": "App.Settings.Smtp",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Timers/Timer.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Timers.Timer",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:src/App/Web/Controllers/HomeController.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Web.Controllers.HomeController",
+          "line": 15
+        },
+        {
+          "kind": "method",
+          "name": "App.Web.Controllers.HomeController.Run",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "id": "project:src/App/App.csproj",
+      "kind": "project",
+      "path": "src/App/App.csproj"
+    },
+    {
+      "id": "unresolved:dotnet:Serilog",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "unresolved:dotnet:Task",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "unresolved:dotnet:Timer",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/App/Checks/AuditAttribute.cs",
+      "line": 1,
+      "target": "ext:dotnet:System",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Services/Clock.cs",
+      "line": 1,
+      "target": "ext:dotnet:System",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Services/Mailer.cs",
+      "line": 5,
+      "target": "file:src/App/Services/Clock.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Services.Clock",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Services/Mailer.cs",
+      "line": 7,
+      "target": "file:src/App/Services/Envelope.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Services.Envelope",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 1,
+      "target": "ext:dotnet:System.Collections.Generic",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.Collections.Generic",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 2,
+      "target": "ext:dotnet:System.Threading.Tasks",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.Threading.Tasks",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 4,
+      "target": "file:src/App/Extensions/StringExtensions.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Extensions",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 5,
+      "target": "file:src/App/Jobs/Task.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Jobs",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 7,
+      "target": "file:src/App/Timers/Timer.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Timers",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 8,
+      "target": "file:src/App/Legacy/Timer.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Legacy",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 9,
+      "target": "unresolved:dotnet:Serilog",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Serilog",
+      "confidence": "unresolved",
+      "reason": "not_found",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 13,
+      "target": "file:src/App/Checks/AuditAttribute.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Checks.AuditAttribute",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 14,
+      "target": "file:src/App/Checks/Traced.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Checks.Traced",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 17,
+      "target": "file:src/App/Services/Mailer.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Services.Mailer",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 18,
+      "target": "file:src/App/Models/User.Rules.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type"
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 18,
+      "target": "file:src/App/Models/User.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type"
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 20,
+      "target": "unresolved:dotnet:Timer",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "Timer",
+      "confidence": "unresolved",
+      "reason": "ambiguous"
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 22,
+      "target": "file:src/App/Settings.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Settings",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Web/Controllers/HomeController.cs",
+      "line": 22,
+      "target": "unresolved:dotnet:Task",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "Task",
+      "confidence": "unresolved",
+      "reason": "ambiguous"
+    }
+  ],
+  "coverage": [
+    {
+      "path": "README.md",
+      "language": null,
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "src/App/App.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "src/App/Checks/AuditAttribute.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Checks/Traced.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Extensions/StringExtensions.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Jobs/Task.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Legacy/Timer.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Models/User.Rules.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Models/User.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Services/Clock.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Services/Envelope.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Services/Mailer.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Services/Queue.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Settings.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Timers/Timer.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/App/Web/Controllers/HomeController.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 1
+    }
+  ],
+  "skipped": []
+}

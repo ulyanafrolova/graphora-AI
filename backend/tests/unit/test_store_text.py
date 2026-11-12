@@ -59,6 +59,9 @@ def test_expected_edge_lines_start_an_import(name):
             continue  # a file without text (e.g. invalid UTF-8) has no served lines
         assert 1 <= edge["line"] <= len(lines), (path, edge["line"])
         line = lines[edge["line"] - 1]
+        if edge["type"] == "type_reference":  # 008: a use of the type, not an import statement
+            assert edge["symbol"].rsplit(".", 1)[-1].removesuffix("Attribute") in line, (path, edge["line"], line)
+            continue
         assert any(word in line for word in _STATEMENT_WORDS), (path, edge["line"], line)
 
 

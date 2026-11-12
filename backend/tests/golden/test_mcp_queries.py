@@ -24,6 +24,8 @@ def _flags(options):
         flags.append("--follow-barrels")
     if options.get("max_depth") is not None:
         flags += ["--max-depth", str(options["max_depth"])]
+    if options.get("symbol") is not None:
+        flags += ["--symbol", options["symbol"]]
     return flags
 
 

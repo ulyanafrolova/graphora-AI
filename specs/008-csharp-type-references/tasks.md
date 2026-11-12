@@ -105,10 +105,10 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 - [X] T007 [P] [US1] `dependents --symbol` matches `type_reference` edges whose `symbol` is the name or ends in
   `.name`, in `backend/src/graphora/graph/queries.py` `_matches` (contracts/cli.md); test in
   `backend/tests/unit/test_dependents.py`.
-- [ ] T008 [US1] Update by hand `fixtures/repos/csharp-basic/`, `csharp-multiproject/` and `csharp-edge/`
+- [X] T008 [US1] Update by hand `fixtures/repos/csharp-basic/`, `csharp-multiproject/` and `csharp-edge/`
   `expected.json` and `queries.json` for type-reference edges, removed fallback edges and `unresolved_type_names`
   (derive each change from the fixture code, then compare with the tool; investigate every difference).
-- [ ] T009 [US1] Add fixture `fixtures/repos/csharp-types/` (`repo/`, hand-written `expected.json`, `queries.json`)
+- [X] T009 [US1] Add fixture `fixtures/repos/csharp-types/` (`repo/`, hand-written `expected.json`, `queries.json`)
   with the US1 cases of spec FR-016: same-namespace and enclosing-namespace references, every R1 position, a
   namespace used through one of three types, an extension-method-only `using`, ambiguity with a repository type and
   with a base-library type (`Task`), `partial` and nested types, generics, attributes with and without the suffix, a
