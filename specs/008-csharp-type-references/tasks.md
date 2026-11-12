@@ -151,7 +151,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 
 **Independent Test**: `uv run pytest tests/unit/test_cs_types.py -k alias tests/golden -k csharp-types`.
 
-- [ ] T013 [US3] Alias fallback in `backend/src/graphora/graph/build.py` and `backend/src/graphora/resolve/csharp.py`:
+- [X] T013 [US3] Alias fallback in `backend/src/graphora/graph/build.py` and `backend/src/graphora/resolve/csharp.py`:
   a `using_alias` directive whose alias name resolved at least one reference drops its slice-1 `file:` edges (US3-1);
   an unused alias keeps them; `using static` edges stay (US3-2). Unit tests in `backend/tests/unit/test_cs_types.py`;
   add a used and an unused alias (file level and global `<Using Alias>`) to `fixtures/repos/csharp-types/` and update

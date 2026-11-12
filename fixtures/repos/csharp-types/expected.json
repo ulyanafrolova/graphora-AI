@@ -70,6 +70,19 @@
       ]
     },
     {
+      "id": "file:src/App/Aliases.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Aliases",
+          "line": 7
+        }
+      ]
+    },
+    {
       "id": "file:src/App/Checks/AuditAttribute.cs",
       "kind": "file",
       "language": "csharp",
@@ -411,6 +424,39 @@
       "reason": "partial_type"
     },
     {
+      "source": "file:src/App/Aliases.cs",
+      "line": 2,
+      "target": "file:src/App/Services/Queue.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services.Queue",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using_alias",
+      "global_using": false,
+      "alias": "Unused"
+    },
+    {
+      "source": "file:src/App/Aliases.cs",
+      "line": 9,
+      "target": "file:src/App/Services/Mailer.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Services.Mailer",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/App/Aliases.cs",
+      "line": 10,
+      "target": "file:src/App/Settings.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Settings.Smtp",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
       "source": "file:src/App/Checks/AuditAttribute.cs",
       "line": 1,
       "target": "ext:dotnet:System",
@@ -691,6 +737,13 @@
       "language": "csharp",
       "status": "not_code",
       "flags": []
+    },
+    {
+      "path": "src/App/Aliases.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/App/App.csproj",

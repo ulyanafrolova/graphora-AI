@@ -12,13 +12,19 @@
           ]
         },
         {
+          "node": "file:src/App/Aliases.cs",
+          "chain": [
+            "src/App/Aliases.cs:9"
+          ]
+        },
+        {
           "node": "file:src/App/Web/Controllers/HomeController.cs",
           "chain": [
             "src/App/Web/Controllers/HomeController.cs:17"
           ]
         }
       ],
-      "total": 2,
+      "total": 3,
       "completeness": {
         "unresolved_imports": 4,
         "not_analyzed_files": 0,

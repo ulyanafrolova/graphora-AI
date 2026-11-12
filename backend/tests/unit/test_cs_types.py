@@ -229,3 +229,29 @@ def test_global_directive_applies_to_another_file(types):
     project = tuple(global_directives("App/GlobalUsings.cs", extract(b"global using App.Services;").usings))
     r = _one(types, "class X { Mailer m; }", project=project)
     assert [t.node_id for t in r.targets] == ["file:App/Services/Mailer.cs"] and r.via == ("App/GlobalUsings.cs:1:1",)
+
+
+# --- aliases in code (spec US3) ----------------------------------------------------------------------------------
+
+
+def test_used_alias_drops_its_fallback_edges_and_unused_alias_keeps_them(tmp_path):
+    import json
+
+    from graphora.graph.build import analyze
+    from graphora.graph.serialize import dumps
+    from graphora.ingest.walk import Deadline
+
+    (tmp_path / "A").mkdir()
+    (tmp_path / "A" / "A.csproj").write_text("<Project />\n")
+    (tmp_path / "A" / "M.cs").write_text("namespace S;\npublic class Mailer { }\npublic static class Text { }\n")
+    (tmp_path / "A" / "Q.cs").write_text("namespace S;\npublic class Queue { }\n")
+    (tmp_path / "A" / "P.cs").write_text(
+        "using Mail = S.Mailer;\nusing Unused = S.Queue;\nusing static S.Text;\nclass P\n{\n    Mail m;\n}\n"
+    )
+    out = json.loads(dumps(analyze(tmp_path, 100, 1024 * 1024, Deadline(30)).doc))
+    edges = sorted((e["line"], e["type"], e["target"], e.get("alias")) for e in out["edges"] if e["source"] == "file:A/P.cs")
+    assert edges == [
+        (2, "imports", "file:A/Q.cs", "Unused"),  # unused alias: fallback stays
+        (3, "imports", "file:A/M.cs", None),  # using static: always kept
+        (6, "type_reference", "file:A/M.cs", None),  # used alias: the edge is at the use, the directive edge is gone
+    ]
