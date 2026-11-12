@@ -254,7 +254,7 @@ fixtures.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T015 [P] Add `backend/tests/integration/test_safety_cs.py` (constitution I, SC-007): analyzing
+- [X] T015 [P] Add `backend/tests/integration/test_safety_cs.py` (constitution I, SC-007): analyzing
   `csharp-edge` and a temporary repo with `ProjectReference Include="..\..\outside\X.csproj"`, a billion-laughs
   `DOCTYPE`, and `<Import>` starts no subprocess (`subprocess.Popen`, `os.system`, `os.exec*` patched to fail),
   opens no path outside the root (patched `open`/`os.open` recorder), and finishes within one second.
