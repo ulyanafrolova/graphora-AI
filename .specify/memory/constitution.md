@@ -111,4 +111,4 @@ Rationale: every fact must be traceable to `file:line@commit` and verifiable lat
 - Runtime guidance for coding agents lives in `CLAUDE.md`; product context lives in
   `docs/product/`.
 
-**Version**: 1.0.1 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-10-22
+**Version**: 1.1.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-11-12
