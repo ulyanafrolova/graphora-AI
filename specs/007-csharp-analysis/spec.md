@@ -19,6 +19,11 @@ files that declare types in that namespace; skip bin/ and obj/; .cs files get co
   `heuristic` (reason `namespace_spread`) when there are several files and `resolved` when there is one. No
   namespace node.
 
+- During planning (2026-11-12) the spec was corrected: base-library namespaces use ecosystem `dotnet`, apart
+  from `nuget` packages, so a namespace and a package with the same name (`Microsoft.Extensions.Logging`) stay
+  two nodes; the heuristic package match gets reason `package_prefix`; a `using` inside a namespace block
+  follows the compiler's inside-out lookup; aliases to tuple or keyword types create no edge.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See which C# files depend on which (Priority: P1)
@@ -44,7 +49,7 @@ hand-checked `expected.json`. All expected nodes and edges are present and nothi
 2. **Given** `using App.Models;` where only `App/Models/User.cs` declares types in `App.Models`, **When**
    analyzed, **Then** there is one `resolved` edge `App/Program.cs → App/Models/User.cs`.
 3. **Given** `using System.Collections.Generic;`, **When** analyzed, **Then** there is an edge to a .NET base
-   library external node `System.Collections.Generic` with category `stdlib`.
+   library external node `System.Collections.Generic` with ecosystem `dotnet` and category `stdlib`.
 4. **Given** `using Missing.Namespace;` that no file declares, that is not a base-library namespace and that
    matches no package of the project, **When** analyzed, **Then** the edge is `unresolved` with reason
    `not_found`, and no file is guessed.
@@ -180,7 +185,9 @@ namespaces to the index. The coverage report is how users learn what was and was
   namespace that each type is declared in.
 - **FR-007**: The analysis MUST record every `using` directive: plain (`using A.B;`), static
   (`using static A.B.C;`), alias (`using X = A.B.C;`) and `global using` of any of these. Each becomes at least
-  one edge (FR-011) that records which of these forms it is.
+  one edge (FR-013–FR-015) that records which of these forms it is. An alias to a type that names nothing in the
+  repository or a library (tuple, array, pointer or built-in keyword type such as `using P = (int, int);`)
+  creates no edge.
 - **FR-008**: Type references inside method bodies, fields and signatures are NOT extracted in this slice
   (slice 2).
 
@@ -201,16 +208,20 @@ namespaces to the index. The coverage report is how users learn what was and was
   `partial` types).
 - **FR-012**: A file MUST see only the namespaces declared in its own project and in the projects reachable from
   it through project references (direct and transitive). Project-less files see only project-less files.
-- **FR-013**: A plain `using A.B;` MUST be resolved in this order:
+- **FR-013**: A plain `using A.B;` MUST be resolved in this order. A `using` written inside a namespace block
+  `N` is first tried as `N.A.B`, then with each enclosing namespace of `N` from the inside out, then as `A.B`
+  (the compiler's lookup order); the first candidate found in the repository wins. A `global::` prefix skips
+  this and means `A.B` only.
   1. `A.B` has declaring files in the visible scope → one edge per declaring file (excluding the file itself):
      `resolved` when there is exactly one, `heuristic` with reason `namespace_spread` when there are several
      (the `using` does not say which of them is used; slice 2 narrows this by type references);
   2. `A.B` is declared in the repository but only outside the visible scope → `unresolved`, reason
      `not_referenced`;
-  3. `A.B` is in the .NET base-library namespace list → `resolved` edge to a `nuget` external node named `A.B`
-     with category `stdlib`;
+  3. `A.B` is in the .NET base-library namespace list for the file's project → `resolved` edge to a `dotnet`
+     external node named `A.B` with category `stdlib`;
   4. `A.B` equals, or starts with followed by `.`, exactly one package id of the file's project → `heuristic`
-     edge to that package node (namespace-to-package naming is a convention, not a fact); more than one →
+     edge to that package node with reason `package_prefix` (namespace-to-package naming is a convention, not
+     a fact); more than one →
      `unresolved`, reason `ambiguous`;
   5. otherwise → `unresolved`, reason `not_found`.
 - **FR-014**: `using static A.B.C;` and an alias whose target is a type MUST point to the files that declare the
@@ -220,18 +231,18 @@ namespaces to the index. The coverage report is how users learn what was and was
 - **FR-016**: The .NET base-library namespace list MUST be a fixed, versioned data file shipped with the
   extractor and MUST NOT depend on any .NET installation on the machine.
 - **FR-017**: Resolution MUST NOT guess: when several candidates remain and no rule above picks one, the edge
-  is `unresolved`. Unresolved C# edges point to placeholder nodes in the `nuget` ecosystem, which never merge
+  is `unresolved`. Unresolved C# edges point to placeholder nodes in the `dotnet` ecosystem, which never merge
   with Python or npm placeholders.
 
 **Schema v4**
 
 - **FR-018**: The graph format MUST move to schema version 4. `schema/graph.schema.json` MUST allow:
-  - file language `csharp`, ecosystem `nuget`;
+  - file language `csharp`, ecosystems `dotnet` (base library, C# placeholders) and `nuget` (packages);
   - definition kinds `struct`, `record` and `delegate`;
   - a project node kind and the owning project on C# file nodes;
   - edge types for project references and package references, with a project node as source;
   - the record of the `using` form (plain, static, alias, global) on C# edges;
-  - reasons `namespace_spread`, `not_referenced`, `no_types`, `ambiguous`, `partial_type`, `msbuild_property`, `msbuild_condition`;
+  - reasons `namespace_spread`, `package_prefix`, `not_referenced`, `no_types`, `ambiguous`, `partial_type`, `msbuild_property`, `msbuild_condition`;
   - the coverage flag `ambiguous_project`.
 - **FR-019**: Schema v4 MUST keep every provenance rule of v3: an edge without source, target, type, line,
   column, snapshot, confidence, extractor and snippet hash is rejected, and `unresolved` edges carry a reason.
@@ -269,7 +280,8 @@ namespaces to the index. The coverage report is how users learn what was and was
 - **Project node**: a `.csproj` file; owns `.cs` files, references other projects and packages.
 - **Namespace index**: namespace → declaring files, and type → declaring files, scoped by project visibility.
   Used for resolution; not itself part of the graph output.
-- **NuGet external node**: a base-library namespace (`stdlib`) or a referenced package (`third_party`).
+- **External node**: a base-library namespace (ecosystem `dotnet`, category `stdlib`) or a referenced NuGet
+  package (ecosystem `nuget`, category `third_party`).
 - **Using edge**: one `using` directive from a file node to a target, with its form, provenance and confidence.
 - **Project reference / package reference edge**: one `<ProjectReference>` or `<PackageReference>` item, from a
   project node, with provenance in the `.csproj`.
