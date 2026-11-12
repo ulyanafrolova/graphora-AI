@@ -37,7 +37,7 @@
       ],
       "total": 4,
       "completeness": {
-        "unresolved_imports": 6,
+        "unresolved_imports": 9,
         "not_analyzed_files": 1,
         "files_with_errors": 0
       }
@@ -73,7 +73,7 @@
       ],
       "total": 3,
       "completeness": {
-        "unresolved_imports": 6,
+        "unresolved_imports": 9,
         "not_analyzed_files": 1,
         "files_with_errors": 0
       }
@@ -96,11 +96,136 @@
           "chain": [
             "project:tests/Core.Tests/Core.Tests.csproj:4"
           ]
+        },
+        {
+          "node": "solution:Graphora.sln",
+          "chain": [
+            "solution:Graphora.sln:4"
+          ]
+        },
+        {
+          "node": "solution:Graphora.slnx",
+          "chain": [
+            "solution:Graphora.slnx:3"
+          ]
         }
       ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/Web/Web.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "ext:nuget:Microsoft.Extensions.Logging",
+          "chain": [
+            "project:src/Web/Web.csproj:16"
+          ],
+          "declared_only": true
+        },
+        {
+          "node": "ext:nuget:Serilog",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:7"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "project:src/Core/Core.csproj",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:1"
+          ]
+        },
+        {
+          "node": "project:src/Infra/Infra.csproj",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:3"
+          ]
+        },
+        {
+          "node": "project:src/Tools/Tools.csproj",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:4"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "unresolved": [
+        "project:src/Web/Web.csproj:9 not_found",
+        "project:src/Web/Web.csproj:10 msbuild_property"
+      ],
+      "total": 5,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/LoopA/LoopA.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:src/LoopB/LoopB.csproj",
+          "chain": [
+            "src/LoopA/Alpha.cs:7"
+          ]
+        },
+        {
+          "node": "project:src/Tools/Tools.csproj",
+          "chain": [
+            "project:src/LoopA/LoopA.csproj:5"
+          ],
+          "declared_only": true
+        }
+      ],
+      "unresolved": [],
       "total": 2,
       "completeness": {
-        "unresolved_imports": 6,
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "project:src/LoopA/LoopA.csproj",
+            "project:src/LoopB/LoopB.csproj"
+          ],
+          "cycle": [
+            "src/LoopA/Alpha.cs:7",
+            "src/LoopB/Beta.cs:7"
+          ],
+          "type_only": false
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 9,
         "not_analyzed_files": 1,
         "files_with_errors": 0
       }

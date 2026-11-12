@@ -38,7 +38,7 @@ def test_csharp_analyzed(path):
     assert classify(path) == ("csharp", "analyzed")
 
 
-@pytest.mark.parametrize("path", ["src/App/App.csproj", "App.sln", "Directory.Build.props", "src/Directory.Packages.props"])
+@pytest.mark.parametrize("path", ["src/App/App.csproj", "App.sln", "App.slnx", "Directory.Build.props", "src/Directory.Packages.props"])
 def test_csharp_project_files_are_not_code(path):
     assert classify(path) == ("csharp", "not_code")
 

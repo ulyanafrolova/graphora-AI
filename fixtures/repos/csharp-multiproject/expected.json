@@ -102,6 +102,32 @@
       ]
     },
     {
+      "id": "file:src/LoopA/Alpha.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/LoopA/LoopA.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "LoopA.Alpha",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:src/LoopB/Beta.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:src/LoopB/LoopB.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "LoopB.Beta",
+          "line": 5
+        }
+      ]
+    },
+    {
       "id": "file:src/Tools/Diag.cs",
       "kind": "file",
       "language": "csharp",
@@ -167,6 +193,16 @@
       "path": "src/Infra/Infra.csproj"
     },
     {
+      "id": "project:src/LoopA/LoopA.csproj",
+      "kind": "project",
+      "path": "src/LoopA/LoopA.csproj"
+    },
+    {
+      "id": "project:src/LoopB/LoopB.csproj",
+      "kind": "project",
+      "path": "src/LoopB/LoopB.csproj"
+    },
+    {
       "id": "project:src/Tools/Tools.csproj",
       "kind": "project",
       "path": "src/Tools/Tools.csproj"
@@ -180,6 +216,16 @@
       "id": "project:tests/Core.Tests/Core.Tests.csproj",
       "kind": "project",
       "path": "tests/Core.Tests/Core.Tests.csproj"
+    },
+    {
+      "id": "solution:Graphora.sln",
+      "kind": "solution",
+      "path": "Graphora.sln"
+    },
+    {
+      "id": "solution:Graphora.slnx",
+      "kind": "solution",
+      "path": "Graphora.slnx"
     },
     {
       "id": "unresolved:dotnet:$(SharedRoot)\\Shared.csproj",
@@ -207,7 +253,17 @@
       "ecosystem": "dotnet"
     },
     {
+      "id": "unresolved:dotnet:src/Gone/Gone.csproj",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    },
+    {
       "id": "unresolved:dotnet:src/Missing/Missing.csproj",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "unresolved:dotnet:src/Reports/Reports.fsproj",
       "kind": "unresolved",
       "ecosystem": "dotnet"
     }
@@ -284,6 +340,26 @@
       "reason": "namespace_spread",
       "directive": "using",
       "global_using": false
+    },
+    {
+      "source": "file:src/LoopA/Alpha.cs",
+      "line": 7,
+      "target": "file:src/LoopB/Beta.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "LoopB.Beta",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:src/LoopB/Beta.cs",
+      "line": 7,
+      "target": "file:src/LoopA/Alpha.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "LoopA.Alpha",
+      "confidence": "resolved",
+      "reason": null
     },
     {
       "source": "file:src/Web/Controllers/HomeController.cs",
@@ -482,6 +558,36 @@
       "reason": null
     },
     {
+      "source": "project:src/LoopA/LoopA.csproj",
+      "line": 4,
+      "target": "project:src/LoopB/LoopB.csproj",
+      "type": "project_reference",
+      "form": "static",
+      "symbol": "..\\LoopB\\LoopB.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "project:src/LoopA/LoopA.csproj",
+      "line": 5,
+      "target": "project:src/Tools/Tools.csproj",
+      "type": "project_reference",
+      "form": "static",
+      "symbol": "..\\Tools\\Tools.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "project:src/LoopB/LoopB.csproj",
+      "line": 4,
+      "target": "project:src/LoopA/LoopA.csproj",
+      "type": "project_reference",
+      "form": "static",
+      "symbol": "..\\LoopA\\LoopA.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
       "source": "project:src/Web/Web.csproj",
       "line": 8,
       "target": "project:src/Infra/Infra.csproj",
@@ -560,9 +666,141 @@
       "symbol": "xunit",
       "confidence": "resolved",
       "reason": null
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 4,
+      "target": "project:src/Core/Core.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src\\Core\\Core.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 6,
+      "target": "project:src/Infra/Infra.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src\\Infra\\Infra.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 8,
+      "target": "project:src/Web/Web.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src\\Web\\Web.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 10,
+      "target": "project:src/Tools/Tools.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src\\Tools\\Tools.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 14,
+      "target": "project:tests/Core.Tests/Core.Tests.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "tests\\Core.Tests\\Core.Tests.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 16,
+      "target": "unresolved:dotnet:src/Gone/Gone.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src\\Gone\\Gone.csproj",
+      "confidence": "unresolved",
+      "reason": "not_found"
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 18,
+      "target": "unresolved:dotnet:src/Reports/Reports.fsproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src\\Reports\\Reports.fsproj",
+      "confidence": "unresolved",
+      "reason": "not_csharp"
+    },
+    {
+      "source": "solution:Graphora.sln",
+      "line": 20,
+      "target": "unresolved:dotnet:$(SharedRoot)\\Shared.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "$(SharedRoot)\\Shared.csproj",
+      "confidence": "unresolved",
+      "reason": "msbuild_property"
+    },
+    {
+      "source": "solution:Graphora.slnx",
+      "line": 3,
+      "target": "project:src/Core/Core.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src/Core/Core.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.slnx",
+      "line": 4,
+      "target": "project:src/Infra/Infra.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src/Infra/Infra.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.slnx",
+      "line": 5,
+      "target": "project:src/Web/Web.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src/Web/Web.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "solution:Graphora.slnx",
+      "line": 6,
+      "target": "project:src/LoopA/LoopA.csproj",
+      "type": "solution_member",
+      "form": "static",
+      "symbol": "src/LoopA/LoopA.csproj",
+      "confidence": "resolved",
+      "reason": null
     }
   ],
   "coverage": [
+    {
+      "path": "Graphora.sln",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "Graphora.slnx",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
     {
       "path": "README.md",
       "language": null,
@@ -608,6 +846,32 @@
       "status": "analyzed",
       "flags": [],
       "unresolved_type_names": 0
+    },
+    {
+      "path": "src/LoopA/Alpha.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/LoopA/LoopA.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "src/LoopB/Beta.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "src/LoopB/LoopB.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
     },
     {
       "path": "src/Tools/Diag.cs",

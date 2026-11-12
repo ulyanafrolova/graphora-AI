@@ -58,5 +58,5 @@ def test_counts_csharp_projects():
     """007: project nodes are counted, and every node kind is covered by the counts."""
     data = analyzed_graph("csharp-multiproject")
     o = overview(index(loads(data)))
-    assert o.nodes["project"] == 5
+    assert (o.nodes["project"], o.nodes["solution"]) == (7, 2)  # 009 added LoopA, LoopB and two solutions
     assert sum(o.nodes.values()) == len(json.loads(data)["nodes"])

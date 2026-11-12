@@ -110,7 +110,7 @@ CLI and MCP.
   extractor `sln-reader@0.1.0`, `parse_error` flag and warning), `current_extractors()` adds `sln-reader`, CLI warning
   text `ignoring <path>: not a readable solution file`, `extractor_versions.json` entry. Tests in
   `backend/tests/unit/test_build_analyze.py` and `backend/tests/integration/test_cli.py`.
-- [ ] T009 [US2] Extend `fixtures/repos/csharp-multiproject/` (research R8): `Graphora.sln` (backslash paths, a
+- [X] T009 [US2] Extend `fixtures/repos/csharp-multiproject/` (research R8): `Graphora.sln` (backslash paths, a
   solution folder, a missing project, an `.fsproj`, a `$(…)` path) and `Graphora.slnx` (same projects minus `Tools`),
   two new projects `src/LoopA`, `src/LoopB` whose files use each other's types (a project-level cycle); update
   `expected.json` by hand and add project-level `cycles` and `dependencies` of `src/Web/Web.csproj` (with

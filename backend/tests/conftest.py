@@ -100,7 +100,7 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
                     item["exports"] = n["exports"]
                 if "project" in n:
                     item["project"] = n["project"]
-            if n["kind"] == "project":
+            if n["kind"] in ("project", "solution"):
                 item["path"] = n["path"]
             nodes.append(item)
         out["nodes"] = sorted(nodes, key=lambda n: n["id"])

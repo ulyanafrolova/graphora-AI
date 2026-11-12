@@ -62,6 +62,7 @@ MARKER_FILES = {
 MARKER_EXTENSIONS = {
     ".csproj": "csharp",
     ".sln": "csharp",
+    ".slnx": "csharp",
 }
 
 

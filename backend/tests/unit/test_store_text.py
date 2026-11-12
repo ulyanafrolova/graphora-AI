@@ -43,7 +43,7 @@ def test_no_text():
     assert text_lines("empty.ts", b"") == ()
 
 
-_STATEMENT_WORDS = ("import", "from", "export", "require", "using", "Reference")  # 007: C# and .csproj
+_STATEMENT_WORDS = ("import", "from", "export", "require", "using", "Reference", "Project")  # 007, 009: C#, .csproj, .sln
 
 
 @pytest.mark.parametrize("name", sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file()))

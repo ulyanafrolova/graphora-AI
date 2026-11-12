@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from graphora.adapters import csharp, js, msbuild, python
+from graphora.adapters.msbuild import sln
 from conftest import FIXTURES, REPO_ROOT, edge_key, project, run_analyze
 
 FIXTURE_NAMES = sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file())
@@ -45,12 +46,14 @@ def test_provenance_consistent(name):
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
     languages.update({n["id"]: "msbuild" for n in doc["nodes"] if n["kind"] == "project"})
+    languages.update({n["id"]: "solution" for n in doc["nodes"] if n["kind"] == "solution"})
     extractors = {
         "python": python.EXTRACTOR,
         "typescript": js.EXTRACTOR,
         "javascript": js.EXTRACTOR,
         "csharp": csharp.EXTRACTOR,
         "msbuild": msbuild.EXTRACTOR,
+        "solution": sln.EXTRACTOR,
     }
     for edge in doc["edges"]:
         assert edge["snapshot"] == doc["snapshot"]
@@ -126,7 +129,7 @@ def test_ecosystems_separate(name):
     """003 US3, 007 R7: a target's ecosystem always matches its source file's language."""
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
-    languages.update({n["id"]: "csharp" for n in doc["nodes"] if n["kind"] == "project"})
+    languages.update({n["id"]: "csharp" for n in doc["nodes"] if n["kind"] in ("project", "solution")})
     allowed = {"python": {"python"}, "typescript": {"npm"}, "javascript": {"npm"}, "csharp": {"dotnet", "nuget"}}
     for edge in doc["edges"]:
         if edge["target"].startswith(("ext:", "unresolved:")):
