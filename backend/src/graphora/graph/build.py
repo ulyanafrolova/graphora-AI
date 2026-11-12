@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 
-from graphora.adapters import js, python
+from graphora.adapters import csharp, js, python
+from graphora.adapters.csharp import extract as cs_extract
 from graphora.adapters.js import extract as js_extract
 from graphora.adapters.python import extract as py_extract
 from graphora.adapters.text import decode_python as _decode
@@ -25,6 +26,7 @@ from graphora.graph.model import (
 from graphora.graph.serialize import snippet_hash
 from graphora.ingest.snapshot import snapshot_id
 from graphora.ingest.walk import Deadline, read_file, walk
+from graphora.resolve import csharp as cs_resolve
 from graphora.resolve import js as js_resolve
 from graphora.resolve import python as py_resolve
 from graphora.resolve.tsconfig import load_configs
@@ -43,6 +45,9 @@ class Analysis:
 def current_extractors() -> dict[str, str]:
     """The extractor versions this code writes into every document (005 research § R6)."""
     return {
+        "csharp-adapter": csharp.VERSION,
+        "csharp-resolver": cs_resolve.RESOLVER_VERSION,
+        "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
         "js-adapter": js.VERSION,
         "js-resolver": js_resolve.RESOLVER_VERSION,
         "node-builtins": js_resolve.BUILTINS_VERSION,
@@ -124,6 +129,57 @@ def _js_graph(
                 )
 
 
+def _node_for(target: str) -> Node | None:
+    """The external or placeholder node a C# target id stands for; None for file targets."""
+    kind, _, rest = target.partition(":")
+    ecosystem, _, name = rest.partition(":")
+    if kind == "ext":
+        return ExternalNode(name, ecosystem, "stdlib" if ecosystem == "dotnet" else "third_party")
+    if kind == "unresolved":
+        return UnresolvedNode(name, ecosystem)
+    return None
+
+
+def _csharp_graph(
+    facts: dict[str, cs_extract.CsFacts | None],
+    owners: dict[str, str | None],
+    snapshot: str,
+    nodes: dict[str, Node],
+    edges: list[Edge],
+) -> None:
+    """File nodes and `using` edges (specs/007-csharp-analysis data-model.md § `using` edge)."""
+    scopes = cs_resolve.build_scopes(facts, owners)
+    resolver = cs_resolve.Resolver(scopes)
+    frameworks = cs_resolve.namespaces_for([cs_resolve.NETCORE])
+    for path, file_facts in sorted(facts.items()):
+        project = owners.get(path)
+        node = FileNode(path, "csharp", file_facts.definitions if file_facts else (), None, f"project:{project}" if project else None)
+        nodes[node.id] = node
+        ctx = cs_resolve.Context(visible=((project or "", False),), frameworks=frameworks)
+        for record in file_facts.usings if file_facts else ():
+            for target in resolver.resolve(path, record, ctx):
+                extra = _node_for(target.node_id)
+                if extra is not None:
+                    nodes.setdefault(extra.id, extra)
+                edges.append(
+                    Edge(
+                        source=node.id,
+                        target=target.node_id,
+                        symbol=target.symbol,
+                        line=record.line,
+                        column=record.column,
+                        snapshot=snapshot,
+                        confidence=target.confidence,
+                        reason=target.reason,
+                        extractor=csharp.EXTRACTOR,
+                        snippet_hash=snippet_hash(record.text),
+                        alias=record.alias,
+                        directive=record.form,
+                        global_using=record.global_using,
+                    )
+                )
+
+
 def build(
     root: Path, max_files: int, max_bytes: int, deadline: Deadline, snapshot: str | None = None
 ) -> tuple[GraphDocument, tuple[str, ...]]:
@@ -153,7 +209,11 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     configs = load_configs(files, read)
     invalid_configs = frozenset(configs.invalid)
 
+    csproj_folders = cs_resolve.csproj_folders(p for p in walked.files if p.lower().endswith(".csproj"))
+    cs_owners: dict[str, str | None] = {}
+
     coverage: list[CoverageFile] = []
+    cs_facts: dict[str, cs_extract.CsFacts | None] = {}
     py_facts: dict[str, py_extract.FileFacts | None] = {}
     js_facts: dict[str, js_extract.FileFacts | None] = {}
     languages: dict[str, str] = {}
@@ -168,6 +228,12 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
                 text = _decode(data) if data is not None else None
                 facts = py_extract.extract(text.encode("utf-8"), deadline.check) if text is not None else None
                 py_facts[path] = facts
+            elif language == "csharp":
+                facts = cs_extract.extract(data, deadline.check) if data is not None else None
+                cs_facts[path] = facts
+                cs_owners[path], is_ambiguous = cs_resolve.owner(path, csproj_folders)
+                if is_ambiguous:
+                    flags.append("ambiguous_project")
             else:
                 facts = js_extract.extract(path, data, deadline.check) if data is not None else None
                 js_facts[path] = facts
@@ -186,6 +252,7 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _python_graph(py_facts, snapshot, nodes, edges)
     resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, read))
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
+    _csharp_graph(cs_facts, cs_owners, snapshot, nodes, edges)
 
     doc = GraphDocument(
         snapshot=snapshot,

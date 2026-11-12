@@ -1,4 +1,5 @@
-"""Language and coverage status per file (001 data-model.md § CoverageFile, 003 data-model.md § Coverage)."""
+"""Language and coverage status per file (001 data-model.md § CoverageFile, 003 data-model.md § Coverage,
+007 data-model.md § Coverage)."""
 
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ ANALYZED_EXTENSIONS = {
     ".jsx": "javascript",
     ".mjs": "javascript",
     ".cjs": "javascript",
+    ".cs": "csharp",
 }
 
 DETECTED_ONLY_EXTENSIONS = {
@@ -26,7 +28,10 @@ DETECTED_ONLY_EXTENSIONS = {
     ".kt": "kotlin",
     ".kts": "kotlin",
     ".rs": "rust",
-    ".cs": "csharp",
+    ".cshtml": "razor",
+    ".razor": "razor",
+    ".fs": "fsharp",
+    ".vb": "vb",
     ".c": "c",
     ".h": "c",
     ".cpp": "cpp",
@@ -50,6 +55,13 @@ MARKER_FILES = {
     "Cargo.toml": "rust",
     "pom.xml": "java",
     "build.gradle": "java",
+    "Directory.Build.props": "csharp",
+    "Directory.Packages.props": "csharp",
+}
+
+MARKER_EXTENSIONS = {
+    ".csproj": "csharp",
+    ".sln": "csharp",
 }
 
 
@@ -65,6 +77,8 @@ def classify(path: str) -> tuple[str | None, Status]:
         return ANALYZED_EXTENSIONS[ext], "analyzed"
     if name in MARKER_FILES:
         return MARKER_FILES[name], "not_code"
+    if ext in MARKER_EXTENSIONS:
+        return MARKER_EXTENSIONS[ext], "not_code"
     if ext in DETECTED_ONLY_EXTENSIONS:
         return DETECTED_ONLY_EXTENSIONS[ext], "detected_only"
     return None, "not_code"

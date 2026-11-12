@@ -137,7 +137,7 @@ one project (or among project-less files).
     own scope and `frameworks` is `{"Microsoft.NETCore.App"}`;
   - tests in `backend/tests/unit/test_cs_resolve.py` covering every row of the `using` table that does not need
     project references or packages.
-- [ ] T007 [US1] Wire C# into the build (depends on T005, T006):
+- [X] T007 [US1] Wire C# into the build (depends on T005, T006):
   - `backend/src/graphora/detect/languages.py`: `.cs` → `csharp` analyzed (removed from detected-only);
     `.csproj` (by extension), `.sln`, `Directory.Build.props`, `Directory.Packages.props` → `csharp` `not_code`;
     `.cshtml`/`.razor` → `razor`, `.fs` → `fsharp`, `.vb` → `vb` detected-only;

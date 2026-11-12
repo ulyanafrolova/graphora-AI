@@ -57,3 +57,32 @@ def test_unopenable_file_has_no_contents(tmp_path):
 def test_current_extractors_match_documents(name):
     _, analysis, _ = _run(name)
     assert analysis.doc.extractors == current_extractors()
+
+
+def test_csharp_folder_end_to_end(tmp_path, validator):
+    """007: a small C# project gives file nodes with their project and `using` edges (data-model.md)."""
+    (tmp_path / "App").mkdir()
+    (tmp_path / "App" / "App.csproj").write_text('<Project Sdk="Microsoft.NET.Sdk"></Project>\n')
+    (tmp_path / "App" / "Program.cs").write_text("using System.Linq;\nusing App.Models;\nusing Gone;\nnamespace App;\nclass Program {}\n")
+    (tmp_path / "App" / "User.cs").write_text("namespace App.Models;\npublic record User(string Name);\n")
+    (tmp_path / "Loose.cs").write_text("class Loose {}\n")
+    doc, _ = build(tmp_path, 100, 1024 * 1024, Deadline(30))
+    data = dumps(doc)
+    import json
+
+    out = json.loads(data)
+    validator.validate(out)
+    files = {n["path"]: n for n in out["nodes"] if n["kind"] == "file"}
+    assert files["App/Program.cs"]["project"] == "project:App/App.csproj"
+    assert files["Loose.cs"]["project"] is None
+    assert files["App/User.cs"]["definitions"] == [{"kind": "record", "name": "App.Models.User", "line": 2}]
+    edges = [(e["target"], e["confidence"], e["directive"], e["global_using"]) for e in out["edges"]]
+    assert edges == [
+        ("ext:dotnet:System.Linq", "resolved", "using", False),
+        ("file:App/User.cs", "resolved", "using", False),
+        ("unresolved:dotnet:Gone", "unresolved", "using", False),
+    ]
+    coverage = {f["path"]: (f["language"], f["status"]) for f in out["coverage"]["files"]}
+    assert coverage["App/App.csproj"] == ("csharp", "not_code")
+    assert coverage["App/Program.cs"] == ("csharp", "analyzed")
+    assert set(out["extractors"]) >= {"csharp-adapter", "csharp-resolver", "dotnet-namespaces"}
