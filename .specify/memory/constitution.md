@@ -6,6 +6,9 @@
 
 - Imported repositories MUST be analyzed statically only. No code from them is run, imported,
   built, installed or evaluated, including `setup.py`, package scripts and test suites.
+- Build and project files (`.csproj`, `.sln`, `Directory.Build.props`, `tsconfig.json`,
+  `package.json`) MUST be read as data. `dotnet`, MSBuild, NuGet restore and Node MUST NOT run;
+  MSBuild conditions and properties are not evaluated.
 - Every tool available to agents (internal or via MCP) MUST be read-only.
 - Ingest MUST enforce limits (size, file count, time) and protect archive extraction against
   path traversal, zip bombs and symlinks escaping the snapshot root.
