@@ -19,6 +19,8 @@ with deterministic claim verification on top, and an MCP server for external cod
 - Facts are computed by code; the LLM only phrases verified claims. The verifier is plain code.
 - File contents given to a model are data, never instructions.
 - TS/JS config files are data: never run Node, never read `node_modules`.
+- .NET project files (`.csproj`, `.sln`, `Directory.Build.props`) are data: never run `dotnet`,
+  MSBuild or NuGet, never evaluate MSBuild conditions.
 - Graph queries live only in `backend/src/graphora/graph/`; API, MCP and agents call them.
 
 ## Repository layout (target)
