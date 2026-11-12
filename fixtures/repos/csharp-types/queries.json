@@ -148,5 +148,107 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "dependencies",
+    "target": "hosts/Web/Web.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:src/App/App.csproj",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/App/App.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [],
+      "unresolved": [],
+      "total": 0,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/App/App.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:hosts/Web/Web.csproj",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ]
+        },
+        {
+          "node": "project:hosts/Worker/Worker.csproj",
+          "chain": [
+            "hosts/Worker/GlobalUsings.cs:2"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "src/App/App.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:hosts/Web/Web.csproj",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "project:hosts/Worker/Worker.csproj",
+          "chain": [
+            "hosts/Worker/GlobalUsings.cs:2"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 2,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

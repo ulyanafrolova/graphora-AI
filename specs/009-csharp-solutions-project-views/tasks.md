@@ -81,7 +81,7 @@ CLI and MCP.
 - [X] T005 [US1] MCP `level` argument (`"file"` default, `"project"`) on `dependencies`, `dependents`, `impact`,
   `cycles` in `backend/src/graphora/mcp/server.py`, with a sentence in each description; `_flags` in
   `backend/tests/golden/test_mcp_queries.py` passes `--level`; unit test in `backend/tests/unit/test_mcp_tools.py`.
-- [ ] T006 [US1] Hand-write project-level entries in `fixtures/repos/csharp-types/queries.json`: `dependencies` of
+- [X] T006 [US1] Hand-write project-level entries in `fixtures/repos/csharp-types/queries.json`: `dependencies` of
   `hosts/Web/Web.csproj` and of `src/App/App.csproj` at project level (code links via type references and fallback,
   packages if any), `dependents` of `src/App/App.csproj`, `impact` of `src/App/App.csproj`; derive each answer from
   the fixture code first, then compare with the tool and investigate every difference. The query and MCP golden tests
