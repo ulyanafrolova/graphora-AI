@@ -1,6 +1,6 @@
 """Small synthetic graph documents for query tests (specs/004-graph-queries tasks T006, T008)."""
 
-from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, UnresolvedNode
+from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, ProjectNode, UnresolvedNode
 
 SNAP = "content:0123456789abcdef"
 
@@ -21,6 +21,8 @@ def _node(node_id: str):
     if kind == "file":
         if rest.endswith((".ts", ".tsx")):
             return FileNode(rest, "typescript", (), ())
+        if rest.endswith(".cs"):
+            return FileNode(rest, "csharp")
         return FileNode(rest, "python")
     if kind == "ext":
         ecosystem, _, name = rest.partition(":")
@@ -28,6 +30,8 @@ def _node(node_id: str):
     if kind == "unresolved":
         ecosystem, _, ref = rest.partition(":")
         return UnresolvedNode(ref, ecosystem)
+    if kind == "project":
+        return ProjectNode(rest)
     return AssetNode(rest)
 
 

@@ -129,3 +129,40 @@ def test_not_found_messages():
     assert message("node_modules") == "node_modules is skipped (excluded_dir)"
     assert message("missing.py") == f"missing.py is not in snapshot {SNAP}"
     assert "ext:npm:yaml" in message("yaml") and "ext:python:yaml" in message("yaml")
+
+
+# --- v4: projects and C# externals (specs/007-csharp-analysis/contracts/cli.md) ------------------------------
+
+
+def _cs_ix():
+    return index(
+        make_doc(
+            [
+                edge("project:src/Web/Web.csproj", "project:src/Core/Core.csproj", type="project_reference"),
+                edge("project:src/Web/Web.csproj", "ext:nuget:Serilog", type="package_reference"),
+                edge("src/Web/A.cs", "ext:dotnet:System.Linq"),
+                edge("src/Web/A.cs", "ext:nuget:Shared"),
+                edge("src/Web/A.cs", "ext:dotnet:Shared"),
+            ]
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "target, node_id",
+    [
+        ("src/Web/Web.csproj", "project:src/Web/Web.csproj"),
+        ("./src/Core/Core.csproj", "project:src/Core/Core.csproj"),
+        ("Serilog", "ext:nuget:Serilog"),
+        ("System.Linq", "ext:dotnet:System.Linq"),
+    ],
+)
+def test_resolve_csharp(target, node_id):
+    assert resolve(_cs_ix(), target) == node_id
+
+
+def test_resolve_name_in_two_csharp_ecosystems_is_ambiguous():
+    with pytest.raises(NodeNotFound) as exc:
+        resolve(_cs_ix(), "Shared")
+    assert exc.value.status == "ambiguous"
+    assert "ext:nuget:Shared or ext:dotnet:Shared" in exc.value.message

@@ -86,7 +86,7 @@ and C# external ids, before any C# code exists.
     plan.md § Constitution Check, plus `test_old_schema_version_rejected` for 3), model rules in
     `backend/tests/unit/test_serialize.py`, loader cases in `backend/tests/unit/test_load.py`; projection in
     `backend/tests/conftest.py` gains `project`, `directive`, `global_using`.
-- [ ] T004 Teach the query layer about project and C# ids (contracts/cli.md § Query commands):
+- [X] T004 Teach the query layer about project and C# ids (contracts/cli.md § Query commands):
   - `backend/src/graphora/graph/queries.py` `resolve()`: a path ending in `.csproj` maps to `project:<path>`
     when that node exists; external names are tried as `ext:npm:`, `ext:python:`, `ext:nuget:`, `ext:dotnet:`,
     more than one match raises the existing `ambiguous` `NodeNotFound`; `cycles` and `key_files` stay file-only;

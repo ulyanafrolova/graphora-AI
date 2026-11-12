@@ -63,3 +63,25 @@ def test_key_files_without_type_only():
     ix = index(make_doc([edge("b.ts", "a.ts", type_only=True), edge("c.ts", "a.ts")]))
     assert ranked(key_files(ix)) == [("a.ts", 2, 2)]
     assert ranked(key_files(ix, include_type_only=False)) == [("a.ts", 1, 1)]
+
+
+def test_project_dependencies_and_names():
+    from graphora.graph.queries import dependencies
+    from graphora.graph.results import render_text
+
+    ref = edge("project:src/Web/Web.csproj", "project:src/Core/Core.csproj", 9, type="project_reference")
+    pkg = edge("project:src/Web/Web.csproj", "ext:nuget:Serilog", 10, type="package_reference", confidence="heuristic", reason="msbuild_condition")
+    answer = dependencies(index(make_doc([ref, pkg])), "src/Web/Web.csproj")
+    assert [(i.node, i.kind, i.confidence) for i in answer.items] == [
+        ("ext:nuget:Serilog", "external", "heuristic"),
+        ("project:src/Core/Core.csproj", "project", "resolved"),
+    ]
+    text = render_text(answer)
+    assert "nuget:Serilog" in text and "(likely)" in text
+    assert "src/Core/Core.csproj  src/Web/Web.csproj:9" in text
+
+
+def test_key_files_ignore_projects():
+    ref = edge("project:a/A.csproj", "project:b/B.csproj", type="project_reference")
+    answer = key_files(index(make_doc([ref, edge("a/X.cs", "b/Y.cs")])))
+    assert [i.node for i in answer.items] == ["file:b/Y.cs"]

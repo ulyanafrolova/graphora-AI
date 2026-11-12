@@ -119,11 +119,12 @@ def resolve(ix: GraphIndex, target: str) -> str:
     while path.startswith("./"):
         path = path[2:]
     path = path.rstrip("/")
-    for node_id in (f"file:{path}", f"asset:{path}"):
+    for node_id in (f"file:{path}", f"asset:{path}", f"project:{path}"):
         if node_id in ix.nodes:
             return node_id
 
-    externals = [i for i in (f"ext:npm:{target}", f"ext:python:{target}") if i in ix.nodes]
+    candidates = (f"ext:npm:{target}", f"ext:python:{target}", f"ext:nuget:{target}", f"ext:dotnet:{target}")
+    externals = [i for i in candidates if i in ix.nodes]
     if len(externals) == 1:
         return externals[0]
     if externals:
@@ -142,7 +143,7 @@ def resolve(ix: GraphIndex, target: str) -> str:
 
 
 def _kind(node_id: str) -> str:
-    return {"file": "file", "ext": "external", "asset": "asset"}[node_id.split(":", 1)[0]]
+    return {"file": "file", "ext": "external", "asset": "asset", "project": "project"}[node_id.split(":", 1)[0]]
 
 
 def _make_link(source: str, target: str, edges: tuple[Edge, ...]) -> Link:
