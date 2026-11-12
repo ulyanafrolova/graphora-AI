@@ -297,7 +297,8 @@ def _overview_text(o: Overview) -> str:
         f"languages: {pairs(o.languages)}",
         f"files: {f['analyzed']} analyzed, {f['detected_only']} detected only, {f['not_code']} not code, "
         f"{f['skipped']} skipped",
-        f"nodes: {n['file']} file, {n['external']} external, {n['unresolved']} unresolved, {n['asset']} asset",
+        f"nodes: {n['file']} file, {n['external']} external, {n['unresolved']} unresolved, {n['asset']} asset, "
+        f"{n['project']} project",
         f"edges: {o.edges} ({o.unresolved_imports} unresolved imports)",
     ]
     return "\n".join(lines) + "\n"

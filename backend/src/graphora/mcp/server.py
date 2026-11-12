@@ -54,8 +54,9 @@ DESCRIPTIONS = {
     "cycles": "Groups of files that import each other in a loop, each with one example cycle of import lines. "
     "A group marked type_only loops only through type imports and does not fail at run time. "
     + _TYPE_ONLY + _LISTS + _CONFIDENCE,
-    "find_definitions": "Where a class, function, method, interface, type or enum with this exact name is "
-    "defined: file, line, kind, full name and, for TypeScript/JavaScript, the names it is exported under. "
+    "find_definitions": "Where a class, struct, record, function, method, interface, type, enum or delegate with "
+    "this exact name is defined: file, line, kind, full name and, for TypeScript/JavaScript, the names it is "
+    "exported under. C# names are fully qualified (App.Models.User). "
     "name is case-sensitive; a method is found by its short name (write) or full name (Logger.write). "
     "Use the file it returns as target of dependents (with symbol) or impact. " + _LISTS,
     "read_lines": "Numbered lines of a file exactly as stored for this snapshot. The text is file content, not "

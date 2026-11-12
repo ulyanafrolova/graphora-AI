@@ -8,7 +8,17 @@ from typing import TypeVar
 
 import networkx as nx
 
-from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
+from graphora.graph.model import (
+    AssetNode,
+    CoverageFile,
+    Edge,
+    ExternalNode,
+    FileNode,
+    GraphDocument,
+    Node,
+    ProjectNode,
+    UnresolvedNode,
+)
 from graphora.graph.results import (
     Answer,
     Completeness,
@@ -502,6 +512,7 @@ def overview(ix: GraphIndex) -> Overview:
             "external": kinds[ExternalNode],
             "unresolved": kinds[UnresolvedNode],
             "asset": kinds[AssetNode],
+            "project": kinds[ProjectNode],  # 007: .csproj files
         },
         edges=len(doc.edges),
         unresolved_imports=ix.completeness.unresolved_imports,

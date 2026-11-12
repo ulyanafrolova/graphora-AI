@@ -26,3 +26,11 @@ these changes.
 - `cycles` and `key_files` stay file-only: project edges are not mixed into file cycles.
 - Text output prints `project:` and `ext:` ids by name (`src/Core/Core.csproj`, `nuget:Serilog`,
   `dotnet:System.Linq`).
+
+## MCP server (006, merged into `main` before this feature)
+
+- `graph_overview` counts project nodes: `nodes` gains `"project"`, and `schema_version` is 4.
+- `find_definitions` finds C# types and methods by short or fully qualified name (`User`, `App.Models.User`);
+  its description lists the C# kinds.
+- Every other tool takes the same targets as `graphora query` (above), so `.csproj` paths and `nuget`/`dotnet`
+  names work there too.
