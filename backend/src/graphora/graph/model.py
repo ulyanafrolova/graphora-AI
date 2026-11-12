@@ -18,6 +18,7 @@ UnresolvedReason = Literal[
     "no_types",
     "ambiguous",
     "msbuild_property",
+    "not_csharp",
 ]
 HeuristicReason = Literal["namespace_spread", "partial_type", "package_prefix", "msbuild_condition"]
 Reason = Literal[UnresolvedReason, HeuristicReason]
@@ -28,7 +29,7 @@ DefinitionKind = Literal["class", "function", "method", "interface", "type_alias
 Category = Literal["stdlib", "builtin", "third_party"]
 Ecosystem = Literal["python", "npm", "dotnet", "nuget"]
 Form = Literal["static", "dynamic", "require"]
-EdgeType = Literal["imports", "reexports", "project_reference", "package_reference", "type_reference"]
+EdgeType = Literal["imports", "reexports", "project_reference", "package_reference", "type_reference", "solution_member"]
 Directive = Literal["using", "using_static", "using_alias"]
 
 UNRESOLVED_REASONS: frozenset[str] = frozenset(get_args(UnresolvedReason))
@@ -106,7 +107,18 @@ class AssetNode:
         return f"asset:{self.path}"
 
 
-Node = Union[FileNode, ExternalNode, UnresolvedNode, AssetNode, ProjectNode]
+@dataclass(frozen=True)
+class SolutionNode:
+    """A `.sln` or `.slnx` file (specs/009-csharp-solutions-project-views)."""
+
+    path: str
+
+    @property
+    def id(self) -> str:
+        return f"solution:{self.path}"
+
+
+Node = Union[FileNode, ExternalNode, UnresolvedNode, AssetNode, ProjectNode, SolutionNode]
 
 
 @dataclass(frozen=True)

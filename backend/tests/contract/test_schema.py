@@ -1,4 +1,4 @@
-"""Schema v5 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
+"""Schema v6 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
 
 import copy
 
@@ -167,7 +167,7 @@ def test_unresolved_without_ecosystem_rejected(ts_doc, validator):
     assert not validator.is_valid(bad)
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5])
 def test_old_schema_version_rejected(doc, validator, version):
     bad = copy.deepcopy(doc)
     bad["schema_version"] = version
@@ -323,6 +323,7 @@ TYPES_INVALID = {
     "count on a project file": lambda d: d["coverage"]["files"][0].update(path="App/App.csproj", status="not_code"),
     "negative count": lambda d: d["coverage"]["files"][0].update(unresolved_type_names=-1),
     "v4 document": lambda d: d.update(schema_version=4),
+    "v5 document": lambda d: d.update(schema_version=5),
 }
 
 
@@ -330,4 +331,49 @@ TYPES_INVALID = {
 def test_types_invalid_rejected(types_doc, validator, case):
     bad = copy.deepcopy(types_doc)
     TYPES_INVALID[case](bad)
+    assert not validator.is_valid(bad)
+
+
+# --- v6: solutions (specs/009-csharp-solutions-project-views/contracts/graph.schema.json) -------------------------
+
+
+@pytest.fixture
+def sln_doc(cs_doc):
+    """cs_doc plus a solution with a resolved and a not_csharp member."""
+    doc = copy.deepcopy(cs_doc)
+    doc["nodes"] += [
+        {"id": "solution:App.sln", "kind": "solution", "path": "App.sln"},
+        {"id": "unresolved:dotnet:x/Lib.fsproj", "kind": "unresolved", "reference": "x/Lib.fsproj", "ecosystem": "dotnet"},
+    ]
+    base = {k: v for k, v in _cs_edge(doc, 7).items()}
+    doc["edges"] += [
+        dict(base, source="solution:App.sln", type="solution_member", target="project:App/App.csproj", line=6),
+        dict(base, source="solution:App.sln", type="solution_member", target="unresolved:dotnet:x/Lib.fsproj", confidence="unresolved", reason="not_csharp", line=8),
+    ]
+    return doc
+
+
+def _member(doc, line):
+    return next(e for e in doc["edges"] if e["type"] == "solution_member" and e["line"] == line)
+
+
+def test_solution_document_valid(sln_doc, validator):
+    validator.validate(sln_doc)
+
+
+SLN_INVALID = {
+    "member from a project": lambda d: _member(d, 6).update(source="project:App/App.csproj"),
+    "member to a file": lambda d: _member(d, 6).update(target="file:App/P.cs"),
+    "member with directive": lambda d: _member(d, 6).update(directive="using", global_using=False),
+    "imports from a solution": lambda d: _member(d, 6).update(type="imports"),
+    "not_csharp on a heuristic edge": lambda d: _member(d, 8).update(confidence="heuristic", target="project:App/App.csproj"),
+    "solution path not .sln": lambda d: next(n for n in d["nodes"] if n["kind"] == "solution").update(id="solution:App.txt", path="App.txt"),
+    "v5 document": lambda d: d.update(schema_version=5),
+}
+
+
+@pytest.mark.parametrize("case", sorted(SLN_INVALID))
+def test_solution_invalid_rejected(sln_doc, validator, case):
+    bad = copy.deepcopy(sln_doc)
+    SLN_INVALID[case](bad)
     assert not validator.is_valid(bad)

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://graphora.dev/schema/graph.schema.json",
   "title": "Graphora graph document",
-  "description": "Schema version 5. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
+  "description": "Schema version 6. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,7 +15,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 5
+      "const": 6
     },
     "snapshot": {
       "$ref": "#/$defs/snapshot"
@@ -78,6 +78,9 @@
         },
         {
           "$ref": "#/$defs/projectNode"
+        },
+        {
+          "$ref": "#/$defs/solutionNode"
         }
       ]
     },
@@ -578,7 +581,7 @@
         },
         "source": {
           "type": "string",
-          "pattern": "^(file|project):.+$"
+          "pattern": "^(file|project|solution):.+$"
         },
         "target": {
           "type": "string",
@@ -590,7 +593,8 @@
             "reexports",
             "project_reference",
             "package_reference",
-            "type_reference"
+            "type_reference",
+            "solution_member"
           ]
         },
         "form": {
@@ -646,7 +650,8 @@
             "namespace_spread",
             "partial_type",
             "package_prefix",
-            "msbuild_condition"
+            "msbuild_condition",
+            "not_csharp"
           ]
         },
         "extractor": {
@@ -695,7 +700,8 @@
                   "not_referenced",
                   "no_types",
                   "ambiguous",
-                  "msbuild_property"
+                  "msbuild_property",
+                  "not_csharp"
                 ]
               }
             }
@@ -951,6 +957,61 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "solution_member"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "directive"
+                  ]
+                },
+                {
+                  "required": [
+                    "alias"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "source": {
+                "pattern": "^solution:"
+              },
+              "target": {
+                "pattern": "^(project:|unresolved:dotnet:)"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "pattern": "^solution:"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "const": "solution_member"
+              }
+            }
+          }
         }
       ]
     },
@@ -1120,6 +1181,34 @@
             },
             {
               "pattern": "\\.csproj$"
+            }
+          ]
+        }
+      }
+    },
+    "solutionNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "path"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^solution:.+\\.slnx?$"
+        },
+        "kind": {
+          "const": "solution"
+        },
+        "path": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/relpath"
+            },
+            {
+              "pattern": "\\.slnx?$"
             }
           ]
         }

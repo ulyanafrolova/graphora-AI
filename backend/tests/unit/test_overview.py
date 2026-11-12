@@ -19,11 +19,11 @@ def test_counts_on_a_synthetic_graph():
     o = overview(index(doc))
     assert o.to_dict() == {
         "snapshot": SNAP,
-        "schema_version": 5,
+        "schema_version": 6,
         "extractors": {"python-adapter": "0.2.0"},
         "languages": {"go": 1, "python": 2},
         "files": {"analyzed": 2, "detected_only": 1, "not_code": 1, "skipped": 1},
-        "nodes": {"file": 2, "external": 1, "unresolved": 1, "asset": 0, "project": 0},
+        "nodes": {"file": 2, "external": 1, "unresolved": 1, "asset": 0, "project": 0, "solution": 0},
         "edges": 3,
         "unresolved_imports": 1,
     }

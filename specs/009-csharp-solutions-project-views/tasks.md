@@ -33,7 +33,7 @@ Paths are relative to the repository root; run commands from `backend/`.
 
 ## Phase 1: Foundational (schema v6)
 
-- [ ] T001 Move the graph format to schema v6 (research R7, data-model.md):
+- [X] T001 Move the graph format to schema v6 (research R7, data-model.md):
   - copy `specs/009-csharp-solutions-project-views/contracts/graph.schema.json` to `schema/graph.schema.json`;
   - `backend/src/graphora/graph/model.py`: `SolutionNode(path)` with `id = f"solution:{path}"`; `EdgeType` adds
     `"solution_member"`; `UnresolvedReason` adds `"not_csharp"`; `Node` union adds `SolutionNode`;

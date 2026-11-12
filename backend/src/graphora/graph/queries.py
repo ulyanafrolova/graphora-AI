@@ -17,6 +17,7 @@ from graphora.graph.model import (
     GraphDocument,
     Node,
     ProjectNode,
+    SolutionNode,
     UnresolvedNode,
 )
 from graphora.graph.results import (
@@ -141,7 +142,7 @@ def resolve(ix: GraphIndex, target: str) -> str:
     while path.startswith("./"):
         path = path[2:]
     path = path.rstrip("/")
-    for node_id in (f"file:{path}", f"asset:{path}", f"project:{path}"):
+    for node_id in (f"file:{path}", f"asset:{path}", f"project:{path}", f"solution:{path}"):
         if node_id in ix.nodes:
             return node_id
 
@@ -165,7 +166,7 @@ def resolve(ix: GraphIndex, target: str) -> str:
 
 
 def _kind(node_id: str) -> str:
-    return {"file": "file", "ext": "external", "asset": "asset", "project": "project"}[node_id.split(":", 1)[0]]
+    return {"file": "file", "ext": "external", "asset": "asset", "project": "project", "solution": "solution"}[node_id.split(":", 1)[0]]
 
 
 def _make_link(source: str, target: str, edges: tuple[Edge, ...]) -> Link:
@@ -515,6 +516,7 @@ def overview(ix: GraphIndex) -> Overview:
             "unresolved": kinds[UnresolvedNode],
             "asset": kinds[AssetNode],
             "project": kinds[ProjectNode],  # 007: .csproj files
+            "solution": kinds[SolutionNode],  # 009: .sln and .slnx files
         },
         edges=len(doc.edges),
         unresolved_imports=ix.completeness.unresolved_imports,

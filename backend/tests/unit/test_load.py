@@ -55,7 +55,7 @@ def test_not_an_object():
     _invalid(b"[1, 2]", "object")
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 6])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 7])
 def test_schema_version(version):
     doc = _doc()
     doc["schema_version"] = version
@@ -160,3 +160,16 @@ def test_csharp_round_trip():
 
 def test_project_edge_from_file_rejected():
     _invalid(_cs_bytes(source="file:A/P.cs"), "not a project node")
+
+
+def test_solution_round_trip_and_source_check():
+    from graphora.graph.model import Edge, GraphDocument, ProjectNode, SolutionNode
+
+    snap, h = "content:0123456789abcdef", "sha256:0000000000000000"
+    member = Edge("solution:A.sln", "project:A/A.csproj", "A\\A.csproj", 5, 1, snap, "resolved", None, "sln-reader@0.1.0", h, type="solution_member")
+    doc = serialize.to_dict(GraphDocument(snap, {}, (SolutionNode("A.sln"), ProjectNode("A/A.csproj")), (member,), (), ()))
+    data = _bytes(doc)
+    assert serialize.dumps(loads(data)) == serialize.dumps(loads(serialize.dumps(loads(data))))
+    doc["edges"][0]["source"] = "project:A/A.csproj"
+    _rehash(doc["edges"][0])
+    _invalid(_bytes(doc), "not a solution node")

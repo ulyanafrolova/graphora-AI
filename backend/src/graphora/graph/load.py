@@ -18,6 +18,7 @@ from graphora.graph.model import (
     Node,
     ProjectNode,
     Skipped,
+    SolutionNode,
     UnresolvedNode,
 )
 
@@ -124,6 +125,8 @@ def _node(raw: Any, where: str) -> Node:
         node = AssetNode(_str(raw, "path", where))
     elif kind == "project":
         node = ProjectNode(_str(raw, "path", where))
+    elif kind == "solution":
+        node = SolutionNode(_str(raw, "path", where))
     else:
         raise InvalidGraph(f"{where}.kind: unknown value {kind!r}")
     stored = _str(raw, "id", where)
@@ -175,7 +178,10 @@ def _check_edges(edges: tuple[Edge, ...], nodes: dict[str, Node], snapshot: str)
         where = f"edges[{i}]"
         if e.snapshot != snapshot:
             raise InvalidGraph(f"{where}.snapshot: {e.snapshot} differs from the document snapshot {snapshot}")
-        if e.type in _PROJECT_EDGES:
+        if e.type == "solution_member":
+            if not isinstance(nodes.get(e.source), SolutionNode):
+                raise InvalidGraph(f"{where}.source: {e.source} is not a solution node of the document")
+        elif e.type in _PROJECT_EDGES:
             if not isinstance(nodes.get(e.source), ProjectNode):
                 raise InvalidGraph(f"{where}.source: {e.source} is not a project node of the document")
         elif not isinstance(nodes.get(e.source), FileNode):

@@ -17,10 +17,11 @@ from graphora.graph.model import (
     GraphDocument,
     Node,
     ProjectNode,
+    SolutionNode,
     UnresolvedNode,
 )
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 
 def _sha16(text: str) -> str:
@@ -70,6 +71,8 @@ def _node_dict(node: Node) -> dict[str, Any]:
         return {"id": node.id, "kind": "unresolved", "reference": node.reference, "ecosystem": node.ecosystem}
     if isinstance(node, ProjectNode):
         return {"id": node.id, "kind": "project", "path": node.path}
+    if isinstance(node, SolutionNode):
+        return {"id": node.id, "kind": "solution", "path": node.path}
     assert isinstance(node, AssetNode)
     return {"id": node.id, "kind": "asset", "path": node.path}
 
