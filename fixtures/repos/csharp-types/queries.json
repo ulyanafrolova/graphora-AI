@@ -6,15 +6,21 @@
     "expected": {
       "items": [
         {
+          "node": "file:hosts/Web/Endpoints.cs",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ]
+        },
+        {
           "node": "file:src/App/Web/Controllers/HomeController.cs",
           "chain": [
             "src/App/Web/Controllers/HomeController.cs:17"
           ]
         }
       ],
-      "total": 1,
+      "total": 2,
       "completeness": {
-        "unresolved_imports": 3,
+        "unresolved_imports": 4,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }
@@ -108,7 +114,7 @@
       ],
       "total": 12,
       "completeness": {
-        "unresolved_imports": 3,
+        "unresolved_imports": 4,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }
@@ -131,7 +137,7 @@
       ],
       "total": 1,
       "completeness": {
-        "unresolved_imports": 3,
+        "unresolved_imports": 4,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }

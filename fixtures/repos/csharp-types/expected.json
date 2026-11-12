@@ -20,6 +20,56 @@
       "ecosystem": "dotnet"
     },
     {
+      "id": "file:hosts/Web/Endpoints.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:hosts/Web/Web.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Web.Endpoints",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "Web.Endpoints.Send",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "id": "file:hosts/Web/Program.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:hosts/Web/Web.csproj",
+      "definitions": []
+    },
+    {
+      "id": "file:hosts/Worker/GlobalUsings.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:hosts/Worker/Worker.csproj",
+      "definitions": []
+    },
+    {
+      "id": "file:hosts/Worker/Job.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:hosts/Worker/Worker.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Worker.Job",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "Worker.Job.ExecuteAsync",
+          "line": 8
+        }
+      ]
+    },
+    {
       "id": "file:src/App/Checks/AuditAttribute.cs",
       "kind": "file",
       "language": "csharp",
@@ -232,9 +282,24 @@
       ]
     },
     {
+      "id": "project:hosts/Web/Web.csproj",
+      "kind": "project",
+      "path": "hosts/Web/Web.csproj"
+    },
+    {
+      "id": "project:hosts/Worker/Worker.csproj",
+      "kind": "project",
+      "path": "hosts/Worker/Worker.csproj"
+    },
+    {
       "id": "project:src/App/App.csproj",
       "kind": "project",
       "path": "src/App/App.csproj"
+    },
+    {
+      "id": "unresolved:dotnet:Queue",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
     },
     {
       "id": "unresolved:dotnet:Serilog",
@@ -253,6 +318,98 @@
     }
   ],
   "edges": [
+    {
+      "source": "file:hosts/Web/Endpoints.cs",
+      "line": 5,
+      "target": "file:src/App/Services/Mailer.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Services.Mailer",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:hosts/Web/Endpoints.cs",
+      "line": 6,
+      "target": "file:src/App/Models/User.Rules.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type"
+    },
+    {
+      "source": "file:hosts/Web/Endpoints.cs",
+      "line": 6,
+      "target": "file:src/App/Models/User.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type"
+    },
+    {
+      "source": "file:hosts/Web/Endpoints.cs",
+      "line": 8,
+      "target": "file:src/App/Extensions/StringExtensions.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Extensions.StringExtensions",
+      "confidence": "heuristic",
+      "reason": "msbuild_condition"
+    },
+    {
+      "source": "file:hosts/Web/Endpoints.cs",
+      "line": 10,
+      "target": "file:src/App/Services/Envelope.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Services.Envelope",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "file:hosts/Worker/GlobalUsings.cs",
+      "line": 2,
+      "target": "file:src/App/Timers/Timer.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Timers",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": true
+    },
+    {
+      "source": "file:hosts/Worker/Job.cs",
+      "line": 5,
+      "target": "unresolved:dotnet:Queue",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "Queue",
+      "confidence": "unresolved",
+      "reason": "ambiguous"
+    },
+    {
+      "source": "file:hosts/Worker/Job.cs",
+      "line": 6,
+      "target": "file:src/App/Models/User.Rules.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type"
+    },
+    {
+      "source": "file:hosts/Worker/Job.cs",
+      "line": 6,
+      "target": "file:src/App/Models/User.cs",
+      "type": "type_reference",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type"
+    },
     {
       "source": "file:src/App/Checks/AuditAttribute.cs",
       "line": 1,
@@ -460,12 +617,78 @@
       "symbol": "Task",
       "confidence": "unresolved",
       "reason": "ambiguous"
+    },
+    {
+      "source": "project:hosts/Web/Web.csproj",
+      "line": 4,
+      "target": "project:src/App/App.csproj",
+      "type": "project_reference",
+      "form": "static",
+      "symbol": "..\\..\\src\\App\\App.csproj",
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "project:hosts/Worker/Worker.csproj",
+      "line": 4,
+      "target": "project:src/App/App.csproj",
+      "type": "project_reference",
+      "form": "static",
+      "symbol": "..\\..\\src\\App\\App.csproj",
+      "confidence": "resolved",
+      "reason": null
     }
   ],
   "coverage": [
     {
       "path": "README.md",
       "language": null,
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "hosts/Directory.Build.props",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "hosts/Web/Endpoints.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 1
+    },
+    {
+      "path": "hosts/Web/Program.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "hosts/Web/Web.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "hosts/Worker/GlobalUsings.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "hosts/Worker/Job.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 1
+    },
+    {
+      "path": "hosts/Worker/Worker.csproj",
+      "language": "csharp",
       "status": "not_code",
       "flags": []
     },

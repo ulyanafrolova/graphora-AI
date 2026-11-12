@@ -138,7 +138,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
   project resolves through it (fallback rule, R7). Tests in `backend/tests/unit/test_cs_types.py` and
   `backend/tests/unit/test_build_analyze.py`; CLI warning test for a broken `Directory.Build.props` in
   `backend/tests/integration/test_cli.py`.
-- [ ] T012 [US2] Extend `fixtures/repos/csharp-types/` with the US2 cases of FR-016: a `Directory.Build.props` above
+- [X] T012 [US2] Extend `fixtures/repos/csharp-types/` with the US2 cases of FR-016: a `Directory.Build.props` above
   two projects (one `Microsoft.NET.Sdk.Web`, one `Microsoft.NET.Sdk.Worker`) enabling `ImplicitUsings` and adding a
   `<Using>`; `<Using>` items with `Alias`, `Static` and `Remove`; a conditional `<Using>`; a `GlobalUsings.cs`; files
   with no `using` lines that reference types through each source. Update `expected.json` and `queries.json` by hand.
