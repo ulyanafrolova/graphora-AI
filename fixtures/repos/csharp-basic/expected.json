@@ -534,67 +534,78 @@
       "status": "analyzed",
       "flags": [
         "parse_error"
-      ]
+      ],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Deep/Only.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/GlobalUsings.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Legacy.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Models/User.Validation.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Models/User.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Program.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Services/Clock.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Services/Mailer.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Services/Queue.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Util/Strings.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "App/Views/Index.cshtml",

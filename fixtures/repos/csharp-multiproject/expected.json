@@ -579,19 +579,22 @@
       "path": "src/Core/Domain/Line.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/Core/Domain/Order.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/Core/Shared/Ids.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/Infra/Infra.csproj",
@@ -603,13 +606,15 @@
       "path": "src/Infra/Store.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/Tools/Diag.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/Tools/Tools.csproj",
@@ -621,7 +626,8 @@
       "path": "src/Web/Controllers/HomeController.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "src/Web/Web.csproj",
@@ -639,7 +645,8 @@
       "path": "tests/Core.Tests/OrderTests.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 1
     },
     {
       "path": "tools/bin/build.py",

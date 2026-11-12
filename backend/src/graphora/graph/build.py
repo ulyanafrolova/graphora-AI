@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from types import MappingProxyType
 
@@ -51,6 +51,7 @@ def current_extractors() -> dict[str, str]:
         "csharp-adapter": csharp.VERSION,
         "csharp-resolver": cs_resolve.RESOLVER_VERSION,
         "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
+        "dotnet-types": cs_resolve.TYPES_VERSION,
         "js-adapter": js.VERSION,
         "js-resolver": js_resolve.RESOLVER_VERSION,
         "node-builtins": js_resolve.BUILTINS_VERSION,
@@ -177,6 +178,9 @@ def _project_graph(projects: cs_resolve.Projects, snapshot: str, nodes: dict[str
             )
 
 
+_RANK = {"resolved": 0, "heuristic": 1, "unresolved": 2}
+
+
 def _csharp_graph(
     facts: dict[str, cs_extract.CsFacts | None],
     owners: dict[str, str | None],
@@ -184,20 +188,55 @@ def _csharp_graph(
     snapshot: str,
     nodes: dict[str, Node],
     edges: list[Edge],
-) -> None:
-    """File nodes and `using` edges (specs/007-csharp-analysis data-model.md § `using` edge)."""
+) -> dict[str, int]:
+    """File nodes, `using` edges (007 data-model.md) and `type_reference` edges (008 data-model.md).
+
+    Returns the number of unresolved type names per file, for the coverage report."""
     scopes = cs_resolve.build_scopes(facts, owners)
     resolver = cs_resolve.Resolver(scopes)
+    types = cs_resolve.TypeResolver(resolver)
     contexts: dict[str | None, cs_resolve.Context] = {}
+    for project in sorted({owners.get(p) for p in facts}, key=lambda p: p or ""):
+        contexts[project] = projects.context(project)
+
+    # Pass 1: type references. Which directives were used decides the `using` fallback in pass 2 (008 R7).
+    used: set[str] = set()
+    references: dict[str, dict[str, tuple[int, int, int, cs_resolve.Target, str]]] = {}
+    unresolved_names: dict[str, int] = {}
+    for path, file_facts in sorted(facts.items()):
+        if file_facts is None:
+            unresolved_names[path] = 0
+            continue
+        ctx = contexts[owners.get(path)]
+        usings = cs_resolve.FileUsings(path, file_facts.usings)
+        best: dict[str, tuple[int, int, int, cs_resolve.Target, str]] = {}
+        missing: set[str] = set()
+        for ref in file_facts.type_refs:
+            result = types.resolve(path, ref, ctx, usings)
+            if not result.found:
+                if ref.kind != "qualifier":
+                    missing.add(ref.name)
+                continue
+            if any(t.node_id.startswith("file:") for t in result.targets) or not result.targets:
+                used.update(result.via)
+            for target in result.targets:
+                key = (_RANK[target.confidence], ref.line, ref.column)
+                if target.node_id not in best or key < best[target.node_id][:3]:
+                    best[target.node_id] = (*key, target, ref.text)
+        references[path] = best
+        unresolved_names[path] = len(missing)
+
+    # Pass 2: nodes and edges.
     for path, file_facts in sorted(facts.items()):
         project = owners.get(path)
         node = FileNode(path, "csharp", file_facts.definitions if file_facts else (), None, f"project:{project}" if project else None)
         nodes[node.id] = node
-        if project not in contexts:
-            contexts[project] = projects.context(project)
         ctx = contexts[project]
         for record in file_facts.usings if file_facts else ():
+            drop_files = record.form != "using_static" and cs_resolve.directive_id(path, record) in used
             for target in resolver.resolve(path, record, ctx):
+                if drop_files and target.node_id.startswith("file:"):
+                    continue  # the types used through this directive have their own edges
                 extra = _node_for(target.node_id)
                 if extra is not None:
                     nodes.setdefault(extra.id, extra)
@@ -218,6 +257,26 @@ def _csharp_graph(
                         global_using=record.global_using,
                     )
                 )
+        for target_id, (_, line, column, target, text) in sorted(references.get(path, {}).items()):
+            extra = _node_for(target_id)
+            if extra is not None:
+                nodes.setdefault(extra.id, extra)
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=target_id,
+                    symbol=target.symbol,
+                    line=line,
+                    column=column,
+                    snapshot=snapshot,
+                    confidence=target.confidence,
+                    reason=target.reason,
+                    extractor=csharp.EXTRACTOR,
+                    snippet_hash=snippet_hash(text),
+                    type="type_reference",
+                )
+            )
+    return unresolved_names
 
 
 def build(
@@ -297,7 +356,8 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
     projects = cs_resolve.Projects(csproj_facts)
     _project_graph(projects, snapshot, nodes, edges)
-    _csharp_graph(cs_facts, cs_owners, projects, snapshot, nodes, edges)
+    unresolved_names = _csharp_graph(cs_facts, cs_owners, projects, snapshot, nodes, edges)
+    coverage = [replace(c, unresolved_type_names=unresolved_names[c.path]) if c.path in unresolved_names else c for c in coverage]
 
     doc = GraphDocument(
         snapshot=snapshot,

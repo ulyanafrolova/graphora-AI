@@ -95,7 +95,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
   project's global usings arrive in US2 and are an empty list here. Unit tests in new
   `backend/tests/unit/test_cs_types.py` for every row of the lookup table and each edge case in spec § Edge Cases that
   does not need project-wide usings.
-- [ ] T006 [US1] Wire type references into `backend/src/graphora/graph/build.py` (depends on T004, T005;
+- [X] T006 [US1] Wire type references into `backend/src/graphora/graph/build.py` (depends on T004, T005;
   research R6–R8): one `type_reference` edge per (source, target) with the strongest confidence and the first
   position at that confidence, `symbol` the full type name, `extractor` `csharp-adapter@0.2.0`, snippet hash of the
   line; `unresolved:dotnet:<name>` placeholders for `ambiguous`; drop a file-level directive's slice-1 edges to

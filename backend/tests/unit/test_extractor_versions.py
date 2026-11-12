@@ -32,6 +32,7 @@ COMPONENTS = {
     "csproj-reader": (msbuild.VERSION, ["adapters/msbuild/*.py"], []),
     "csharp-resolver": (cs_resolve.RESOLVER_VERSION, ["resolve/csharp.py"], []),
     "dotnet-namespaces": (cs_resolve.NAMESPACES_VERSION, ["resolve/data/dotnet_namespaces.txt"], []),
+    "dotnet-types": (cs_resolve.TYPES_VERSION, ["resolve/data/dotnet_types.txt"], []),
 }
 
 

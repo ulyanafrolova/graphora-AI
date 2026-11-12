@@ -246,7 +246,8 @@
       "path": "Broken/Code.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "Evil/Evil.csproj",
@@ -260,7 +261,8 @@
       "path": "Evil/Thing.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "Imports/Imports.csproj",
@@ -272,7 +274,8 @@
       "path": "Imports/Use.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "Imports/evil.targets",
@@ -284,13 +287,15 @@
       "path": "Loose/Helper.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "Loose/Main.cs",
       "language": "csharp",
       "status": "analyzed",
-      "flags": []
+      "flags": [],
+      "unresolved_type_names": 0
     },
     {
       "path": "README.md",
@@ -316,7 +321,8 @@
       "status": "analyzed",
       "flags": [
         "ambiguous_project"
-      ]
+      ],
+      "unresolved_type_names": 0
     },
     {
       "path": "tools/gen.py",

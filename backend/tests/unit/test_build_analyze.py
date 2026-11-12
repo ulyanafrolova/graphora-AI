@@ -120,3 +120,42 @@ def test_csharp_projects_end_to_end(tmp_path, validator):
     assert coverage["Bad/Bad.csproj"] == ["parse_error"]
     files = {n["path"]: n["project"] for n in out["nodes"] if n["kind"] == "file"}
     assert files == {"Bad/X.cs": "project:Bad/Bad.csproj", "Core/Order.cs": "project:Core/Core.csproj", "Web/Home.cs": "project:Web/Web.csproj"}
+
+
+def test_csharp_type_references_end_to_end(tmp_path, validator):
+    """008 US1: type-reference edges, the `using` fallback, ambiguity and the unresolved count."""
+    import json
+
+    def write(path, text):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(text)
+
+    write("App/App.csproj", '<Project Sdk="Microsoft.NET.Sdk"></Project>\n')
+    for name in ("Mailer", "Clock", "Queue"):
+        write(f"App/Services/{name}.cs", f"namespace App.Services;\npublic class {name} {{ }}\n")
+    write("App/Ext/Extensions.cs", "namespace App.Ext;\npublic static class Extensions { }\n")
+    write("App/T1/Timer.cs", "namespace App.T1;\npublic class Timer { }\n")
+    write("App/T2/Timer.cs", "namespace App.T2;\npublic class Timer { }\n")
+    write(
+        "App/Program.cs",
+        "using App.Services;\nusing App.Ext;\nusing App.T1;\nusing App.T2;\nusing Serilog;\n"
+        "namespace App;\nclass Program\n{\n    Mailer first;\n    Mailer again;\n    Timer t;\n    ILogger log;\n}\n",
+    )
+    out = json.loads(dumps(analyze(tmp_path, 100, 1024 * 1024, Deadline(30)).doc))
+    validator.validate(out)
+    edges = sorted(
+        (e["line"], e["type"], e["target"], e["confidence"], e.get("reason"))
+        for e in out["edges"]
+        if e["source"] == "file:App/Program.cs"
+    )
+    assert edges == [
+        (2, "imports", "file:App/Ext/Extensions.cs", "resolved", None),  # nothing used through it: fallback stays
+        (3, "imports", "file:App/T1/Timer.cs", "resolved", None),  # ambiguous use is not a resolved one
+        (4, "imports", "file:App/T2/Timer.cs", "resolved", None),
+        (5, "imports", "unresolved:dotnet:Serilog", "unresolved", "not_found"),
+        (9, "type_reference", "file:App/Services/Mailer.cs", "resolved", None),
+        (11, "type_reference", "unresolved:dotnet:Timer", "unresolved", "ambiguous"),
+    ]
+    coverage = {f["path"]: f.get("unresolved_type_names") for f in out["coverage"]["files"]}
+    assert coverage["App/Program.cs"] == 1  # ILogger
+    assert coverage["App/App.csproj"] is None
