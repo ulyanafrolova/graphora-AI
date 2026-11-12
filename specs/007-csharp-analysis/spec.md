@@ -11,6 +11,14 @@ grammar (namespaces, types, using directives); read .csproj files as data (Proje
 edges, PackageReference → NuGet external nodes); resolve each using directive to its namespace and then to the
 files that declare types in that namespace; skip bin/ and obj/; .cs files get coverage status analyzed."
 
+## Clarifications
+
+### Session 2026-11-12
+
+- Q: How is a `using` of a namespace declared in several files represented? → A: One edge per declaring file,
+  `heuristic` (reason `namespace_spread`) when there are several files and `resolved` when there is one. No
+  namespace node.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - See which C# files depend on which (Priority: P1)
@@ -32,9 +40,9 @@ hand-checked `expected.json`. All expected nodes and edges are present and nothi
 1. **Given** `App/Program.cs` with `using App.Services;` on line 1, and `App/Services/Mailer.cs` and
    `App/Services/Clock.cs` that both declare types in namespace `App.Services`, **When** analyzed, **Then** the
    graph has edges from `App/Program.cs` to both files, at line 1, with the snapshot id, the C# extractor
-   name@version and a snippet hash, and with the confidence defined in FR-012.
+   name@version and a snippet hash, confidence `heuristic` and reason `namespace_spread` (FR-013).
 2. **Given** `using App.Models;` where only `App/Models/User.cs` declares types in `App.Models`, **When**
-   analyzed, **Then** there is one edge `App/Program.cs → App/Models/User.cs`.
+   analyzed, **Then** there is one `resolved` edge `App/Program.cs → App/Models/User.cs`.
 3. **Given** `using System.Collections.Generic;`, **When** analyzed, **Then** there is an edge to a .NET base
    library external node `System.Collections.Generic` with category `stdlib`.
 4. **Given** `using Missing.Namespace;` that no file declares, that is not a base-library namespace and that
@@ -43,8 +51,8 @@ hand-checked `expected.json`. All expected nodes and edges are present and nothi
 5. **Given** `using static App.Util.Strings;` where class `App.Util.Strings` is declared in one file, **When**
    analyzed, **Then** there is a `resolved` edge to that file.
 6. **Given** `using Json = Newtonsoft.Json.JsonConvert;` in a project with
-   `<PackageReference Include="Newtonsoft.Json" />`, **When** analyzed, **Then** there is an edge to the NuGet
-   package node `Newtonsoft.Json` (FR-016).
+   `<PackageReference Include="Newtonsoft.Json" />`, **When** analyzed, **Then** there is a `heuristic` edge to the
+   NuGet package node `Newtonsoft.Json` (FR-014, FR-013 step 4).
 7. **Given** `App/Program.cs` declares `namespace App { class Program { void Main() {} } }`, **When** analyzed,
    **Then** its file node lists the definitions `App.Program` (class) and `App.Program.Main` (method) with
    their lines.
@@ -194,10 +202,9 @@ namespaces to the index. The coverage report is how users learn what was and was
 - **FR-012**: A file MUST see only the namespaces declared in its own project and in the projects reachable from
   it through project references (direct and transitive). Project-less files see only project-less files.
 - **FR-013**: A plain `using A.B;` MUST be resolved in this order:
-  1. `A.B` has declaring files in the visible scope → edges to those files (excluding the file itself),
-     [NEEDS CLARIFICATION: one edge per declaring file with `heuristic` confidence when there are several and
-     `resolved` when there is one, or one `resolved` edge to a single namespace node that lists its declaring
-     files?];
+  1. `A.B` has declaring files in the visible scope → one edge per declaring file (excluding the file itself):
+     `resolved` when there is exactly one, `heuristic` with reason `namespace_spread` when there are several
+     (the `using` does not say which of them is used; slice 2 narrows this by type references);
   2. `A.B` is declared in the repository but only outside the visible scope → `unresolved`, reason
      `not_referenced`;
   3. `A.B` is in the .NET base-library namespace list → `resolved` edge to a `nuget` external node named `A.B`
@@ -224,7 +231,7 @@ namespaces to the index. The coverage report is how users learn what was and was
   - a project node kind and the owning project on C# file nodes;
   - edge types for project references and package references, with a project node as source;
   - the record of the `using` form (plain, static, alias, global) on C# edges;
-  - reasons `not_referenced`, `no_types`, `ambiguous`, `partial_type`, `msbuild_property`, `msbuild_condition`;
+  - reasons `namespace_spread`, `not_referenced`, `no_types`, `ambiguous`, `partial_type`, `msbuild_property`, `msbuild_condition`;
   - the coverage flag `ambiguous_project`.
 - **FR-019**: Schema v4 MUST keep every provenance rule of v3: an edge without source, target, type, line,
   column, snapshot, confidence, extractor and snippet hash is rejected, and `unresolved` edges carry a reason.
