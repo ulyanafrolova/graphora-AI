@@ -212,7 +212,7 @@ hand-written `expected.json` files.
     `ignoring <path>: not well-formed XML or has a DOCTYPE`, others unchanged;
   - tests: `backend/tests/unit/test_build_analyze.py` (two projects end to end),
     `backend/tests/integration/test_cli.py` (warning line, exit status 0).
-- [ ] T012 [US2] Add fixture `fixtures/repos/csharp-multiproject/` with `repo/`, hand-written `expected.json` and
+- [X] T012 [US2] Add fixture `fixtures/repos/csharp-multiproject/` with `repo/`, hand-written `expected.json` and
   `queries.json` (research R10): `src/Core/Core.csproj`, `src/Web/Web.csproj` (`Microsoft.NET.Sdk.Web`),
   `tests/Core.Tests/Core.Tests.csproj`; `..\` project references incl. a transitive one, a missing project, a
   `$(…)` reference, a conditional reference; `Serilog` package matched by `package_prefix`, packages `Foo` and

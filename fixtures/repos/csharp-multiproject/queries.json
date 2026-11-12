@@ -1,0 +1,109 @@
+[
+  {
+    "question": "dependencies",
+    "target": "src/Web/Web.csproj",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:nuget:Microsoft.Extensions.Logging",
+          "chain": [
+            "project:src/Web/Web.csproj:16"
+          ]
+        },
+        {
+          "node": "ext:nuget:Serilog",
+          "chain": [
+            "project:src/Web/Web.csproj:15"
+          ]
+        },
+        {
+          "node": "project:src/Infra/Infra.csproj",
+          "chain": [
+            "project:src/Web/Web.csproj:8"
+          ]
+        },
+        {
+          "node": "project:src/Tools/Tools.csproj",
+          "chain": [
+            "project:src/Web/Web.csproj:11"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "unresolved": [
+        "project:src/Web/Web.csproj:9 not_found",
+        "project:src/Web/Web.csproj:10 msbuild_property"
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/Core/Domain/Order.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/Infra/Store.cs",
+          "chain": [
+            "src/Infra/Store.cs:1"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:src/Web/Controllers/HomeController.cs",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:1"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:tests/Core.Tests/OrderTests.cs",
+          "chain": [
+            "tests/Core.Tests/OrderTests.cs:1"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/Core/Core.csproj",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "project:src/Infra/Infra.csproj",
+          "chain": [
+            "project:src/Infra/Infra.csproj:4"
+          ]
+        },
+        {
+          "node": "project:tests/Core.Tests/Core.Tests.csproj",
+          "chain": [
+            "project:tests/Core.Tests/Core.Tests.csproj:4"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 6,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]
