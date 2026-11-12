@@ -2,7 +2,7 @@
   "csharp-adapter@0.1.0": "961a308d2a26c17f",
   "csharp-adapter@0.2.0": "12fde2732cf808a4",
   "csharp-resolver@0.1.0": "be0d97b2f94c7d5b",
-  "csharp-resolver@0.2.0": "7f87b288dd27ce99",
+  "csharp-resolver@0.2.0": "89a367d4075dec4e",
   "csproj-reader@0.1.0": "e8c184e007d666be",
   "csproj-reader@0.2.0": "f22a41bc923f1a21",
   "dotnet-implicit-usings@10.0.100": "54b3372ebaeef1c2",
@@ -14,5 +14,6 @@
   "python-adapter@0.3.0": "caa8701ef965c23c",
   "python-resolver@0.2.0": "943cf01a00722f15",
   "python-resolver@0.3.0": "690fc5c29d23c96a",
-  "python-stdlib@3.14.0": "0c38532c2850724d"
+  "python-stdlib@3.14.0": "0c38532c2850724d",
+  "sln-reader@0.1.0": "ceb33d1429319175"
 }

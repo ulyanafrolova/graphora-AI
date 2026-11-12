@@ -563,3 +563,22 @@ def global_directives(path: str, usings: Iterable[UsingRecord]) -> list[GlobalUs
             alias = record.alias if record.form == "using_alias" else None
             out.append(GlobalUsing(directive_id(path, record), record.target, alias, False))
     return out
+
+
+# --- solutions (specs/009-csharp-solutions-project-views research § R3) ------------------------------------------
+
+
+def resolve_solution_member(solution: str, path: str, projects: frozenset[str]) -> Target:
+    """One project entry of a `.sln`/`.slnx`: `$(…)`, non-C#, outside the root and missing entries are unresolved."""
+    if "$(" in path or "@(" in path:
+        return Target(f"unresolved:dotnet:{path}", path, "unresolved", "msbuild_property")
+    relative = path.replace("\\", "/")
+    absolute = relative.startswith("/") or (len(relative) > 1 and relative[1] == ":")
+    joined = posixpath.normpath(posixpath.join(posixpath.dirname(solution), relative)) if not absolute else relative
+    if not joined.lower().endswith(".csproj"):
+        return Target(f"unresolved:dotnet:{joined}", path, "unresolved", "not_csharp")
+    if absolute or joined == ".." or joined.startswith("../"):
+        return Target(f"unresolved:dotnet:{path}", path, "unresolved", "not_found")
+    if joined in projects:
+        return Target(f"project:{joined}", path, "resolved", None)
+    return Target(f"unresolved:dotnet:{joined}", path, "unresolved", "not_found")

@@ -9,7 +9,7 @@ from types import MappingProxyType
 
 from graphora.adapters import csharp, js, msbuild, python
 from graphora.adapters.csharp import extract as cs_extract
-from graphora.adapters.msbuild import csproj
+from graphora.adapters.msbuild import csproj, sln
 from graphora.adapters.js import extract as js_extract
 from graphora.adapters.python import extract as py_extract
 from graphora.adapters.text import decode_python as _decode
@@ -23,6 +23,7 @@ from graphora.graph.model import (
     GraphDocument,
     Node,
     ProjectNode,
+    SolutionNode,
     UnresolvedNode,
 )
 from graphora.graph.serialize import snippet_hash
@@ -48,6 +49,7 @@ def current_extractors() -> dict[str, str]:
     """The extractor versions this code writes into every document (005 research § R6)."""
     return {
         "csproj-reader": msbuild.VERSION,
+        "sln-reader": sln.VERSION,
         "csharp-adapter": csharp.VERSION,
         "csharp-resolver": cs_resolve.RESOLVER_VERSION,
         "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
@@ -180,6 +182,40 @@ def _project_graph(projects: cs_resolve.Projects, snapshot: str, nodes: dict[str
 
 
 _RANK = {"resolved": 0, "heuristic": 1, "unresolved": 2}
+
+
+def _solution_graph(
+    facts: dict[str, sln.SolutionFacts],
+    paths: list[str],
+    projects: frozenset[str],
+    snapshot: str,
+    nodes: dict[str, Node],
+    edges: list[Edge],
+) -> None:
+    """Solution nodes and their membership edges (specs/009-csharp-solutions-project-views data-model.md)."""
+    for path in paths:
+        node = SolutionNode(path)
+        nodes[node.id] = node
+        for entry in facts[path].entries if path in facts else ():
+            target = cs_resolve.resolve_solution_member(path, entry.path, projects)
+            extra = _node_for(target.node_id)
+            if extra is not None:
+                nodes.setdefault(extra.id, extra)
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=target.node_id,
+                    symbol=target.symbol,
+                    line=entry.line,
+                    column=entry.column,
+                    snapshot=snapshot,
+                    confidence=target.confidence,
+                    reason=target.reason,
+                    extractor=sln.EXTRACTOR,
+                    snippet_hash=snippet_hash(entry.text),
+                    type="solution_member",
+                )
+            )
 
 
 def _csharp_graph(
@@ -320,7 +356,11 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     csproj_facts = {p: csproj.read(contents[p]) for p in csproj_paths if p in contents}
     props_paths = sorted(p for p in walked.files if p.rsplit("/", 1)[-1] == cs_resolve.PROPS)
     props_facts = {p: csproj.read(contents[p]) for p in props_paths if p in contents}
-    broken_csproj = frozenset(p for p, f in [*csproj_facts.items(), *props_facts.items()] if f.has_error)
+    solution_paths = sorted(p for p in walked.files if p.lower().endswith((".sln", ".slnx")))
+    solution_facts = {p: sln.read(p, contents[p]) for p in solution_paths if p in contents}
+    broken_csproj = frozenset(
+        p for p, f in [*csproj_facts.items(), *props_facts.items(), *solution_facts.items()] if f.has_error
+    )
     cs_owners: dict[str, str | None] = {}
 
     coverage: list[CoverageFile] = []
@@ -365,6 +405,7 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
     projects = cs_resolve.Projects(csproj_facts, props_facts)
     _project_graph(projects, snapshot, nodes, edges)
+    _solution_graph(solution_facts, solution_paths, projects.paths, snapshot, nodes, edges)
     unresolved_names = _csharp_graph(cs_facts, cs_owners, projects, snapshot, nodes, edges)
     coverage = [replace(c, unresolved_type_names=unresolved_names[c.path]) if c.path in unresolved_names else c for c in coverage]
 

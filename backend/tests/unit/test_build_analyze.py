@@ -192,3 +192,34 @@ def test_csharp_project_usings_end_to_end(tmp_path, validator):
     ]  # the global using in GlobalUsings.cs was used, so its fallback edge is gone
     coverage = {f["path"]: f.get("unresolved_type_names") for f in out["coverage"]["files"]}
     assert coverage["Lib/Use.cs"] == 0  # List and Task come from the implicit usings
+
+
+def test_solutions_end_to_end(tmp_path, validator):
+    """009 US2: solution nodes and membership edges from .sln and .slnx, with a broken solution."""
+    import json
+
+    def write(path, text):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(text)
+
+    write("src/Core/Core.csproj", "<Project />\n")
+    write(
+        "App.sln",
+        "Microsoft Visual Studio Solution File, Format Version 12.00\n"
+        'Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "src\\Core\\Core.csproj", "{1}"\nEndProject\n'
+        'Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gone", "src\\Gone\\Gone.csproj", "{2}"\nEndProject\n',
+    )
+    write("App.slnx", '<Solution>\n  <Project Path="src/Core/Core.csproj" />\n</Solution>\n')
+    write("Broken.sln", "not a solution\n")
+    analysis = analyze(tmp_path, 100, 1024 * 1024, Deadline(30))
+    out = json.loads(dumps(analysis.doc))
+    validator.validate(out)
+    assert analysis.warnings == ("Broken.sln",)
+    members = sorted((e["source"], e["line"], e["target"], e["confidence"]) for e in out["edges"] if e["type"] == "solution_member")
+    assert members == [
+        ("solution:App.sln", 2, "project:src/Core/Core.csproj", "resolved"),
+        ("solution:App.sln", 4, "unresolved:dotnet:src/Gone/Gone.csproj", "unresolved"),
+        ("solution:App.slnx", 2, "project:src/Core/Core.csproj", "resolved"),
+    ]
+    assert {n["id"] for n in out["nodes"] if n["kind"] == "solution"} == {"solution:App.sln", "solution:App.slnx", "solution:Broken.sln"}
+    assert {f["path"]: f["flags"] for f in out["coverage"]["files"]}["Broken.sln"] == ["parse_error"]

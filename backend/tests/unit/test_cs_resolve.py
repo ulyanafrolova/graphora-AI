@@ -378,3 +378,22 @@ def test_implicit_usings_list():
     }
     assert "Microsoft.AspNetCore.Builder" in groups["web"]
     assert groups["winforms"] == {"System.Drawing", "System.Windows.Forms"}
+
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("src\\Core\\Core.csproj", ("project:src/Core/Core.csproj", "resolved", None)),
+        ("src/Gone/Gone.csproj", ("unresolved:dotnet:src/Gone/Gone.csproj", "unresolved", "not_found")),
+        ("lib\\Lib.fsproj", ("unresolved:dotnet:lib/Lib.fsproj", "unresolved", "not_csharp")),
+        ("$(Root)\\X.csproj", ("unresolved:dotnet:$(Root)\\X.csproj", "unresolved", "msbuild_property")),
+        ("..\\..\\outside\\O.csproj", ("unresolved:dotnet:..\\..\\outside\\O.csproj", "unresolved", "not_found")),
+        ("C:\\abs\\A.csproj", ("unresolved:dotnet:C:\\abs\\A.csproj", "unresolved", "not_found")),
+    ],
+)
+def test_solution_member(path, expected):
+    from graphora.resolve.csharp import resolve_solution_member
+
+    target = resolve_solution_member("App.sln", path, frozenset({"src/Core/Core.csproj"}))
+    assert (target.node_id, target.confidence, target.reason) == expected
+    assert target.symbol == path

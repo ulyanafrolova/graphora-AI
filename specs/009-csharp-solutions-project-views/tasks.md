@@ -103,7 +103,7 @@ CLI and MCP.
   `2150E333-8FDC-42A3-9474-1A3956D46DE8`) and `read_slnx(data)` (expat, DTD refused, `Project Path=` anywhere,
   `Folder`/`File` ignored); `has_error` for malformed input. Tests in new `backend/tests/unit/test_sln.py`: both
   formats, CRLF, BOM, nested folders, missing header, DOCTYPE, positions.
-- [ ] T008 [US2] Membership and build (depends on T001, T007; research R3): `resolve_solution_member(solution, entry,
+- [X] T008 [US2] Membership and build (depends on T001, T007; research R3): `resolve_solution_member(solution, entry,
   projects)` in `backend/src/graphora/resolve/csharp.py` (`$(` → `msbuild_property`; not `.csproj` →
   `not_csharp`; outside root or missing → `not_found`; else resolved `project:`), solution pass in
   `backend/src/graphora/graph/build.py` (solution nodes for every walked `.sln`/`.slnx`, `solution_member` edges with

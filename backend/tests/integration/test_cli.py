@@ -134,3 +134,12 @@ def test_broken_directory_build_props_warns_and_succeeds(tmp_path):
     assert "graphora: warning: ignoring Directory.Build.props: not well-formed XML or has a DOCTYPE" in err
     coverage = {f["path"]: f for f in json.loads(out)["coverage"]["files"]}
     assert coverage["Directory.Build.props"]["flags"] == ["parse_error"]
+
+
+def test_broken_solution_warns_and_succeeds(tmp_path):
+    """009 contracts/cli.md: an unreadable solution file is a warning."""
+    (tmp_path / "App.slnx").write_text("<Solution><Project Path=\n")
+    (tmp_path / "P.cs").write_text("class P {}\n")
+    code, _, err = run_analyze(tmp_path)
+    assert code == 0, err
+    assert "graphora: warning: ignoring App.slnx: not a readable solution file" in err
