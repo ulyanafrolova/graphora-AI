@@ -75,7 +75,7 @@ CLI and MCP.
   `Item.declared_only: bool = False` (serialized only when true), text rendering
   `<project>  <first evidence file>:<line> → <target> (+N more)` and `(declared, not used by code)`. Tests in
   `test_project_view.py` and `backend/tests/unit/test_dependents.py`/`test_cycles.py` for each question and error.
-- [ ] T004 [US1] CLI `--level {file,project}` in `backend/src/graphora/cli/__init__.py` (contracts/cli.md): passed to
+- [X] T004 [US1] CLI `--level {file,project}` in `backend/src/graphora/cli/__init__.py` (contracts/cli.md): passed to
   the four questions; usage error (exit 2, existing format) with `--symbol`, `--follow-barrels` or `--no-type-only` at
   project level; `not_a_project` → exit 1 `… is not a project`. Tests in `backend/tests/integration/test_query_cli.py`.
 - [ ] T005 [US1] MCP `level` argument (`"file"` default, `"project"`) on `dependencies`, `dependents`, `impact`,

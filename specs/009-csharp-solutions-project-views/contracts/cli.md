@@ -18,11 +18,11 @@ graphora query <graph> dependencies|dependents|impact|cycles [<target>] --level 
 - At project level `<target>` is a `project:` id, a `.csproj` path or a C# file path (mapped to its project).
   `--symbol`, `--follow-barrels` and `--no-type-only` are usage errors at project level (exit 2, existing message
   format).
-- Text output of a project link: `<project>  <first evidence file>:<line> → <target> (+N more)`; declared-only links
-  end in `(declared, not used by code)`; "likely" as before.
+- Text output of a project link: `<project>  <first evidence file>:<line> (+N more) → <target>`; declared-only
+  links end in `(declared, not used by code)`; "likely" as before.
 - JSON: the existing answer shape; links may carry `declared` (list of edges); items may carry `declared_only: true`;
   the `projects` answer has a `projects` list (data-model.md § Projects answer entry).
-- Not-a-project targets: exit 1 with `… is not a project` (status `not_a_project`).
+- Not-a-project targets: the existing not-found exit status (8) with `… is not a project` (status `not_a_project`).
 
 ## MCP
 
