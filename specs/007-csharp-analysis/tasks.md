@@ -107,7 +107,7 @@ one project (or among project-less files).
 
 **Independent Test**: `uv run pytest tests/golden -k csharp-basic` matches the hand-written `expected.json`.
 
-- [ ] T005 [P] [US1] Implement the C# extractor in `backend/src/graphora/adapters/csharp/__init__.py`
+- [X] T005 [P] [US1] Implement the C# extractor in `backend/src/graphora/adapters/csharp/__init__.py`
   (`VERSION = "0.1.0"`, `EXTRACTOR = "csharp-adapter@0.1.0"`) and
   `backend/src/graphora/adapters/csharp/extract.py` (research R1, data-model.md § Internal entities):
   - `extract(data: bytes, check) -> CsFacts | None`; decode with the shared text helper (BOM, UTF-8);
