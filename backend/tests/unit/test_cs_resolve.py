@@ -1,5 +1,7 @@
 """C# resolution (specs/007-csharp-analysis/data-model.md § Resolution, research R3–R6)."""
 
+from pathlib import Path
+
 import pytest
 
 from graphora.adapters.csharp.extract import extract
@@ -329,3 +331,28 @@ def test_package_through_type_alias(multi, projects):
 
 def test_base_library_wins_over_package_prefix(multi, projects):
     assert _web(multi, projects, "using Microsoft.AspNetCore.Mvc;")[0].node_id == "ext:dotnet:Microsoft.AspNetCore.Mvc"
+
+
+# --- slice 2 data files (specs/008-csharp-type-references research R3, R4) ----------------------------------------
+
+DATA = Path(__file__).resolve().parents[2] / "src" / "graphora" / "resolve" / "data"
+
+
+def _data_lines(name):
+    lines = (DATA / name).read_text(encoding="utf-8").split("\n")
+    assert lines[-1] == ""
+    return lines[0], lines[1:-1]
+
+
+def test_dotnet_types_list():
+    header, lines = _data_lines("dotnet_types.txt")
+    assert header == "# dotnet-types@10.0.0"
+    assert lines == sorted(set(lines))
+    triples = {tuple(line.split(" ")) for line in lines}
+    assert all(len(t) == 3 for t in triples)
+    assert {
+        ("Microsoft.NETCore.App", "System.Collections.Generic", "List"),
+        ("Microsoft.NETCore.App", "System.Threading.Tasks", "Task"),
+        ("Microsoft.AspNetCore.App", "Microsoft.AspNetCore.Mvc", "Controller"),
+    } <= triples
+    assert ("Microsoft.NETCore.App", "Microsoft.AspNetCore.Mvc", "Controller") not in triples

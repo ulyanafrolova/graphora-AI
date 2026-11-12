@@ -33,7 +33,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 
 ## Phase 1: Setup (shipped data)
 
-- [ ] T001 [P] Extend `backend/scripts/gen_dotnet_namespaces.py` to also write
+- [X] T001 [P] Extend `backend/scripts/gen_dotnet_namespaces.py` to also write
   `backend/src/graphora/resolve/data/dotnet_types.txt` (research R3): first line `# dotnet-types@10.0.0`, then one
   `<framework> <namespace> <type>` triple per line for every public top-level `T:` entry of the three .NET 10
   reference packs (generic arity `` `N `` dropped, nested `+` types skipped), sorted, unique, UTF-8, LF. Regenerate
