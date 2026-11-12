@@ -16,6 +16,7 @@ dependencies = [
     "uvicorn==0.54.0",
     "jsonschema==4.26.0",
     "networkx==3.7",
+    "mcp==2.3.0",
 ]
 
 [project.scripts]

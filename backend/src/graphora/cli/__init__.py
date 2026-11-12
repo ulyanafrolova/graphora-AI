@@ -88,18 +88,23 @@ def _parser() -> argparse.ArgumentParser:
     query = commands.add_parser("query", help="answer one question about a graph document")
     query.add_argument("graph", help="a graph JSON written by `graphora analyze`, or - for standard input")
     query.add_argument("question", choices=_QUESTIONS)
-    query.add_argument("target", nargs="?", help="a node id, a file path or an external package name")
+    query.add_argument("target", nargs="?", help="a node id, a file path or an external package name; for definitions, a name")
     query.add_argument("--format", choices=("text", "json"), default="text")
     query.add_argument("--limit", type=int)
     query.add_argument("--no-type-only", action="store_true", help="leave out type-only links")
     query.add_argument("--symbol", help="dependents: only edges of this imported name")
     query.add_argument("--max-depth", type=int, help="impact: stop at this distance")
     query.add_argument("--follow-barrels", action="store_true", help="dependents and impact: see through re-exports")
+    mcp = commands.add_parser("mcp", help="serve one snapshot to coding agents over MCP on standard input/output")
+    mcp.add_argument("--graph", help="a graph JSON written by `graphora analyze`")
+    mcp.add_argument("--repository", help="store mode: a stored repository name")
+    mcp.add_argument("--snapshot", help="store mode: a stored snapshot id")
+    mcp.add_argument("--database", help="store mode: PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
     return parser
 
 
-_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files")
-_WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors")
+_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions")
+_WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors", "definitions")
 _OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
 
 
@@ -132,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
         return _serve(args)
     if args.command == "query":
         return _query(args)
+    if args.command == "mcp":
+        return _mcp(args)
 
     # SIGTERM must also unwind through fetch_snapshot so the temp folder is removed (research § R11).
     in_main_thread = threading.current_thread() is threading.main_thread()
@@ -160,6 +167,12 @@ def _query(args: argparse.Namespace) -> int:
         if getattr(args, option) not in (None, False) and question not in allowed:
             _log("error", f"--{option.replace('_', '-')} is only for {' and '.join(allowed)}")
             return EXIT_USAGE
+    if question == "overview" and (args.limit is not None or args.no_type_only):
+        _log("error", "overview takes only --format")
+        return EXIT_USAGE
+    if question == "definitions" and args.no_type_only:
+        _log("error", "definitions takes only --limit and --format")
+        return EXIT_USAGE
 
     options: dict[str, object] = {"include_type_only": not args.no_type_only, "limit": args.limit}
     if question == "dependents":
@@ -185,7 +198,12 @@ def _query(args: argparse.Namespace) -> int:
     try:
         ix = queries.index(loads(data))
         target = (args.target,) if question in _WITH_TARGET else ()
-        answer = asks[question](ix, *target, **options)
+        if question == "overview":
+            answer = queries.overview(ix)
+        elif question == "definitions":
+            answer = queries.definitions(ix, args.target, limit=args.limit)
+        else:
+            answer = asks[question](ix, *target, **options)
     except InvalidGraph as exc:
         _log("error", f"invalid graph: {exc.message}")
         return EXIT_GRAPH
@@ -199,6 +217,57 @@ def _query(args: argparse.Namespace) -> int:
     out = dumps(answer) if args.format == "json" else render_text(answer).encode("utf-8")
     sys.stdout.buffer.write(out)
     sys.stdout.flush()
+    return EXIT_OK
+
+
+def _mcp(args: argparse.Namespace) -> int:
+    """`graphora mcp` (specs/006-mcp-server contracts/cli.md). Only the protocol may write to stdout."""
+    from graphora.graph.load import InvalidGraph
+    from graphora.mcp import PairNotFound, create_server, from_graph_file, from_store
+    from graphora.store import StoreUnavailable
+
+    store_mode = args.repository is not None or args.snapshot is not None
+    if args.graph is None and not store_mode:
+        _log("error", "give --graph FILE, or --repository and --snapshot")
+        return EXIT_USAGE
+    if args.graph is not None and store_mode:
+        _log("error", "--graph cannot be combined with --repository or --snapshot")
+        return EXIT_USAGE
+    if store_mode and (args.repository is None or args.snapshot is None):
+        _log("error", "--repository and --snapshot go together")
+        return EXIT_USAGE
+    if args.graph == "-":
+        _log("error", "--graph - is not allowed: standard input carries the MCP protocol")
+        return EXIT_USAGE
+    if args.graph is not None and args.database is not None:
+        _log("error", "--database is only for store mode")
+        return EXIT_USAGE
+
+    try:
+        if store_mode:
+            url = _database_url(args.database)
+            if url is None:
+                raise StoreUnavailable("no database URL: use --database or GRAPHORA_DATABASE_URL")
+            served = from_store(url, args.repository, args.snapshot)
+        else:
+            served = from_graph_file(args.graph)
+    except OSError as exc:
+        _log("error", f"cannot read {args.graph}: {exc.strerror or exc}")
+        return EXIT_USAGE
+    except StoreUnavailable as exc:
+        _log("error", f"store unavailable: {exc.reason}")
+        return EXIT_STORE
+    except InvalidGraph as exc:
+        _log("error", f"invalid graph: {exc.message}")
+        return EXIT_GRAPH
+    except PairNotFound as exc:
+        _log("error", exc.message)
+        return EXIT_NOT_FOUND
+    try:
+        create_server(served).run("stdio")
+    finally:
+        if served.store is not None:
+            served.store.close()
     return EXIT_OK
 
 
