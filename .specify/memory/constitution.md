@@ -86,7 +86,8 @@ Rationale: every fact must be traceable to `file:line@commit` and verifiable lat
 - LLM: local by default (Ollama, `qwen3:8b`, explicit `num_ctx`); the provider is selected by
   configuration only, never hard-coded. Each agent gets at most 3–4 tools; tool arguments are
   validated before execution.
-- Language support for MVP: full analysis for Python and TypeScript/JavaScript only.
+- Language support: full analysis for Python and TypeScript/JavaScript (MVP) and C#. Razor,
+  F#, VB.NET, C and C++ stay `detected_only`.
 
 ## Development Workflow
 
