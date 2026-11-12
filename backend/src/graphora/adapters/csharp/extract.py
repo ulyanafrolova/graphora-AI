@@ -31,6 +31,22 @@ _TYPE_KINDS = {
 }
 _NAMESPACES = ("namespace_declaration", "file_scoped_namespace_declaration")
 _NAME_TARGETS = ("identifier", "qualified_name", "generic_name", "alias_qualified_name")
+_WRAPPED_TYPES = ("nullable_type", "array_type", "pointer_type", "ref_type", "scoped_type")
+_TYPE_FIELDS = frozenset({"type", "returns"})
+_NOT_TYPES = frozenset({"var", "dynamic", "nameof", "unmanaged", "notnull"})
+# Fields whose identifier declares a name (local, parameter, field, property...): such a name is not a type qualifier.
+_DECLARING = frozenset(
+    {
+        "variable_declarator",
+        "parameter",
+        "property_declaration",
+        "catch_declaration",
+        "declaration_pattern",
+        "foreach_statement",
+        "single_variable_designation",
+        "event_declaration",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -64,12 +80,29 @@ class UsingRecord:
 
 
 @dataclass(frozen=True)
+class TypeRef:
+    """One type name written in code (specs/008-csharp-type-references research.md § R1).
+
+    `kind`: `type` (a type position), `attribute` (also tried with an `Attribute` suffix) or `qualifier` (the left
+    part of `X.Member` or a `nameof` argument: counts only if it resolves, never as missing)."""
+
+    name: str  # dotted, without `global::` and generic arguments
+    rooted: bool
+    kind: Literal["type", "attribute", "qualifier"]
+    namespace: str  # innermost enclosing namespace, "" at file level
+    line: int
+    column: int
+    text: str  # the source line, trimmed
+
+
+@dataclass(frozen=True)
 class CsFacts:
     namespaces: tuple[str, ...]  # every declared namespace, sorted, without ""
     types: tuple[TypeDecl, ...]
     definitions: tuple[Definition, ...]
     usings: tuple[UsingRecord, ...]
     has_error: bool
+    type_refs: tuple[TypeRef, ...] = ()
 
 
 def _text(node: Node) -> str:
@@ -131,6 +164,94 @@ def _using(position: Positions, node: Node, namespace: str) -> UsingRecord:
     return UsingRecord(form, _has_token(node, "global"), alias, target or None, rooted, namespace, _text(node), line, column)
 
 
+def _type_params(node: Node) -> frozenset[str]:
+    out: set[str] = set()
+    for child in node.named_children:
+        if child.type == "type_parameter_list":
+            for p in child.named_children:
+                name = p.child_by_field_name("name") or next((c for c in p.named_children if c.type == "identifier"), None)
+                if name is not None:
+                    out.add(_text(name))
+    return frozenset(out)
+
+
+class _Refs:
+    """Collects type references of one file in source order."""
+
+    def __init__(self, source: bytes, position: Positions) -> None:
+        self.lines = source.decode("utf-8").split("\n")
+        self.position = position
+        self.out: list[TypeRef] = []
+        self.qualifiers: list[tuple[list[str], int, int, str, str]] = []  # filtered against declared names at the end
+
+    def _line(self, row: int) -> str:
+        return self.lines[row].strip() if row < len(self.lines) else ""
+
+    def type_node(self, node: Node, namespace: str, params: frozenset[str], kind: str = "type") -> None:
+        """A node in a type position: emit its name and recurse into generic arguments and element types."""
+        t = node.type
+        if t in _WRAPPED_TYPES:
+            inner = node.child_by_field_name("type") or next((c for c in node.named_children), None)
+            if inner is not None:
+                self.type_node(inner, namespace, params, kind)
+            return
+        if t == "tuple_type":
+            for element in node.named_children:
+                inner = element.child_by_field_name("type")
+                if inner is not None:
+                    self.type_node(inner, namespace, params)
+            return
+        if t not in _NAME_TARGETS:
+            return
+        name, rooted = _name_text(node)
+        if name and name not in _NOT_TYPES and name not in params:
+            line, column = self.position(node)
+            self.out.append(TypeRef(name, rooted, kind, namespace, line, column, self._line(node.start_point.row)))  # type: ignore[arg-type]
+        stack = [node]
+        while stack:  # generic arguments anywhere inside the name, e.g. A.B<C>.D<E>
+            n = stack.pop()
+            for c in n.named_children:
+                if c.type == "type_argument_list":
+                    for arg in c.named_children:
+                        self.type_node(arg, namespace, params)
+                elif c.type in _NAME_TARGETS:
+                    stack.append(c)
+
+    def qualifier(self, node: Node, namespace: str, params: frozenset[str], include_last: bool = False) -> None:
+        """`A.B.C.Member` → candidates `A`, `A.B`, `A.B.C` (names only, from the left). For a `nameof` argument the last
+        part is a candidate too."""
+        parts: list[Node] = []
+        n: Node | None = node
+        while n is not None and n.type == "member_access_expression":
+            name = n.child_by_field_name("name")
+            if name is None:
+                return
+            parts.append(name)
+            n = n.child_by_field_name("expression")
+        if n is None or n.type not in ("identifier", "generic_name"):
+            return
+        names = [n, *reversed(parts)]
+        if not include_last:
+            names = names[:-1]
+        texts: list[str] = []
+        for p in names:
+            if p.type not in ("identifier", "generic_name"):
+                break
+            texts.append(_name_text(p)[0])
+        if not texts or texts[0] in params or texts[0] in _NOT_TYPES:
+            return
+        line, column = self.position(n)
+        self.qualifiers.append((texts, line, column, namespace, self._line(n.start_point.row)))
+
+    def finish(self, declared: set[str]) -> tuple[TypeRef, ...]:
+        for texts, line, column, namespace, text in self.qualifiers:
+            if texts[0] in declared:
+                continue
+            for i in range(1, len(texts) + 1):
+                self.out.append(TypeRef(".".join(texts[:i]), False, "qualifier", namespace, line, column, text))
+        return tuple(self.out)
+
+
 def extract(source: bytes, check: Callable[[], None] = lambda: None) -> CsFacts | None:
     """Parse one C# file. None if it is not valid UTF-8 (a leading BOM is allowed).
 
@@ -143,54 +264,92 @@ def extract(source: bytes, check: Callable[[], None] = lambda: None) -> CsFacts 
     source = normalize_newlines(source)
     root = _PARSER.parse(source).root_node
     position = Positions(source)
+    refs = _Refs(source, position)
 
     namespaces: set[str] = set()
     types: list[TypeDecl] = []
     definitions: list[Definition] = []
     usings: list[UsingRecord] = []
+    declared: set[str] = set()
 
-    # Depth-first in source order, so `Positions` sees nodes in order. Each entry: node, namespace, enclosing types.
-    stack: list[tuple[Node, str, str]] = [(root, "", "")]
+    # Depth-first in source order. Each entry: node, namespace, enclosing types, type parameters in scope.
+    stack: list[tuple[Node, str, str, frozenset[str]]] = [(root, "", "", frozenset())]
     seen = 0
     file_namespace = ""
     while stack:
-        node, namespace, outer = stack.pop()
+        node, namespace, outer, params = stack.pop()
         seen += 1
         if seen % CHECK_EVERY == 0:
             check()
         kind = node.type
-        children_namespace, children_outer = namespace, outer
+        namespace = namespace or file_namespace
+        children_namespace, children_outer, children_params = namespace, outer, params
         if kind in _NAMESPACES:
             name_node = node.child_by_field_name("name")
             name = _name_text(name_node)[0] if name_node is not None else ""
-            children_namespace = _join(namespace, name)
+            children_namespace = _join(namespace if kind == "namespace_declaration" else "", name)
             if children_namespace:
                 namespaces.add(children_namespace)
             if kind == "file_scoped_namespace_declaration":
                 # The rest of the file (later siblings) belongs to this namespace.
                 file_namespace = children_namespace
+                continue
         elif kind == "using_directive":
-            usings.append(_using(position, node, namespace or file_namespace))
+            usings.append(_using(position, node, namespace))
             continue
         elif kind in _TYPE_KINDS:
             name_node = node.child_by_field_name("name")
             if name_node is not None:
-                effective_namespace = namespace or file_namespace
-                full = _join(effective_namespace, outer, _text(name_node))
+                full = _join(namespace, outer, _text(name_node))
                 line = name_node.start_point.row + 1
-                types.append(TypeDecl(_TYPE_KINDS[kind], full, effective_namespace, line, _is_partial(node)))
+                types.append(TypeDecl(_TYPE_KINDS[kind], full, namespace, line, _is_partial(node)))
                 definitions.append(Definition(_TYPE_KINDS[kind], full, line))
                 children_outer = _join(outer, _text(name_node))
-                children_namespace = effective_namespace
-        elif kind == "method_declaration" and outer:
+            children_params = params | _type_params(node)
+        elif kind == "method_declaration":
             name_node = node.child_by_field_name("name")
-            if name_node is not None:
-                definitions.append(Definition("method", _join(namespace or file_namespace, outer, _text(name_node)), name_node.start_point.row + 1))
-            continue  # local functions and lambdas inside a body are not definitions
-        if kind in ("block", "arrow_expression_clause"):
-            continue
-        for child in reversed(node.children):
-            stack.append((child, children_namespace, children_outer))
+            if name_node is not None and outer:
+                definitions.append(Definition("method", _join(namespace, outer, _text(name_node)), name_node.start_point.row + 1))
+            children_params = params | _type_params(node)
+        elif kind == "local_function_statement":
+            children_params = params | _type_params(node)
+        elif kind == "member_access_expression" and (node.parent is None or node.parent.type != "member_access_expression"):
+            refs.qualifier(node, namespace, params)
+        elif kind == "invocation_expression":
+            function = node.child_by_field_name("function")
+            if function is not None and function.type == "identifier" and _text(function) == "nameof":
+                for arg in (a for c in node.named_children if c.type == "argument_list" for a in c.named_children):
+                    expr = next((c for c in arg.named_children), None)
+                    if expr is not None and expr.type == "identifier":  # `nameof(A.B)` is an ordinary member access
+                        refs.qualifier(expr, namespace, params, include_last=True)
+        if kind in _DECLARING:
+            for field in ("name", "left"):
+                n = node.child_by_field_name(field)
+                if n is not None and n.type == "identifier":
+                    declared.add(_text(n))
+
+        children = []
+        for i, child in enumerate(node.children):
+            field = node.field_name_for_child(i)
+            if field in _TYPE_FIELDS and child.is_named:
+                refs.type_node(child, children_namespace, children_params)
+                continue
+            if field == "right" and kind in ("as_expression", "is_expression"):
+                refs.type_node(child, children_namespace, children_params)
+                continue
+            if kind in ("base_list", "type_argument_list") and child.is_named:
+                inner = child.child_by_field_name("type") if child.type == "primary_constructor_base_type" else child
+                if inner is not None:
+                    refs.type_node(inner, children_namespace, children_params)
+                if child.type == "primary_constructor_base_type":
+                    children.append(child)  # its argument list may hold more code
+                continue
+            if kind == "attribute" and field == "name":
+                refs.type_node(child, children_namespace, children_params, "attribute")
+                continue
+            children.append(child)
+        for child in reversed(children):
+            stack.append((child, children_namespace, children_outer, children_params))
 
     return CsFacts(
         namespaces=tuple(sorted(namespaces)),
@@ -198,4 +357,5 @@ def extract(source: bytes, check: Callable[[], None] = lambda: None) -> CsFacts 
         definitions=tuple(sorted(definitions, key=lambda d: (d.line, d.name))),
         usings=tuple(usings),
         has_error=root.has_error,
+        type_refs=refs.finish(declared),
     )

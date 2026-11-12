@@ -76,7 +76,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 
 **Independent Test**: `uv run pytest tests/golden -k "csharp-types or csharp-basic"`.
 
-- [ ] T004 [P] [US1] Extract type references in `backend/src/graphora/adapters/csharp/extract.py`
+- [X] T004 [P] [US1] Extract type references in `backend/src/graphora/adapters/csharp/extract.py`
   (`VERSION = "0.2.0"`, research R1): `CsFacts.type_refs: tuple[TypeRef, ...]` with `name` (dots, no generic
   arguments), `rooted`, `kind` (`"type"` | `"qualifier"`), `namespace` (enclosing namespace, `""` at file level),
   `type_params` (names of enclosing type parameters), `line`, `column`, `text` (the source line, trimmed); positions

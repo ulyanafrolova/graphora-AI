@@ -165,3 +165,104 @@ def test_syntax_error_keeps_readable_parts():
 def test_bom_and_invalid_utf8():
     assert extract(b"\xef\xbb\xbfusing A;").usings[0].target == "A"
     assert extract(b"class \xff {}") is None
+
+
+# --- type references (specs/008-csharp-type-references research.md § R1) -------------------------------------
+
+
+def _refs(source: str, kind: str | None = None):
+    return [(r.name, r.kind, r.line) for r in _facts(source).type_refs if kind is None or r.kind == kind]
+
+
+POSITIONS = """namespace A;
+[Serializable, My.Check(1)]
+class C<T> : Base<T>, IThing where T : IOther {
+  Field f; List<Order> xs; event Handler E; Dto? n; Item[] arr; (Left, Right) pair;
+  Ret M(Param p, out Res r) {
+    var v = new Made(); Local l = null; T t = default;
+    var q = typeof(Ty); var c = (Cast)o; var a = o as As;
+    if (o is Pat pp) {}
+    try {} catch (Exc e) {}
+    App.Models.User u = null; global::G.H g; Gen<Arg1, Dictionary<string, Arg2>> gg;
+  }
+  Prop P { get; set; }
+}
+"""
+
+
+def test_every_type_position():
+    names = [n for n, k, _ in _refs(POSITIONS) if k != "qualifier"]
+    assert names == [
+        "Serializable", "My.Check", "Base", "IThing", "IOther",
+        "Field", "List", "Order", "Handler", "Dto", "Item", "Left", "Right",
+        "Ret", "Param", "Res", "Made", "Local",
+        "Ty", "Cast", "As", "Pat", "Exc",
+        "App.Models.User", "G.H", "Gen", "Arg1", "Dictionary", "Arg2",
+        "Prop",
+    ]
+
+
+def test_attribute_kind_and_rooted_name():
+    facts = _facts(POSITIONS)
+    kinds = {r.name: r.kind for r in facts.type_refs}
+    assert kinds["Serializable"] == kinds["My.Check"] == "attribute"
+    rooted = {r.name: r.rooted for r in facts.type_refs}
+    assert rooted["G.H"] and not rooted["App.Models.User"]
+
+
+def test_type_parameters_var_and_keywords_are_not_references():
+    names = [n for n, _, _ in _refs("class C<T> { void M<U>(T t, U u, int i, string s) { var x = 1; dynamic d = null; } }")]
+    assert names == []
+
+
+def test_namespace_and_position_of_references():
+    facts = _facts("namespace A.B {\n  class C {\n    Mailer m;\n  }\n}\n")
+    (ref,) = facts.type_refs
+    assert (ref.name, ref.namespace, ref.line, ref.column, ref.text) == ("Mailer", "A.B", 3, 5, "Mailer m;")
+
+
+def test_file_scoped_namespace_applies_to_references():
+    (ref,) = _facts("using X;\nnamespace A.B;\nclass C { Mailer m; }\n").type_refs
+    assert ref.namespace == "A.B"
+
+
+def test_static_member_qualifiers_but_not_variables():
+    source = """class C {
+  Order order;
+  void M(Param p) {
+    Static.Call();
+    App.Util.Strings.Upper("x");
+    order.Total();
+    p.Run();
+    var local = 1; local.ToString();
+    this.Go();
+    GetIt().Then();
+  }
+}"""
+    assert _refs(source, "qualifier") == [
+        ("Static", "qualifier", 4),
+        ("App", "qualifier", 5),
+        ("App.Util", "qualifier", 5),
+        ("App.Util.Strings", "qualifier", 5),
+    ]
+
+
+def test_nameof_argument_is_a_qualifier():
+    assert _refs("class C { string s = nameof(Mailer); string t = nameof(Clock.Now); }", "qualifier") == [
+        ("Mailer", "qualifier", 1),
+        ("Clock", "qualifier", 1),
+    ]
+
+
+def test_generic_method_type_arguments():
+    names = [n for n, _, _ in _refs("class C { void M() { Resolve<Service>(); } }") if _ != "qualifier"]
+    assert "Service" in names
+
+
+def test_references_in_preprocessor_branches_and_broken_code():
+    names = [n for n, _, _ in _refs("class C {\n#if DEBUG\n  Debugger d;\n#else\n  Release r;\n#endif\n  void M( { Kept k; }\n}")]
+    assert {"Debugger", "Release"} <= set(names)
+
+
+def test_using_directives_and_namespace_names_are_not_references():
+    assert _facts("using A.B;\nusing X = C.D;\nnamespace E.F { }").type_refs == ()
