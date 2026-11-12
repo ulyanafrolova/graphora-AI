@@ -39,7 +39,7 @@ Paths are relative to the repository root. Python code lives in `backend/src/gra
 
 **Purpose**: the pinned grammar and the shipped base-library namespace list.
 
-- [ ] T001 Add `tree-sitter-c-sharp==0.23.5` to `dependencies` in `backend/pyproject.toml`, keeping all other
+- [X] T001 Add `tree-sitter-c-sharp==0.23.5` to `dependencies` in `backend/pyproject.toml`, keeping all other
   exact pins; run `uv sync` and commit `backend/uv.lock`. Check in a test that
   `tree_sitter.Language(tree_sitter_c_sharp.language())` loads with `tree-sitter==0.25.2` (ABI 15) in
   `backend/tests/unit/test_cs_extract.py` (new file, one test for now).

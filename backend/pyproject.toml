@@ -9,6 +9,7 @@ dependencies = [
     "tree-sitter-python==0.25.0",
     "tree-sitter-typescript==0.23.2",
     "tree-sitter-javascript==0.25.0",
+    "tree-sitter-c-sharp==0.23.5",
     "dulwich==1.2.19",
     "psycopg[binary]==3.3.8",
     "fastapi==0.162.0",
