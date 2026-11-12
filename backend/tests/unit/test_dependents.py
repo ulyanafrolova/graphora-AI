@@ -175,3 +175,13 @@ def test_answers_echo_options_and_completeness():
 def test_same_question_same_bytes():
     ix = _fan()
     assert dumps(impact(ix, "a.py")) == dumps(impact(index(ix.doc), "a.py"))
+
+
+def test_symbol_matches_csharp_type_references_by_short_or_full_name():
+    """008 contracts/cli.md: `dependents --symbol` finds type-reference edges by short or full type name."""
+    uses = edge("App/P.cs", "App/M.cs", 9, type="type_reference", symbol="App.Services.Mailer")
+    other = edge("App/Q.cs", "App/M.cs", 4, type="type_reference", symbol="App.Services.MailerFactory")
+    ix = index(make_doc([uses, other]))
+    for symbol in ("Mailer", "App.Services.Mailer", "Services.Mailer"):
+        assert [i.node for i in dependents(ix, "App/M.cs", symbol=symbol).items] == ["file:App/P.cs"], symbol
+    assert dependents(ix, "App/M.cs", symbol="ailer").items == ()

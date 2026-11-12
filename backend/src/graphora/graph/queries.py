@@ -215,6 +215,8 @@ def dependencies(ix: GraphIndex, target: str, *, include_type_only: bool = True,
 
 
 def _matches(e: Edge, symbol: str) -> bool:
+    if e.type == "type_reference" and e.symbol is not None and e.symbol.endswith("." + symbol):
+        return True  # 008: C# types are stored by full name; `--symbol Mailer` finds `App.Services.Mailer`
     return e.symbol == symbol or (e.type == "reexports" and e.alias == symbol)
 
 

@@ -102,7 +102,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
   `file:` targets when anything resolved through it (`using_static` edges always kept); `unresolved_type_names` on
   each analyzed C# coverage entry; `current_extractors()` adds `dotnet-types`; `extractor_versions.json` entries for
   the new versions. Tests in `backend/tests/unit/test_build_analyze.py` (end to end, schema-valid).
-- [ ] T007 [P] [US1] `dependents --symbol` matches `type_reference` edges whose `symbol` is the name or ends in
+- [X] T007 [P] [US1] `dependents --symbol` matches `type_reference` edges whose `symbol` is the name or ends in
   `.name`, in `backend/src/graphora/graph/queries.py` `_matches` (contracts/cli.md); test in
   `backend/tests/unit/test_dependents.py`.
 - [ ] T008 [US1] Update by hand `fixtures/repos/csharp-basic/`, `csharp-multiproject/` and `csharp-edge/`
