@@ -19,6 +19,9 @@ uses), global and implicit usings across a project, `<Using>` items, aliases in 
   its namespace (or its alias) is referenced in the file; those fallback edges stay `heuristic`. Edges from a
   `using` to base-library namespaces, packages and placeholders are unchanged.
 
+- During planning (2026-11-12) SC-002 was corrected: it is measured on the slice-2 fixture, because
+  `csharp-basic` writes almost no types and its edges barely change.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Dependencies point at the file that is really used (Priority: P1)
@@ -209,8 +212,9 @@ heuristic edges.
 
 - **SC-001**: On every C# fixture, 100% of hand-checked nodes and edges are reproduced, and no unexpected node or
   edge appears.
-- **SC-002**: On `csharp-basic`, the number of `heuristic` file → file edges drops by at least half compared with
-  slice 1, with no dependency that the fixture's code shows being lost.
+- **SC-002**: On the slice-2 fixture, every file → file dependency that the code shows through a written type is a
+  `resolved` (or `partial_type`) type-reference edge, and `heuristic` `using` edges to repository files remain only
+  for directives through which no type is referenced.
 - **SC-003**: Zero guesses: every type name the documented rules cannot settle to one declaring type is
   `unresolved`, a `partial_type` edge, a fallback `heuristic` edge, or counted as unresolved — never a single wrong
   file.
