@@ -42,7 +42,7 @@ More screens in [docs/demo](docs/demo).
 
 ## Status
 
-Done and merged into `main` (features 001–005, graph schema v3):
+Done and merged into `main` (features 001–006, graph schema v3):
 
 | # | Feature | What it gives |
 |---|---|---|
@@ -51,6 +51,7 @@ Done and merged into `main` (features 001–005, graph schema v3):
 | 003 | TS/JS analysis | ESM, CommonJS, dynamic imports, `tsconfig` paths, monorepo workspaces, re-exports |
 | 004 | Graph queries | dependencies, dependents, impact, neighbors, cycles, key files (`graphora query`) |
 | 005 | Storage and HTTP API | PostgreSQL store per (repository, snapshot), read-only API (`graphora serve`) |
+| 006 | MCP server | Read-only graph tools for coding agents over stdio (`graphora mcp`), from a graph file or the store |
 
 In progress (PR #22, issue #19, graph schema v4):
 
@@ -58,7 +59,7 @@ In progress (PR #22, issue #19, graph schema v4):
 |---|---|---|
 | 007 | C# analysis, slice 1 | `using` → namespace → declaring files, `.csproj` project and package references read as data, `dotnet`/`nuget` externals, `bin`/`obj` skipped next to a `.csproj` |
 
-Next on the roadmap: MCP server, end-to-end pipeline, claim verifier and agents, `/ask` with
+Next on the roadmap: end-to-end pipeline, claim verifier and agents, `/ask` with
 streaming, hotspots, web UI, frontend ↔ backend bridge, benchmark.
 
 ## Architecture
