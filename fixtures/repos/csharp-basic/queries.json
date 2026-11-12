@@ -1,0 +1,130 @@
+[
+  {
+    "question": "dependents",
+    "target": "App/Services/Mailer.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:App/Models/User.Validation.cs",
+          "chain": [
+            "App/Models/User.Validation.cs:3"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:App/Program.cs",
+          "chain": [
+            "App/Program.cs:3"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "App/Program.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:dotnet:System",
+          "chain": [
+            "App/Program.cs:1"
+          ]
+        },
+        {
+          "node": "ext:dotnet:System.Collections.Generic",
+          "chain": [
+            "App/Program.cs:2"
+          ]
+        },
+        {
+          "node": "ext:dotnet:System.Diagnostics",
+          "chain": [
+            "App/Program.cs:12"
+          ]
+        },
+        {
+          "node": "file:App/Models/User.Validation.cs",
+          "chain": [
+            "App/Program.cs:6"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:App/Models/User.cs",
+          "chain": [
+            "App/Program.cs:6"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:App/Services/Clock.cs",
+          "chain": [
+            "App/Program.cs:3"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:App/Services/Mailer.cs",
+          "chain": [
+            "App/Program.cs:3"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:App/Services/Queue.cs",
+          "chain": [
+            "App/Program.cs:3"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:App/Util/Strings.cs",
+          "chain": [
+            "App/Program.cs:4"
+          ]
+        }
+      ],
+      "unresolved": [
+        "App/Program.cs:9 not_found",
+        "App/Program.cs:10 no_types"
+      ],
+      "total": 9,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "App/Program.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:App/Legacy.cs",
+          "chain": [
+            "App/Legacy.cs:1"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 1,
+        "files_with_errors": 1
+      }
+    }
+  }
+]

@@ -1,4 +1,4 @@
-"""Schema v3 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
+"""Schema v6 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
 
 import copy
 
@@ -13,6 +13,7 @@ from graphora.graph.model import (
     ExternalNode,
     FileNode,
     GraphDocument,
+    ProjectNode,
     UnresolvedNode,
 )
 from graphora.graph.serialize import to_dict
@@ -166,7 +167,7 @@ def test_unresolved_without_ecosystem_rejected(ts_doc, validator):
     assert not validator.is_valid(bad)
 
 
-@pytest.mark.parametrize("version", [1, 2])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5])
 def test_old_schema_version_rejected(doc, validator, version):
     bad = copy.deepcopy(doc)
     bad["schema_version"] = version
@@ -188,4 +189,191 @@ def test_parent_path_rejected(ts_doc, validator):
 def test_bad_snapshot_rejected(doc, validator):
     bad = copy.deepcopy(doc)
     bad["snapshot"] = "abc"
+    assert not validator.is_valid(bad)
+
+
+# --- v4: C# (specs/007-csharp-analysis/contracts/graph.schema.json) ------------------------------------------
+
+
+@pytest.fixture
+def cs_doc():
+    """A C# document. Edges by index: 0 spread using, 1 static, 2 global BCL, 3 alias, 4 unresolved, 5 project
+    reference, 6 conditional package reference."""
+    a, r = "csharp-adapter@0.1.0", "csproj-reader@0.1.0"
+    p = "project:App/App.csproj"
+
+    def using(target, line, confidence="resolved", reason=None, **extra):
+        extra.setdefault("directive", "using")
+        extra.setdefault("global_using", False)
+        return Edge("file:App/P.cs", target, "App.S", line, 1, SNAP, confidence, reason, a, HASH, **extra)
+
+    edges = (
+        using("file:App/M.cs", 1, "heuristic", "namespace_spread"),
+        using("file:App/U.cs", 2, directive="using_static"),
+        using("ext:dotnet:System.Linq", 3, global_using=True),
+        using("file:App/X.cs", 4, directive="using_alias", alias="J"),
+        using("unresolved:dotnet:Missing", 5, "unresolved", "not_found"),
+        Edge(p, "project:Core/Core.csproj", "..\\Core\\Core.csproj", 7, 5, SNAP, "resolved", None, r, HASH, type="project_reference"),
+        Edge(p, "ext:nuget:Serilog", "Serilog", 8, 5, SNAP, "heuristic", "msbuild_condition", r, HASH, type="package_reference"),
+    )
+    return to_dict(
+        GraphDocument(
+            snapshot=SNAP,
+            extractors={"csharp-adapter": "0.1.0", "csproj-reader": "0.1.0"},
+            nodes=(
+                FileNode("App/P.cs", "csharp", (Definition("record", "App.R", 3), Definition("method", "App.P.Main", 5)), None, p),
+                FileNode("Loose.cs", "csharp"),
+                ProjectNode("App/App.csproj"),
+                ExternalNode("System.Linq", "dotnet", "stdlib"),
+                ExternalNode("Serilog", "nuget", "third_party"),
+                UnresolvedNode("Missing", "dotnet"),
+            ),
+            edges=edges,
+            files=(CoverageFile("Loose.cs", "csharp", "analyzed", ("ambiguous_project",)),),
+            skipped=(),
+        )
+    )
+
+
+def _cs_edge(doc, line):
+    return next(e for e in doc["edges"] if e["line"] == line)
+
+
+def test_cs_document_valid(cs_doc, validator):
+    validator.validate(cs_doc)
+
+
+def _set(path_fn, **values):
+    return lambda d: path_fn(d).update(values)
+
+
+def _drop(path_fn, key):
+    return lambda d: path_fn(d).pop(key)
+
+
+CS_INVALID = {
+    "heuristic without reason": _drop(lambda d: _cs_edge(d, 1), "reason"),
+    "heuristic with unresolved reason": _set(lambda d: _cs_edge(d, 1), reason="not_found"),
+    "unresolved with heuristic reason": _set(lambda d: _cs_edge(d, 5), reason="partial_type"),
+    "directive without global_using": _drop(lambda d: _cs_edge(d, 1), "global_using"),
+    "global_using without directive": _drop(lambda d: _cs_edge(d, 1), "directive"),
+    "using_alias without alias": _drop(lambda d: _cs_edge(d, 4), "alias"),
+    "alias on plain using": _set(lambda d: _cs_edge(d, 1), alias="X"),
+    "project_reference from file": _set(lambda d: _cs_edge(d, 7), source="file:App/P.cs"),
+    "package_reference to npm": _set(lambda d: _cs_edge(d, 8), target="ext:npm:serilog"),
+    "imports from project": _set(lambda d: _cs_edge(d, 1), source="project:App/App.csproj"),
+    "directive on project edge": _set(lambda d: _cs_edge(d, 7), directive="using", global_using=False),
+    "csharp file without project": _drop(lambda d: _node(d, "file:App/P.cs"), "project"),
+    "csharp file with exports": _set(lambda d: _node(d, "file:App/P.cs"), exports=[]),
+    "csharp type_alias": lambda d: _node(d, "file:App/P.cs")["definitions"][0].update(kind="type_alias"),
+    "ts file with project": _set(lambda d: _node(d, "file:Loose.cs"), language="typescript", exports=[]),
+    "dotnet third_party": _set(lambda d: _node(d, "ext:dotnet:"), category="third_party"),
+    "nuget stdlib": _set(lambda d: _node(d, "ext:nuget:"), category="stdlib"),
+    "nuget placeholder": _set(lambda d: _node(d, "unresolved:"), id="unresolved:nuget:Missing", ecosystem="nuget"),
+    "project node not a csproj": _set(lambda d: _node(d, "project:"), id="project:App/App.sln", path="App/App.sln"),
+    "unknown coverage flag": lambda d: d["coverage"]["files"][0]["flags"].append("ambiguous"),
+}
+
+
+@pytest.mark.parametrize("case", sorted(CS_INVALID))
+def test_cs_invalid_rejected(cs_doc, validator, case):
+    bad = copy.deepcopy(cs_doc)
+    CS_INVALID[case](bad)
+    assert not validator.is_valid(bad)
+
+
+def test_python_record_rejected(doc, validator):
+    bad = copy.deepcopy(doc)
+    bad["nodes"][0]["definitions"][0]["kind"] = "record"
+    assert not validator.is_valid(bad)
+
+
+# --- v5: C# type references (specs/008-csharp-type-references/contracts/graph.schema.json) -----------------------
+
+
+@pytest.fixture
+def types_doc(cs_doc):
+    """cs_doc plus a resolved, a partial and an ambiguous type reference, and an unresolved-type-name count."""
+    doc = copy.deepcopy(cs_doc)
+    base = {k: v for k, v in _cs_edge(doc, 2).items() if k not in ("directive", "global_using")}
+    doc["edges"] += [
+        dict(base, type="type_reference", line=20, symbol="App.U"),
+        dict(base, type="type_reference", line=21, target="file:App/M.cs", confidence="heuristic", reason="partial_type", symbol="App.M"),
+        dict(base, type="type_reference", line=22, target="unresolved:dotnet:Missing", confidence="unresolved", reason="ambiguous", symbol="Missing"),
+    ]
+    doc["coverage"]["files"][0]["unresolved_type_names"] = 2
+    return doc
+
+
+def _ref(doc, line):
+    return next(e for e in doc["edges"] if e["type"] == "type_reference" and e["line"] == line)
+
+
+def test_types_document_valid(types_doc, validator):
+    validator.validate(types_doc)
+
+
+TYPES_INVALID = {
+    "type_reference with directive": lambda d: _ref(d, 20).update(directive="using", global_using=False),
+    "type_reference with alias": lambda d: _ref(d, 20).update(alias="X"),
+    "type_reference to external": lambda d: _ref(d, 20).update(target="ext:dotnet:System.Linq"),
+    "type_reference from project": lambda d: _ref(d, 20).update(source="project:App/App.csproj"),
+    "type_reference to npm placeholder": lambda d: _ref(d, 22).update(target="unresolved:npm:Missing"),
+    "count on a python file": lambda d: d["coverage"]["files"][0].update(language="python"),
+    "count on a project file": lambda d: d["coverage"]["files"][0].update(path="App/App.csproj", status="not_code"),
+    "negative count": lambda d: d["coverage"]["files"][0].update(unresolved_type_names=-1),
+    "v4 document": lambda d: d.update(schema_version=4),
+    "v5 document": lambda d: d.update(schema_version=5),
+}
+
+
+@pytest.mark.parametrize("case", sorted(TYPES_INVALID))
+def test_types_invalid_rejected(types_doc, validator, case):
+    bad = copy.deepcopy(types_doc)
+    TYPES_INVALID[case](bad)
+    assert not validator.is_valid(bad)
+
+
+# --- v6: solutions (specs/009-csharp-solutions-project-views/contracts/graph.schema.json) -------------------------
+
+
+@pytest.fixture
+def sln_doc(cs_doc):
+    """cs_doc plus a solution with a resolved and a not_csharp member."""
+    doc = copy.deepcopy(cs_doc)
+    doc["nodes"] += [
+        {"id": "solution:App.sln", "kind": "solution", "path": "App.sln"},
+        {"id": "unresolved:dotnet:x/Lib.fsproj", "kind": "unresolved", "reference": "x/Lib.fsproj", "ecosystem": "dotnet"},
+    ]
+    base = {k: v for k, v in _cs_edge(doc, 7).items()}
+    doc["edges"] += [
+        dict(base, source="solution:App.sln", type="solution_member", target="project:App/App.csproj", line=6),
+        dict(base, source="solution:App.sln", type="solution_member", target="unresolved:dotnet:x/Lib.fsproj", confidence="unresolved", reason="not_csharp", line=8),
+    ]
+    return doc
+
+
+def _member(doc, line):
+    return next(e for e in doc["edges"] if e["type"] == "solution_member" and e["line"] == line)
+
+
+def test_solution_document_valid(sln_doc, validator):
+    validator.validate(sln_doc)
+
+
+SLN_INVALID = {
+    "member from a project": lambda d: _member(d, 6).update(source="project:App/App.csproj"),
+    "member to a file": lambda d: _member(d, 6).update(target="file:App/P.cs"),
+    "member with directive": lambda d: _member(d, 6).update(directive="using", global_using=False),
+    "imports from a solution": lambda d: _member(d, 6).update(type="imports"),
+    "not_csharp on a heuristic edge": lambda d: _member(d, 8).update(confidence="heuristic", target="project:App/App.csproj"),
+    "solution path not .sln": lambda d: next(n for n in d["nodes"] if n["kind"] == "solution").update(id="solution:App.txt", path="App.txt"),
+    "v5 document": lambda d: d.update(schema_version=5),
+}
+
+
+@pytest.mark.parametrize("case", sorted(SLN_INVALID))
+def test_solution_invalid_rejected(sln_doc, validator, case):
+    bad = copy.deepcopy(sln_doc)
+    SLN_INVALID[case](bad)
     assert not validator.is_valid(bad)

@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from graphora.adapters import js, python
+from graphora.adapters import csharp, js, msbuild, python
+from graphora.adapters.msbuild import sln
 from conftest import FIXTURES, REPO_ROOT, edge_key, project, run_analyze
 
 FIXTURE_NAMES = sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file())
@@ -43,10 +44,20 @@ def test_matches_expected(name, section, validator):
 @pytest.mark.parametrize("name", FIXTURE_NAMES)
 def test_provenance_consistent(name):
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
+    languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
+    languages.update({n["id"]: "msbuild" for n in doc["nodes"] if n["kind"] == "project"})
+    languages.update({n["id"]: "solution" for n in doc["nodes"] if n["kind"] == "solution"})
+    extractors = {
+        "python": python.EXTRACTOR,
+        "typescript": js.EXTRACTOR,
+        "javascript": js.EXTRACTOR,
+        "csharp": csharp.EXTRACTOR,
+        "msbuild": msbuild.EXTRACTOR,
+        "solution": sln.EXTRACTOR,
+    }
     for edge in doc["edges"]:
         assert edge["snapshot"] == doc["snapshot"]
-        is_python = edge["source"].endswith((".py", ".pyi"))
-        assert edge["extractor"] == (python.EXTRACTOR if is_python else js.EXTRACTOR)
+        assert edge["extractor"] == extractors[languages[edge["source"]]]
 
 
 V1 = Path(__file__).parent / "v1"
@@ -95,7 +106,7 @@ def test_exports_invariant(name):
     """003 data-model § Export: every name a TS/JS file exports appears exactly once."""
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     for node in doc["nodes"]:
-        if node["kind"] != "file" or node["language"] == "python":
+        if node["kind"] != "file" or node["language"] in ("python", "csharp"):
             continue
         # merged declarations (`interface X` + `class X`) share one exported binding: count it once per name
         names = list({(d["name"], n) for d in node["definitions"] for n in d["exported_as"]})
@@ -115,13 +126,14 @@ def _ecosystem(node_id):
 
 @pytest.mark.parametrize("name", FIXTURE_NAMES)
 def test_ecosystems_separate(name):
-    """003 US3: a target's ecosystem always matches its source file's language."""
+    """003 US3, 007 R7: a target's ecosystem always matches its source file's language."""
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
+    languages.update({n["id"]: "csharp" for n in doc["nodes"] if n["kind"] in ("project", "solution")})
+    allowed = {"python": {"python"}, "typescript": {"npm"}, "javascript": {"npm"}, "csharp": {"dotnet", "nuget"}}
     for edge in doc["edges"]:
-        expected = "python" if languages[edge["source"]] == "python" else "npm"
         if edge["target"].startswith(("ext:", "unresolved:")):
-            assert _ecosystem(edge["target"]) == expected, edge
+            assert _ecosystem(edge["target"]) in allowed[languages[edge["source"]]], edge
 
 
 def test_mixed_fullstack_has_no_cross_language_edges():
@@ -142,3 +154,13 @@ def test_edge_ids_unique_and_endpoints_exist(name):
     assert len(ids) == len(set(ids))
     nodes = {n["id"] for n in doc["nodes"]}
     assert all(e["source"] in nodes and e["target"] in nodes for e in doc["edges"])
+
+
+@pytest.mark.parametrize("name", FIXTURE_NAMES)
+def test_csharp_files_point_at_existing_projects(name):
+    """007 FR-009: a C# file's `project` is null or a project node of the same document."""
+    doc = json.loads(_analyze(FIXTURES / name / "repo"))
+    projects = {n["id"] for n in doc["nodes"] if n["kind"] == "project"}
+    for n in doc["nodes"]:
+        if n["kind"] == "file" and n["language"] == "csharp":
+            assert n["project"] is None or n["project"] in projects, n["id"]

@@ -95,6 +95,12 @@ def _parser() -> argparse.ArgumentParser:
     query.add_argument("--symbol", help="dependents: only edges of this imported name")
     query.add_argument("--max-depth", type=int, help="impact: stop at this distance")
     query.add_argument("--follow-barrels", action="store_true", help="dependents and impact: see through re-exports")
+    query.add_argument(
+        "--level",
+        choices=("file", "project"),
+        default="file",
+        help="dependencies, dependents, impact, cycles: answer for C# projects instead of files",
+    )
     mcp = commands.add_parser("mcp", help="serve one snapshot to coding agents over MCP on standard input/output")
     mcp.add_argument("--graph", help="a graph JSON written by `graphora analyze`")
     mcp.add_argument("--repository", help="store mode: a stored repository name")
@@ -103,8 +109,9 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions")
+_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions", "projects")
 _WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors", "definitions")
+_LEVEL_QUESTIONS = ("dependencies", "dependents", "impact", "cycles")
 _OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
 
 
@@ -167,14 +174,26 @@ def _query(args: argparse.Namespace) -> int:
         if getattr(args, option) not in (None, False) and question not in allowed:
             _log("error", f"--{option.replace('_', '-')} is only for {' and '.join(allowed)}")
             return EXIT_USAGE
-    if question == "overview" and (args.limit is not None or args.no_type_only):
-        _log("error", "overview takes only --format")
+    if question in ("overview", "projects") and (args.limit is not None or args.no_type_only):
+        _log("error", f"{question} takes only --format")
         return EXIT_USAGE
     if question == "definitions" and args.no_type_only:
         _log("error", "definitions takes only --limit and --format")
         return EXIT_USAGE
 
+    if args.level == "project":
+        if question not in _LEVEL_QUESTIONS:
+            _log("error", f"--level is only for {', '.join(_LEVEL_QUESTIONS)}")
+            return EXIT_USAGE
+        flags = (("--symbol", args.symbol), ("--follow-barrels", args.follow_barrels), ("--no-type-only", args.no_type_only))
+        given = [flag for flag, value in flags if value]
+        if given:
+            _log("error", f"{' and '.join(given)} cannot be used with --level project")
+            return EXIT_USAGE
+
     options: dict[str, object] = {"include_type_only": not args.no_type_only, "limit": args.limit}
+    if question in _LEVEL_QUESTIONS and args.level == "project":
+        options["level"] = "project"
     if question == "dependents":
         options.update(symbol=args.symbol, follow_barrels=args.follow_barrels)
     elif question == "impact":
@@ -200,6 +219,8 @@ def _query(args: argparse.Namespace) -> int:
         target = (args.target,) if question in _WITH_TARGET else ()
         if question == "overview":
             answer = queries.overview(ix)
+        elif question == "projects":
+            answer = queries.projects(ix)
         elif question == "definitions":
             answer = queries.definitions(ix, args.target, limit=args.limit)
         else:
@@ -398,7 +419,12 @@ def _analyze(args: argparse.Namespace) -> int:
     for line in report.info:
         _log("info", line)
     for path in report.warnings:
-        _log("warning", f"ignoring {path}: not valid JSON-with-comments")
+        if path.lower().endswith((".sln", ".slnx")):
+            _log("warning", f"ignoring {path}: not a readable solution file")
+        elif path.lower().endswith(".csproj") or path.rsplit("/", 1)[-1] == "Directory.Build.props":
+            _log("warning", f"ignoring {path}: not well-formed XML or has a DOCTYPE")
+        else:
+            _log("warning", f"ignoring {path}: not valid JSON-with-comments")
     _log(
         "info",
         f"analyzed {report.files} files, {report.edges} edges ({report.unresolved} unresolved), snapshot {report.snapshot}",

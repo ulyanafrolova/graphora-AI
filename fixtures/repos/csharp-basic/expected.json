@@ -1,0 +1,633 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {
+      "id": "ext:dotnet:System",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:dotnet:System.Collections.Generic",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:dotnet:System.Diagnostics",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:dotnet:System.IO",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:dotnet:System.Text",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "file:App/Broken.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Broken.Half",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:App/Deep/Only.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Outer.Inner.Only",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:App/GlobalUsings.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": []
+    },
+    {
+      "id": "file:App/Legacy.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Legacy",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "Legacy.Run",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:App/Models/User.Validation.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Models.User",
+          "line": 5
+        },
+        {
+          "kind": "method",
+          "name": "App.Models.User.IsValid",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "file:App/Models/User.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Models.User",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:App/Program.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Program",
+          "line": 17
+        },
+        {
+          "kind": "method",
+          "name": "App.Program.Main",
+          "line": 19
+        },
+        {
+          "kind": "class",
+          "name": "App.Program.Options",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "id": "file:App/Services/Clock.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "struct",
+          "name": "App.Services.Clock",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "App.Services.Clock.Now",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:App/Services/Mailer.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "interface",
+          "name": "App.Services.IMailer",
+          "line": 5
+        },
+        {
+          "kind": "method",
+          "name": "App.Services.IMailer.Send",
+          "line": 7
+        },
+        {
+          "kind": "class",
+          "name": "App.Services.Mailer",
+          "line": 10
+        },
+        {
+          "kind": "method",
+          "name": "App.Services.Mailer.Send",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "id": "file:App/Services/Queue.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "enum",
+          "name": "App.Services.Priority",
+          "line": 3
+        },
+        {
+          "kind": "delegate",
+          "name": "App.Services.Handler",
+          "line": 5
+        },
+        {
+          "kind": "record",
+          "name": "App.Services.Job",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "file:App/Util/Strings.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:App/App.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "App.Util.Strings",
+          "line": 3
+        },
+        {
+          "kind": "method",
+          "name": "App.Util.Strings.Upper",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "project:App/App.csproj",
+      "kind": "project",
+      "path": "App/App.csproj"
+    },
+    {
+      "id": "unresolved:dotnet:Missing.Namespace",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "unresolved:dotnet:Outer",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:App/Broken.cs",
+      "line": 1,
+      "target": "file:App/Util/Strings.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Util",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/GlobalUsings.cs",
+      "line": 1,
+      "target": "ext:dotnet:System.IO",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.IO",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": true
+    },
+    {
+      "source": "file:App/GlobalUsings.cs",
+      "line": 2,
+      "target": "file:App/Models/User.Validation.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Models",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": true
+    },
+    {
+      "source": "file:App/GlobalUsings.cs",
+      "line": 2,
+      "target": "file:App/Models/User.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Models",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": true
+    },
+    {
+      "source": "file:App/Legacy.cs",
+      "line": 1,
+      "target": "file:App/Program.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Models/User.Validation.cs",
+      "line": 3,
+      "target": "file:App/Services/Clock.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Models/User.Validation.cs",
+      "line": 3,
+      "target": "file:App/Services/Mailer.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Models/User.Validation.cs",
+      "line": 3,
+      "target": "file:App/Services/Queue.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 1,
+      "target": "ext:dotnet:System",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 2,
+      "target": "ext:dotnet:System.Collections.Generic",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.Collections.Generic",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 3,
+      "target": "file:App/Services/Clock.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 3,
+      "target": "file:App/Services/Mailer.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 3,
+      "target": "file:App/Services/Queue.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Services",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 4,
+      "target": "file:App/Util/Strings.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Util",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 5,
+      "target": "file:App/Util/Strings.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Util.Strings",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using_static",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 6,
+      "target": "file:App/Models/User.Validation.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type",
+      "directive": "using_alias",
+      "global_using": false,
+      "alias": "U"
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 6,
+      "target": "file:App/Models/User.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Models.User",
+      "confidence": "heuristic",
+      "reason": "partial_type",
+      "directive": "using_alias",
+      "global_using": false,
+      "alias": "U"
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 7,
+      "target": "file:App/Models/User.Validation.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Models",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using_alias",
+      "global_using": false,
+      "alias": "M"
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 7,
+      "target": "file:App/Models/User.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "App.Models",
+      "confidence": "heuristic",
+      "reason": "namespace_spread",
+      "directive": "using_alias",
+      "global_using": false,
+      "alias": "M"
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 9,
+      "target": "unresolved:dotnet:Missing.Namespace",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Missing.Namespace",
+      "confidence": "unresolved",
+      "reason": "not_found",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 10,
+      "target": "unresolved:dotnet:Outer",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Outer",
+      "confidence": "unresolved",
+      "reason": "no_types",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Program.cs",
+      "line": 12,
+      "target": "ext:dotnet:System.Diagnostics",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.Diagnostics",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:App/Services/Mailer.cs",
+      "line": 3,
+      "target": "ext:dotnet:System.Text",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.Text",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    }
+  ],
+  "coverage": [
+    {
+      "path": "App/App.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "App/Broken.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [
+        "parse_error"
+      ],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Deep/Only.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/GlobalUsings.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Legacy.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Models/User.Validation.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Models/User.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Program.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Services/Clock.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Services/Mailer.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Services/Queue.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Util/Strings.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "App/Views/Index.cshtml",
+      "language": "razor",
+      "status": "detected_only",
+      "flags": []
+    },
+    {
+      "path": "README.md",
+      "language": null,
+      "status": "not_code",
+      "flags": []
+    }
+  ],
+  "skipped": [
+    {
+      "path": "App/bin",
+      "reason": "excluded_dir"
+    },
+    {
+      "path": "App/obj",
+      "reason": "excluded_dir"
+    }
+  ]
+}

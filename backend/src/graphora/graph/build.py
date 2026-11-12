@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from types import MappingProxyType
 
-from graphora.adapters import js, python
+from graphora.adapters import csharp, js, msbuild, python
+from graphora.adapters.csharp import extract as cs_extract
+from graphora.adapters.msbuild import csproj, sln
 from graphora.adapters.js import extract as js_extract
 from graphora.adapters.python import extract as py_extract
 from graphora.adapters.text import decode_python as _decode
@@ -20,11 +22,14 @@ from graphora.graph.model import (
     FileNode,
     GraphDocument,
     Node,
+    ProjectNode,
+    SolutionNode,
     UnresolvedNode,
 )
 from graphora.graph.serialize import snippet_hash
 from graphora.ingest.snapshot import snapshot_id
 from graphora.ingest.walk import Deadline, read_file, walk
+from graphora.resolve import csharp as cs_resolve
 from graphora.resolve import js as js_resolve
 from graphora.resolve import python as py_resolve
 from graphora.resolve.tsconfig import load_configs
@@ -43,6 +48,13 @@ class Analysis:
 def current_extractors() -> dict[str, str]:
     """The extractor versions this code writes into every document (005 research § R6)."""
     return {
+        "csproj-reader": msbuild.VERSION,
+        "sln-reader": sln.VERSION,
+        "csharp-adapter": csharp.VERSION,
+        "csharp-resolver": cs_resolve.RESOLVER_VERSION,
+        "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
+        "dotnet-types": cs_resolve.TYPES_VERSION,
+        "dotnet-implicit-usings": cs_resolve.IMPLICIT_USINGS_VERSION,
         "js-adapter": js.VERSION,
         "js-resolver": js_resolve.RESOLVER_VERSION,
         "node-builtins": js_resolve.BUILTINS_VERSION,
@@ -124,6 +136,192 @@ def _js_graph(
                 )
 
 
+def _node_for(target: str) -> Node | None:
+    """The external or placeholder node a C# target id stands for; None for file targets."""
+    kind, _, rest = target.partition(":")
+    ecosystem, _, name = rest.partition(":")
+    if kind == "ext":
+        return ExternalNode(name, ecosystem, "stdlib" if ecosystem == "dotnet" else "third_party")
+    if kind == "unresolved":
+        return UnresolvedNode(name, ecosystem)
+    return None
+
+
+def _project_graph(projects: cs_resolve.Projects, snapshot: str, nodes: dict[str, Node], edges: list[Edge]) -> None:
+    """Project nodes and their reference edges (specs/007-csharp-analysis data-model.md § Project reference edge)."""
+    for path, project_facts in projects.facts.items():
+        node = ProjectNode(path)
+        nodes[node.id] = node
+        for item in project_facts.items:
+            if item.kind == "ProjectReference":
+                target = cs_resolve.resolve_project_reference(path, item, projects.paths)
+                edge_type = "project_reference"
+            elif item.kind == "PackageReference":
+                target = cs_resolve.resolve_package_reference(item, projects.spellings)
+                edge_type = "package_reference"
+            else:
+                continue
+            extra = _node_for(target.node_id)
+            if extra is not None:
+                nodes.setdefault(extra.id, extra)
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=target.node_id,
+                    symbol=target.symbol,
+                    line=item.line,
+                    column=item.column,
+                    snapshot=snapshot,
+                    confidence=target.confidence,
+                    reason=target.reason,
+                    extractor=msbuild.EXTRACTOR,
+                    snippet_hash=snippet_hash(item.text),
+                    type=edge_type,
+                )
+            )
+
+
+_RANK = {"resolved": 0, "heuristic": 1, "unresolved": 2}
+
+
+def _solution_graph(
+    facts: dict[str, sln.SolutionFacts],
+    paths: list[str],
+    projects: frozenset[str],
+    snapshot: str,
+    nodes: dict[str, Node],
+    edges: list[Edge],
+) -> None:
+    """Solution nodes and their membership edges (specs/009-csharp-solutions-project-views data-model.md)."""
+    for path in paths:
+        node = SolutionNode(path)
+        nodes[node.id] = node
+        for entry in facts[path].entries if path in facts else ():
+            target = cs_resolve.resolve_solution_member(path, entry.path, projects)
+            extra = _node_for(target.node_id)
+            if extra is not None:
+                nodes.setdefault(extra.id, extra)
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=target.node_id,
+                    symbol=target.symbol,
+                    line=entry.line,
+                    column=entry.column,
+                    snapshot=snapshot,
+                    confidence=target.confidence,
+                    reason=target.reason,
+                    extractor=sln.EXTRACTOR,
+                    snippet_hash=snippet_hash(entry.text),
+                    type="solution_member",
+                )
+            )
+
+
+def _csharp_graph(
+    facts: dict[str, cs_extract.CsFacts | None],
+    owners: dict[str, str | None],
+    projects: cs_resolve.Projects,
+    snapshot: str,
+    nodes: dict[str, Node],
+    edges: list[Edge],
+) -> dict[str, int]:
+    """File nodes, `using` edges (007 data-model.md) and `type_reference` edges (008 data-model.md).
+
+    Returns the number of unresolved type names per file, for the coverage report."""
+    scopes = cs_resolve.build_scopes(facts, owners)
+    resolver = cs_resolve.Resolver(scopes)
+    types = cs_resolve.TypeResolver(resolver)
+    contexts: dict[str | None, cs_resolve.Context] = {}
+    directives: dict[str | None, list[cs_resolve.GlobalUsing]] = {}
+    for path, file_facts in sorted(facts.items()):
+        if file_facts is not None:
+            directives.setdefault(owners.get(path), []).extend(cs_resolve.global_directives(path, file_facts.usings))
+    project_usings: dict[str | None, tuple[cs_resolve.GlobalUsing, ...]] = {}
+    for project in sorted({owners.get(p) for p in facts}, key=lambda p: p or ""):
+        contexts[project] = projects.context(project)
+        project_usings[project] = projects.global_usings(project, directives.get(project, ()))
+
+    # Pass 1: type references. Which directives were used decides the `using` fallback in pass 2 (008 R7).
+    used: set[str] = set()
+    references: dict[str, dict[str, tuple[int, int, int, cs_resolve.Target, str]]] = {}
+    unresolved_names: dict[str, int] = {}
+    for path, file_facts in sorted(facts.items()):
+        if file_facts is None:
+            unresolved_names[path] = 0
+            continue
+        ctx = contexts[owners.get(path)]
+        usings = cs_resolve.FileUsings(path, file_facts.usings, project_usings[owners.get(path)])
+        best: dict[str, tuple[int, int, int, cs_resolve.Target, str]] = {}
+        missing: set[str] = set()
+        for ref in file_facts.type_refs:
+            result = types.resolve(path, ref, ctx, usings)
+            if not result.found:
+                if ref.kind != "qualifier":
+                    missing.add(ref.name)
+                continue
+            if any(t.node_id.startswith("file:") for t in result.targets) or not result.targets:
+                used.update(result.via)
+            for target in result.targets:
+                key = (_RANK[target.confidence], ref.line, ref.column)
+                if target.node_id not in best or key < best[target.node_id][:3]:
+                    best[target.node_id] = (*key, target, ref.text)
+        references[path] = best
+        unresolved_names[path] = len(missing)
+
+    # Pass 2: nodes and edges.
+    for path, file_facts in sorted(facts.items()):
+        project = owners.get(path)
+        node = FileNode(path, "csharp", file_facts.definitions if file_facts else (), None, f"project:{project}" if project else None)
+        nodes[node.id] = node
+        ctx = contexts[project]
+        for record in file_facts.usings if file_facts else ():
+            drop_files = record.form != "using_static" and cs_resolve.directive_id(path, record) in used
+            for target in resolver.resolve(path, record, ctx):
+                if drop_files and target.node_id.startswith("file:"):
+                    continue  # the types used through this directive have their own edges
+                extra = _node_for(target.node_id)
+                if extra is not None:
+                    nodes.setdefault(extra.id, extra)
+                edges.append(
+                    Edge(
+                        source=node.id,
+                        target=target.node_id,
+                        symbol=target.symbol,
+                        line=record.line,
+                        column=record.column,
+                        snapshot=snapshot,
+                        confidence=target.confidence,
+                        reason=target.reason,
+                        extractor=csharp.EXTRACTOR,
+                        snippet_hash=snippet_hash(record.text),
+                        alias=record.alias,
+                        directive=record.form,
+                        global_using=record.global_using,
+                    )
+                )
+        for target_id, (_, line, column, target, text) in sorted(references.get(path, {}).items()):
+            extra = _node_for(target_id)
+            if extra is not None:
+                nodes.setdefault(extra.id, extra)
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=target_id,
+                    symbol=target.symbol,
+                    line=line,
+                    column=column,
+                    snapshot=snapshot,
+                    confidence=target.confidence,
+                    reason=target.reason,
+                    extractor=csharp.EXTRACTOR,
+                    snippet_hash=snippet_hash(text),
+                    type="type_reference",
+                )
+            )
+    return unresolved_names
+
+
 def build(
     root: Path, max_files: int, max_bytes: int, deadline: Deadline, snapshot: str | None = None
 ) -> tuple[GraphDocument, tuple[str, ...]]:
@@ -153,7 +351,20 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     configs = load_configs(files, read)
     invalid_configs = frozenset(configs.invalid)
 
+    csproj_paths = sorted(p for p in walked.files if p.lower().endswith(".csproj"))
+    csproj_folders = cs_resolve.csproj_folders(csproj_paths)
+    csproj_facts = {p: csproj.read(contents[p]) for p in csproj_paths if p in contents}
+    props_paths = sorted(p for p in walked.files if p.rsplit("/", 1)[-1] == cs_resolve.PROPS)
+    props_facts = {p: csproj.read(contents[p]) for p in props_paths if p in contents}
+    solution_paths = sorted(p for p in walked.files if p.lower().endswith((".sln", ".slnx")))
+    solution_facts = {p: sln.read(p, contents[p]) for p in solution_paths if p in contents}
+    broken_csproj = frozenset(
+        p for p, f in [*csproj_facts.items(), *props_facts.items(), *solution_facts.items()] if f.has_error
+    )
+    cs_owners: dict[str, str | None] = {}
+
     coverage: list[CoverageFile] = []
+    cs_facts: dict[str, cs_extract.CsFacts | None] = {}
     py_facts: dict[str, py_extract.FileFacts | None] = {}
     js_facts: dict[str, js_extract.FileFacts | None] = {}
     languages: dict[str, str] = {}
@@ -168,6 +379,12 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
                 text = _decode(data) if data is not None else None
                 facts = py_extract.extract(text.encode("utf-8"), deadline.check) if text is not None else None
                 py_facts[path] = facts
+            elif language == "csharp":
+                facts = cs_extract.extract(data, deadline.check) if data is not None else None
+                cs_facts[path] = facts
+                cs_owners[path], is_ambiguous = cs_resolve.owner(path, csproj_folders)
+                if is_ambiguous:
+                    flags.append("ambiguous_project")
             else:
                 facts = js_extract.extract(path, data, deadline.check) if data is not None else None
                 js_facts[path] = facts
@@ -177,7 +394,7 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
                 flags.append("parse_error")
         elif path not in contents:
             flags.append("unreadable")
-        if path in invalid_configs:
+        if path in invalid_configs or path in broken_csproj:
             flags.append("parse_error")
         coverage.append(CoverageFile(path, language, status, tuple(sorted(flags))))
 
@@ -186,6 +403,11 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _python_graph(py_facts, snapshot, nodes, edges)
     resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, read))
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
+    projects = cs_resolve.Projects(csproj_facts, props_facts)
+    _project_graph(projects, snapshot, nodes, edges)
+    _solution_graph(solution_facts, solution_paths, projects.paths, snapshot, nodes, edges)
+    unresolved_names = _csharp_graph(cs_facts, cs_owners, projects, snapshot, nodes, edges)
+    coverage = [replace(c, unresolved_type_names=unresolved_names[c.path]) if c.path in unresolved_names else c for c in coverage]
 
     doc = GraphDocument(
         snapshot=snapshot,
@@ -196,4 +418,5 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
         files=tuple(coverage),
         skipped=tuple(walked.skipped),
     )
-    return Analysis(doc, configs.invalid, MappingProxyType(contents))
+    warnings = tuple(sorted(set(configs.invalid) | broken_csproj))
+    return Analysis(doc, warnings, MappingProxyType(contents))

@@ -12,7 +12,7 @@ from graphora.graph.model import Edge
 from graphora.graph.serialize import _edge_dict
 
 LinkConfidence = Literal["resolved", "heuristic"]
-Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions"]
+Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions", "projects"]
 
 
 def strongest(confidences: Iterable[str]) -> LinkConfidence:
@@ -33,9 +33,10 @@ class Link:
     confidence: LinkConfidence
     type_only: bool
     via: tuple[Edge, ...] = ()
+    declared: tuple[Edge, ...] = ()  # 009: project level, the declared project or package reference
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "source": self.source,
             "target": self.target,
             "confidence": self.confidence,
@@ -43,6 +44,9 @@ class Link:
             "edges": [_edge_dict(e) for e in self.edges],
             "via": [_edge_dict(e) for e in self.via],
         }
+        if self.declared:
+            out["declared"] = [_edge_dict(e) for e in self.declared]
+        return out
 
 
 @dataclass(frozen=True)
@@ -55,6 +59,7 @@ class Item:
     distance: int | None = None
     transitive_dependents: int | None = None
     direct_dependents: int | None = None
+    declared_only: bool = False  # 009: a declared reference that no code uses
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -70,6 +75,8 @@ class Item:
             out["transitive_dependents"] = self.transitive_dependents
         if self.direct_dependents is not None:
             out["direct_dependents"] = self.direct_dependents
+        if self.declared_only:
+            out["declared_only"] = True
         return out
 
 
@@ -122,6 +129,33 @@ class DefinitionMatch:
 
 
 @dataclass(frozen=True)
+class ProjectSummary:
+    """One project of the snapshot (specs/009-csharp-solutions-project-views data-model.md § Projects answer entry).
+    `project` is None for the entry that counts C# files without a project."""
+
+    project: str | None
+    path: str | None
+    files: int
+    solutions: tuple[str, ...] = ()
+    references: tuple[str, ...] = ()
+    packages: tuple[str, ...] = ()
+    uses: tuple[str, ...] = ()
+    used_by: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "project": self.project,
+            "path": self.path,
+            "files": self.files,
+            "solutions": list(self.solutions),
+            "references": list(self.references),
+            "packages": list(self.packages),
+            "uses": list(self.uses),
+            "used_by": list(self.used_by),
+        }
+
+
+@dataclass(frozen=True)
 class Answer:
     """`None` marks a field the question does not use; it is left out of the JSON (contracts/answers.md)."""
 
@@ -139,6 +173,7 @@ class Answer:
     cut: bool | None = None
     completeness: Completeness | None = None
     definitions: tuple[DefinitionMatch, ...] | None = None
+    projects: tuple[ProjectSummary, ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -149,7 +184,7 @@ class Answer:
             "total": self.total,
             "truncated": self.truncated,
         }
-        for name in ("items", "incoming", "outgoing", "groups", "definitions"):
+        for name in ("items", "incoming", "outgoing", "groups", "definitions", "projects"):
             value = getattr(self, name)
             if value is not None:
                 out[name] = [x.to_dict() for x in value]
@@ -202,13 +237,16 @@ def _chain_text(chain: tuple[Link, ...]) -> str:
     """`a.py:3 → b.py:7 → target.py`; a barrel link adds its re-export lines (`app.ts:1 → index.ts:2 → Card.tsx`)."""
     steps = []
     for link in chain:
-        steps.append(f"{_name(link.source)}:{link.edges[0].line}")
+        first = link.edges[0]  # at project level the edge starts in a file of the source project
+        more = f" (+{len(link.edges) - 1} more)" if link.source.startswith("project:") and len(link.edges) > 1 else ""
+        steps.append(f"{_name(first.source)}:{first.line}{more}")
         steps += [f"{_name(e.source)}:{e.line}" for e in link.via]
     return " → ".join(steps + [_name(chain[-1].target)])
 
 
 def _marks(item: Item) -> str:
-    return (" (likely)" if item.confidence == "heuristic" else "") + (" (type-only)" if item.type_only else "")
+    declared = " (declared, not used by code)" if item.declared_only else ""
+    return (" (likely)" if item.confidence == "heuristic" else "") + (" (type-only)" if item.type_only else "") + declared
 
 
 def _item_lines(answer: Answer) -> list[str]:
@@ -253,6 +291,24 @@ def _definition_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _files(count: int) -> str:
+    return f"{count} file" if count == 1 else f"{count} files"
+
+
+def _project_lines(answer: Answer) -> list[str]:
+    lines = []
+    for p in answer.projects or ():
+        if p.project is None:
+            lines.append(f"(no project)  {_files(p.files)}")
+            continue
+        solutions = ", ".join(_name(s) for s in p.solutions) or "no solution"
+        lines.append(f"{p.path}  {_files(p.files)}  in {solutions}")
+        for label, ids in (("references", p.references), ("packages", p.packages), ("uses", p.uses), ("used by", p.used_by)):
+            if ids:
+                lines.append(f"  {label}: {', '.join(_name(i) for i in ids)}")
+    return lines
+
+
 def _header(answer: Answer) -> list[str]:
     target = f" {_name(answer.target)}" if answer.target else ""
     if answer.question == "definitions":
@@ -261,6 +317,7 @@ def _header(answer: Answer) -> list[str]:
 
 
 _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
+    "projects": _project_lines,
     "dependencies": _item_lines,
     "dependents": _item_lines,
     "impact": _item_lines,
@@ -297,7 +354,8 @@ def _overview_text(o: Overview) -> str:
         f"languages: {pairs(o.languages)}",
         f"files: {f['analyzed']} analyzed, {f['detected_only']} detected only, {f['not_code']} not code, "
         f"{f['skipped']} skipped",
-        f"nodes: {n['file']} file, {n['external']} external, {n['unresolved']} unresolved, {n['asset']} asset",
+        f"nodes: {n['file']} file, {n['external']} external, {n['unresolved']} unresolved, {n['asset']} asset, "
+        f"{n['project']} project, {n['solution']} solution",
         f"edges: {o.edges} ({o.unresolved_imports} unresolved imports)",
     ]
     return "\n".join(lines) + "\n"

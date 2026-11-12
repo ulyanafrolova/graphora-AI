@@ -1,6 +1,8 @@
 import hashlib
 import json
 
+import pytest
+
 from graphora.graph.model import (
     AssetNode,
     CoverageFile,
@@ -10,6 +12,7 @@ from graphora.graph.model import (
     ExternalNode,
     FileNode,
     GraphDocument,
+    ProjectNode,
     Skipped,
     UnresolvedNode,
 )
@@ -74,8 +77,8 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_3():
-    assert to_dict(_doc())["schema_version"] == 3
+def test_schema_version_6():
+    assert to_dict(_doc())["schema_version"] == 6
 
 
 def test_sort_orders():
@@ -174,3 +177,73 @@ def test_dumps_canonical():
 def test_non_ascii_not_escaped():
     doc = GraphDocument(SNAP, {"python-adapter": "0.2.0"}, (FileNode("ü.py", "python"),), (), (), ())
     assert "ü.py".encode() in dumps(doc)
+
+
+# --- v4: C# (specs/007-csharp-analysis/data-model.md) ----------------------------------------------------------
+
+
+def _cs_doc():
+    a, h = "csharp-adapter@0.1.0", "sha256:0000000000000000"
+    return GraphDocument(
+        snapshot=SNAP,
+        extractors={"csharp-adapter": "0.1.0"},
+        nodes=(
+            FileNode("App/P.cs", "csharp", (Definition("record", "App.R", 2),), None, "project:App/App.csproj"),
+            FileNode("Loose.cs", "csharp"),
+            ProjectNode("App/App.csproj"),
+        ),
+        edges=(
+            Edge("file:App/P.cs", "file:Loose.cs", "App.X", 1, 1, SNAP, "resolved", None, a, h, alias="J", directive="using_alias", global_using=False),
+            Edge("project:App/App.csproj", "ext:nuget:Serilog", "Serilog", 4, 5, SNAP, "heuristic", "msbuild_condition", "csproj-reader@0.1.0", h, type="package_reference"),
+        ),
+        files=(),
+        skipped=(),
+    )
+
+
+def test_csharp_file_and_project_nodes():
+    d = to_dict(_cs_doc())
+    assert _node(d, "file:App/P.cs") == {
+        "id": "file:App/P.cs",
+        "kind": "file",
+        "path": "App/P.cs",
+        "language": "csharp",
+        "definitions": [{"kind": "record", "name": "App.R", "line": 2}],
+        "project": "project:App/App.csproj",
+    }
+    assert _node(d, "file:Loose.cs")["project"] is None
+    assert _node(d, "project:App/App.csproj") == {"id": "project:App/App.csproj", "kind": "project", "path": "App/App.csproj"}
+
+
+def test_directive_fields_only_on_csharp_using_edges():
+    using, package = sorted(to_dict(_cs_doc())["edges"], key=lambda e: e["source"])
+    assert (using["directive"], using["global_using"], using["alias"]) == ("using_alias", False, "J")
+    assert "directive" not in package and "global_using" not in package
+    assert package["reason"] == "msbuild_condition"
+
+
+@pytest.mark.parametrize(
+    "confidence, reason, extra",
+    [
+        ("resolved", "not_found", {}),
+        ("heuristic", None, {}),
+        ("heuristic", "not_found", {}),
+        ("unresolved", "partial_type", {}),
+        ("resolved", None, {"directive": "using"}),
+        ("resolved", None, {"global_using": False}),
+        ("resolved", None, {"directive": "using_alias", "global_using": False}),
+        ("resolved", None, {"directive": "using", "global_using": False, "alias": "X"}),
+        ("resolved", None, {"directive": "using", "global_using": False, "type": "project_reference"}),
+    ],
+)
+def test_edge_rules(confidence, reason, extra):
+    with pytest.raises(ValueError):
+        Edge("file:a.cs", "file:b.cs", None, 1, 1, SNAP, confidence, reason, "csharp-adapter@0.1.0", "sha256:0000000000000000", **extra)
+
+
+def test_type_reference_rules_and_count():
+    with pytest.raises(ValueError):
+        Edge("file:a.cs", "file:b.cs", "B", 1, 1, SNAP, "resolved", None, "csharp-adapter@0.2.0", "sha256:0000000000000000", type="type_reference", alias="X")
+    doc = GraphDocument(SNAP, {}, (), (), (CoverageFile("a.cs", "csharp", "analyzed", (), 3), CoverageFile("b.py", "python", "analyzed")), ())
+    files = to_dict(doc)["coverage"]["files"]
+    assert files[0]["unresolved_type_names"] == 3 and "unresolved_type_names" not in files[1]

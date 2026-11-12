@@ -43,7 +43,7 @@ def test_no_text():
     assert text_lines("empty.ts", b"") == ()
 
 
-_STATEMENT_WORDS = ("import", "from", "export", "require")
+_STATEMENT_WORDS = ("import", "from", "export", "require", "using", "Reference", "Project")  # 007, 009: C#, .csproj, .sln
 
 
 @pytest.mark.parametrize("name", sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file()))
@@ -53,12 +53,17 @@ def test_expected_edge_lines_start_an_import(name):
     root = FIXTURES / name / "repo"
     expected = json.loads((FIXTURES / name / "expected.json").read_text(encoding="utf-8"))
     for edge in expected.get("edges", []):
-        path = edge["source"].removeprefix("file:")
+        path = edge["source"].split(":", 1)[1]  # file:… or project:…
         lines = text_lines(path, (root / path).read_bytes())
         if lines is None:
             continue  # a file without text (e.g. invalid UTF-8) has no served lines
         assert 1 <= edge["line"] <= len(lines), (path, edge["line"])
         line = lines[edge["line"] - 1]
+        if edge["type"] == "type_reference":  # 008: a use of the type, not an import statement
+            short = edge["symbol"].rsplit(".", 1)[-1].removesuffix("Attribute")
+            # an alias (`using Member = App.Models.User;`) is written under another name, but never on a blank line
+            assert short in line or (edge["confidence"] != "unresolved" and line.strip()), (path, edge["line"], line)
+            continue
         assert any(word in line for word in _STATEMENT_WORDS), (path, edge["line"], line)
 
 

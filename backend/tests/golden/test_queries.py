@@ -22,6 +22,7 @@ _QUESTIONS = {
     "cycles": queries.cycles,
     "neighbors": queries.neighbors,
     "key_files": queries.key_files,
+    "projects": queries.projects,
 }
 
 
@@ -40,7 +41,7 @@ def _path(node_id: str) -> str:
 def _chain(chain: list[dict]) -> list[str]:
     steps = []
     for link in chain:
-        steps.append(f"{_path(link['source'])}:{link['edges'][0]['line']}")
+        steps.append(f"{_path(link['edges'][0]['source'])}:{link['edges'][0]['line']}")  # 009: a file at project level
         steps += [f"{_path(e['source'])}:{e['line']}" for e in link["via"]]
     return steps
 
@@ -56,6 +57,8 @@ def _items(items: list[dict]) -> list[dict]:
             item["type_only"] = True
         if i["confidence"] != "resolved":
             item["confidence"] = i["confidence"]
+        if i.get("declared_only"):
+            item["declared_only"] = True
         out.append(item)
     return out
 
@@ -73,6 +76,8 @@ def project_answer(answer: dict) -> dict:
         out["unresolved"] = [f"{_path(e['source'])}:{e['line']} {e['reason']}" for e in answer["unresolved"]]
     if "cut" in answer:
         out["cut"] = answer["cut"]
+    if "projects" in answer:
+        out["projects"] = answer["projects"]
     if "completeness" in answer:
         out["completeness"] = answer["completeness"]
     return out

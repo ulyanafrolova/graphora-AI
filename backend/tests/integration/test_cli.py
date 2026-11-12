@@ -84,6 +84,18 @@ def test_broken_tsconfig_warns_and_succeeds(tmp_path):
     assert coverage["tsconfig.json"]["flags"] == ["parse_error"]
 
 
+def test_broken_csproj_warns_and_succeeds(tmp_path):
+    """007 contracts/cli.md: a malformed or DOCTYPE project file is a warning, not an error."""
+    (tmp_path / "A").mkdir()
+    (tmp_path / "A" / "A.csproj").write_text('<!DOCTYPE x [<!ENTITY e "e">]>\n<Project>&e;</Project>\n')
+    (tmp_path / "A" / "P.cs").write_text("class P {}\n")
+    code, out, err = run_analyze(tmp_path)
+    assert code == 0, err
+    assert "graphora: warning: ignoring A/A.csproj: not well-formed XML or has a DOCTYPE" in err
+    coverage = {f["path"]: f for f in json.loads(out)["coverage"]["files"]}
+    assert coverage["A/A.csproj"]["flags"] == ["parse_error"]
+
+
 def test_repeated_names_in_one_statement_give_one_edge(tmp_path):
     (tmp_path / "a.py").write_text("import os, os.path\nfrom m import f, f\n")
     (tmp_path / "m.py").write_text("def f(): pass\n")
@@ -109,3 +121,25 @@ def test_broken_extends_target_flagged_in_coverage(tmp_path):
     flags = {f["path"]: f["flags"] for f in json.loads(out)["coverage"]["files"]}
     assert flags["tsconfig.base.json"] == ["parse_error"]
     assert flags["tsconfig.json"] == []
+
+
+def test_broken_directory_build_props_warns_and_succeeds(tmp_path):
+    """008 contracts/cli.md: a broken Directory.Build.props is a warning in the slice-1 format."""
+    (tmp_path / "Directory.Build.props").write_text("<Project><PropertyGroup>\n")
+    (tmp_path / "A").mkdir()
+    (tmp_path / "A" / "A.csproj").write_text("<Project />\n")
+    (tmp_path / "A" / "P.cs").write_text("class P {}\n")
+    code, out, err = run_analyze(tmp_path)
+    assert code == 0, err
+    assert "graphora: warning: ignoring Directory.Build.props: not well-formed XML or has a DOCTYPE" in err
+    coverage = {f["path"]: f for f in json.loads(out)["coverage"]["files"]}
+    assert coverage["Directory.Build.props"]["flags"] == ["parse_error"]
+
+
+def test_broken_solution_warns_and_succeeds(tmp_path):
+    """009 contracts/cli.md: an unreadable solution file is a warning."""
+    (tmp_path / "App.slnx").write_text("<Solution><Project Path=\n")
+    (tmp_path / "P.cs").write_text("class P {}\n")
+    code, _, err = run_analyze(tmp_path)
+    assert code == 0, err
+    assert "graphora: warning: ignoring App.slnx: not a readable solution file" in err

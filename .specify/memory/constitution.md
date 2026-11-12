@@ -6,6 +6,9 @@
 
 - Imported repositories MUST be analyzed statically only. No code from them is run, imported,
   built, installed or evaluated, including `setup.py`, package scripts and test suites.
+- Build and project files (`.csproj`, `.sln`, `Directory.Build.props`, `tsconfig.json`,
+  `package.json`) MUST be read as data. `dotnet`, MSBuild, NuGet restore and Node MUST NOT run;
+  MSBuild conditions and properties are not evaluated.
 - Every tool available to agents (internal or via MCP) MUST be read-only.
 - Ingest MUST enforce limits (size, file count, time) and protect archive extraction against
   path traversal, zip bombs and symlinks escaping the snapshot root.
@@ -86,7 +89,8 @@ Rationale: every fact must be traceable to `file:line@commit` and verifiable lat
 - LLM: local by default (Ollama, `qwen3:8b`, explicit `num_ctx`); the provider is selected by
   configuration only, never hard-coded. Each agent gets at most 3–4 tools; tool arguments are
   validated before execution.
-- Language support for MVP: full analysis for Python and TypeScript/JavaScript only.
+- Language support: full analysis for Python and TypeScript/JavaScript (MVP) and C#. Razor,
+  F#, VB.NET, C and C++ stay `detected_only`.
 
 ## Development Workflow
 
@@ -107,4 +111,4 @@ Rationale: every fact must be traceable to `file:line@commit` and verifiable lat
 - Runtime guidance for coding agents lives in `CLAUDE.md`; product context lives in
   `docs/product/`.
 
-**Version**: 1.0.1 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-10-22
+**Version**: 1.1.0 | **Ratified**: 2026-10-19 | **Last Amended**: 2026-11-12

@@ -1,0 +1,584 @@
+"""Resolve C# `using` directives to the files that declare the named namespace or type, to .NET base-library
+namespaces, or to NuGet packages. Rules: specs/007-csharp-analysis/data-model.md § Resolution, research R4–R6.
+
+Never guesses: several possible targets give several `heuristic` edges with a reason, or one `unresolved` edge.
+"""
+
+from __future__ import annotations
+
+import posixpath
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
+from functools import cache
+from pathlib import Path, PurePosixPath
+
+from graphora.adapters.csharp.extract import CsFacts, TypeRef, UsingRecord
+from graphora.adapters.msbuild.csproj import Item, ProjectFacts, UsingItem
+
+RESOLVER_VERSION = "0.2.0"  # 0.2.0: type references (specs/008-csharp-type-references)
+NAMESPACES_VERSION = "10.0.0"
+TYPES_VERSION = "10.0.0"
+IMPLICIT_USINGS_VERSION = "10.0.100"
+NETCORE = "Microsoft.NETCore.App"
+ASPNETCORE = "Microsoft.AspNetCore.App"
+WINDOWSDESKTOP = "Microsoft.WindowsDesktop.App"
+_WEB_SDKS = frozenset({"Microsoft.NET.Sdk.Web", "Microsoft.NET.Sdk.Razor", "Microsoft.NET.Sdk.BlazorWebAssembly"})
+_MSBUILD_SYNTAX = ("$(", "@(", "*", "?")
+_WORKER_SDK = "Microsoft.NET.Sdk.Worker"
+_DATA = Path(__file__).with_name("data") / "dotnet_namespaces.txt"
+_TYPES = Path(__file__).with_name("data") / "dotnet_types.txt"
+_IMPLICIT = Path(__file__).with_name("data") / "implicit_usings.txt"
+PROPS = "Directory.Build.props"
+
+
+@cache
+def framework_namespaces() -> Mapping[str, frozenset[str]]:
+    """Shared framework name → its namespaces, from the shipped list (research R6)."""
+    out: dict[str, set[str]] = {}
+    for line in _DATA.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            framework, namespace = line.split(" ", 1)
+            out.setdefault(framework, set()).add(namespace)
+    return {k: frozenset(v) for k, v in sorted(out.items())}
+
+
+@cache
+def framework_types() -> Mapping[str, Mapping[str, frozenset[str]]]:
+    """Shared framework → namespace → public top-level type names, from the shipped list (008 research R3)."""
+    out: dict[str, dict[str, set[str]]] = {}
+    for line in _TYPES.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            framework, namespace, name = line.split(" ", 2)
+            out.setdefault(framework, {}).setdefault(namespace, set()).add(name)
+    return {f: {n: frozenset(t) for n, t in sorted(ns.items())} for f, ns in sorted(out.items())}
+
+
+@cache
+def types_for(frameworks: tuple[str, ...]) -> Mapping[str, frozenset[str]]:
+    """Base-library namespace → type names for a set of frameworks (merged)."""
+    table = framework_types()
+    merged: dict[str, set[str]] = {}
+    for f in sorted(set(frameworks)):
+        for namespace, names in table.get(f, {}).items():
+            merged.setdefault(namespace, set()).update(names)
+    return {n: frozenset(t) for n, t in sorted(merged.items())}
+
+
+@cache
+def implicit_usings() -> Mapping[str, tuple[str, ...]]:
+    """SDK group (`base`, `web`, `worker`, `winforms`) → implicit global usings, from the shipped list (008 R4)."""
+    out: dict[str, list[str]] = {}
+    for line in _IMPLICIT.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            group, namespace = line.split(" ", 1)
+            out.setdefault(group, []).append(namespace)
+    return {g: tuple(sorted(n)) for g, n in sorted(out.items())}
+
+
+def namespaces_for(frameworks: Iterable[str]) -> frozenset[str]:
+    table = framework_namespaces()
+    return frozenset().union(*(table.get(f, frozenset()) for f in sorted(set(frameworks))))
+
+
+# --- ownership --------------------------------------------------------------------------------------------------
+
+
+def owner(path: str, csproj_by_folder: Mapping[str, tuple[str, ...]]) -> tuple[str | None, bool]:
+    """The `.csproj` that owns a `.cs` file: the first folder upwards that holds `.csproj` files (research R3).
+
+    Returns (project path or None, ambiguous). Two or more `.csproj` in that folder → (None, True)."""
+    folder = PurePosixPath(path).parent
+    while True:
+        key = "" if str(folder) == "." else str(folder)
+        found = csproj_by_folder.get(key)
+        if found:
+            return (found[0], False) if len(found) == 1 else (None, True)
+        if key == "":
+            return None, False
+        folder = folder.parent
+
+
+def csproj_folders(paths: Iterable[str]) -> dict[str, tuple[str, ...]]:
+    out: dict[str, list[str]] = {}
+    for p in sorted(paths):
+        parent = str(PurePosixPath(p).parent)
+        out.setdefault("" if parent == "." else parent, []).append(p)
+    return {k: tuple(v) for k, v in out.items()}
+
+
+# --- index ------------------------------------------------------------------------------------------------------
+
+
+@dataclass
+class Scope:
+    """The declarations of one project, or of the project-less files (key "")."""
+
+    key: str
+    namespaces: dict[str, tuple[str, ...]] = field(default_factory=dict)  # namespace → files with types directly in it
+    types: dict[str, tuple[str, ...]] = field(default_factory=dict)  # full type name → declaring files
+    declared: frozenset[str] = frozenset()  # every declared namespace and each of its parent namespaces
+
+
+def build_scopes(facts: Mapping[str, CsFacts | None], owners: Mapping[str, str | None]) -> dict[str, Scope]:
+    """One scope per project key (`owners[path]`, "" when project-less), with sorted file tuples."""
+    namespaces: dict[str, dict[str, set[str]]] = {}
+    types: dict[str, dict[str, set[str]]] = {}
+    declared: dict[str, set[str]] = {}
+    for path in sorted(facts):
+        key = owners.get(path) or ""
+        namespaces.setdefault(key, {})
+        types.setdefault(key, {})
+        declared.setdefault(key, set())
+        file_facts = facts[path]
+        if file_facts is None:
+            continue
+        for ns in file_facts.namespaces:
+            parts = ns.split(".")
+            declared[key].update(".".join(parts[: i + 1]) for i in range(len(parts)))
+        for t in file_facts.types:
+            types[key].setdefault(t.name, set()).add(path)
+            if t.namespace:
+                namespaces[key].setdefault(t.namespace, set()).add(path)
+    return {
+        key: Scope(
+            key,
+            {n: tuple(sorted(f)) for n, f in sorted(namespaces[key].items())},
+            {n: tuple(sorted(f)) for n, f in sorted(types[key].items())},
+            frozenset(declared[key]),
+        )
+        for key in sorted(namespaces)
+    }
+
+
+# --- resolution -------------------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Target:
+    node_id: str  # file:…, ext:dotnet:…, ext:nuget:…, unresolved:dotnet:…
+    symbol: str
+    confidence: str
+    reason: str | None
+
+
+@dataclass(frozen=True)
+class Context:
+    """What one file can see. `visible` lists (scope key, reachable only through a conditional reference)."""
+
+    visible: tuple[tuple[str, bool], ...]
+    frameworks: frozenset[str]  # base-library namespaces of the file's project
+    packages: Mapping[str, str] = field(default_factory=dict)  # lower-case package id → node spelling
+    library: Mapping[str, frozenset[str]] = field(default_factory=dict)  # base-library namespace → type names
+
+
+_PRIORITY = ("partial_type", "namespace_spread", "package_prefix", "msbuild_condition")
+
+
+def _reason(*reasons: str | None) -> str | None:
+    present = [r for r in reasons if r]
+    return min(present, key=_PRIORITY.index) if present else None
+
+
+def candidates(record: UsingRecord) -> tuple[str, ...]:
+    """Names to try, innermost first: inside namespace `A.B`, `X` is tried as `A.B.X`, `A.X`, `X` (research R5)."""
+    name = record.target or ""
+    if record.rooted or record.global_using or not record.namespace:
+        return (name,)
+    parts = record.namespace.split(".")
+    return tuple(".".join(parts[:i] + [name]) for i in range(len(parts), 0, -1)) + (name,)
+
+
+class Resolver:
+    def __init__(self, scopes: Mapping[str, Scope]) -> None:
+        self.scopes = scopes
+        self._all_namespaces = frozenset(n for s in scopes.values() for n in s.namespaces)
+        self._all_types = frozenset(t for s in scopes.values() for t in s.types)
+        self._all_declared = frozenset(n for s in scopes.values() for n in s.declared)
+
+    def _files(self, table: str, name: str, ctx: Context) -> dict[str, bool]:
+        """Declaring files visible to `ctx` → reachable only through a conditional reference."""
+        out: dict[str, bool] = {}
+        for key, conditional in ctx.visible:
+            scope = self.scopes.get(key)
+            for f in getattr(scope, table).get(name, ()) if scope else ():
+                out[f] = out.get(f, True) and conditional
+        return out
+
+    def _visible_declared(self, name: str, ctx: Context) -> bool:
+        return any(name in self.scopes[k].declared for k, _ in ctx.visible if k in self.scopes)
+
+    def _edges(self, path: str, symbol: str, files: dict[str, bool], spread_reason: str) -> list[Target]:
+        others = {f: c for f, c in sorted(files.items()) if f != path}
+        spread = spread_reason if len(files) > 1 else None
+        out = []
+        for f, conditional in others.items():
+            reason = _reason(spread, "msbuild_condition" if conditional else None)
+            out.append(Target(f"file:{f}", symbol, "heuristic" if reason else "resolved", reason))
+        return out
+
+    def resolve(self, path: str, record: UsingRecord, ctx: Context) -> list[Target]:
+        """Targets of one directive; [] when it names only the file itself or aliases a non-name type."""
+        if record.target is None:
+            return []
+        names = candidates(record)
+        want_types = record.form in ("using_static", "using_alias")
+        want_namespaces = record.form in ("using", "using_alias")
+        for name in names:
+            if want_types:
+                files = self._files("types", name, ctx)
+                if files:
+                    return self._edges(path, name, files, "partial_type")
+            if want_namespaces:
+                files = self._files("namespaces", name, ctx)
+                if files:
+                    return self._edges(path, name, files, "namespace_spread")
+                if self._visible_declared(name, ctx):
+                    return [Target(f"unresolved:dotnet:{name}", name, "unresolved", "no_types")]
+        for name in names:
+            if (want_types and name in self._all_types) or (
+                want_namespaces and (name in self._all_namespaces or name in self._all_declared)
+            ):
+                return [Target(f"unresolved:dotnet:{name}", name, "unresolved", "not_referenced")]
+
+        written = names[-1]
+        library_names = ([written] if want_namespaces else []) + ([written.rpartition(".")[0]] if want_types else [])
+        for name in library_names:
+            if name and name in ctx.frameworks:
+                return [Target(f"ext:dotnet:{name}", name, "resolved", None)]
+        lowered = written.lower()
+        matches = sorted(p for p in ctx.packages if lowered == p or lowered.startswith(p + "."))
+        if len(matches) == 1:
+            spelling = ctx.packages[matches[0]]
+            return [Target(f"ext:nuget:{spelling}", written, "heuristic", "package_prefix")]
+        if matches:
+            return [Target(f"unresolved:dotnet:{written}", written, "unresolved", "ambiguous")]
+        return [Target(f"unresolved:dotnet:{written}", written, "unresolved", "not_found")]
+
+
+# --- projects (data-model.md § ProjectReference, § PackageReference; research R4) ---------------------------------
+
+
+def _condition(conditional: bool) -> tuple[str, str | None]:
+    return ("heuristic", "msbuild_condition") if conditional else ("resolved", None)
+
+
+def resolve_project_reference(project: str, item: Item, projects: frozenset[str]) -> Target:
+    include = item.include
+    if any(token in include for token in _MSBUILD_SYNTAX):
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "msbuild_property")
+    relative = include.replace("\\", "/")
+    if relative.startswith("/") or (len(relative) > 1 and relative[1] == ":"):
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "not_found")
+    joined = posixpath.normpath(posixpath.join(posixpath.dirname(project), relative))
+    if joined == ".." or joined.startswith("../"):
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "not_found")
+    if joined in projects:
+        confidence, reason = _condition(item.conditional)
+        return Target(f"project:{joined}", include, confidence, reason)
+    return Target(f"unresolved:dotnet:{joined}", include, "unresolved", "not_found")
+
+
+def resolve_package_reference(item: Item, spellings: Mapping[str, str]) -> Target:
+    include = item.include
+    if "$(" in include or "@(" in include:
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "msbuild_property")
+    confidence, reason = _condition(item.conditional)
+    return Target(f"ext:nuget:{spellings[include.lower()]}", include, confidence, reason)
+
+
+class Projects:
+    """Project references, visibility, frameworks and packages of every walked `.csproj` (sorted throughout)."""
+
+    def __init__(self, facts: Mapping[str, ProjectFacts], props: Mapping[str, ProjectFacts] | None = None) -> None:
+        self.facts = dict(sorted(facts.items()))
+        self.paths = frozenset(self.facts)
+        self.props = dict(sorted((props or {}).items()))  # Directory.Build.props path → facts (008 R5)
+        self.spellings: dict[str, str] = {}
+        for p in [*self.facts, *self.props]:
+            for item in (self.facts.get(p) or self.props[p]).items:
+                if item.kind == "PackageReference" and "$(" not in item.include and "@(" not in item.include:
+                    self.spellings.setdefault(item.include.lower(), item.include)
+        self.references: dict[str, list[Target]] = {}
+        self.packages: dict[str, list[Target]] = {}
+        for p, f in self.facts.items():
+            self.references[p] = [resolve_project_reference(p, i, self.paths) for i in f.items if i.kind == "ProjectReference"]
+            self.packages[p] = [resolve_package_reference(i, self.spellings) for i in f.items if i.kind == "PackageReference"]
+
+    def _reach(self, start: str, unconditional_only: bool) -> set[str]:
+        seen, todo = {start}, [start]
+        while todo:
+            for t in self.references.get(todo.pop(), ()):
+                if not t.node_id.startswith("project:") or (unconditional_only and t.confidence != "resolved"):
+                    continue
+                target = t.node_id.removeprefix("project:")
+                if target not in seen:
+                    seen.add(target)
+                    todo.append(target)
+        return seen
+
+    def context(self, project: str | None) -> Context:
+        """What a file owned by `project` (None: project-less or ambiguous) can see."""
+        if project is None or project not in self.facts:
+            return Context(visible=(("", False),), frameworks=namespaces_for([NETCORE]), library=types_for((NETCORE,)))
+        firm = self._reach(project, True)
+        every = self._reach(project, False)
+        visible = ((project, False),) + tuple((p, p not in firm) for p in sorted(every - {project}))
+        f = self.facts[project]
+        frameworks = [NETCORE]
+        framework_refs = {i.include for i in f.items if i.kind == "FrameworkReference"}
+        if f.sdk in _WEB_SDKS or ASPNETCORE in framework_refs:
+            frameworks.append(ASPNETCORE)
+        if f.use_wpf or f.use_windows_forms or WINDOWSDESKTOP in framework_refs:
+            frameworks.append(WINDOWSDESKTOP)
+        props = self.props_for(project)
+        from_props = [resolve_package_reference(i, self.spellings) for i in (self.props[props].items if props else ()) if i.kind == "PackageReference"]
+        packages = {
+            t.symbol.lower(): t.node_id.removeprefix("ext:nuget:")
+            for t in [*from_props, *self.packages[project]]
+            if t.node_id.startswith("ext:nuget:")
+        }
+        return Context(
+            visible=visible,
+            frameworks=namespaces_for(frameworks),
+            packages=dict(sorted(packages.items())),
+            library=types_for(tuple(frameworks)),
+        )
+
+
+    def props_for(self, project: str) -> str | None:
+        """The nearest `Directory.Build.props` in the project's folder or a parent folder (inside the root)."""
+        folder = PurePosixPath(project).parent
+        while True:
+            key = "" if str(folder) == "." else str(folder)
+            candidate = f"{key}/{PROPS}" if key else PROPS
+            if candidate in self.props:
+                return candidate
+            if key == "":
+                return None
+            folder = folder.parent
+
+
+    def global_usings(self, project: str | None, directives: Iterable[GlobalUsing] = ()) -> tuple[GlobalUsing, ...]:
+        """Effective global usings of one project, in the documented order; project-less: only `directives`."""
+        out: list[GlobalUsing] = []
+        if project is not None and project in self.facts:
+            facts = self.facts[project]
+            props_path = self.props_for(project)
+            layers: list[tuple[str, ProjectFacts]] = ([(props_path, self.props[props_path])] if props_path else []) + [(project, facts)]
+            implicit = None
+            for _, layer in layers:
+                if layer.implicit_usings is not None:
+                    implicit = layer.implicit_usings
+            if implicit is not None and "$(" not in implicit[0] and implicit[0] in ("enable", "true"):
+                groups = ["base"]
+                if facts.sdk in _WEB_SDKS:
+                    groups.append("web")
+                if facts.sdk == _WORKER_SDK:
+                    groups.append("worker")
+                if facts.use_windows_forms:
+                    groups.append("winforms")
+                table = implicit_usings()
+                for group in groups:
+                    out += [GlobalUsing(f"implicit:{group}", ns, None, implicit[1]) for ns in table.get(group, ())]
+            removed: list[UsingItem] = []
+            for path, layer in layers:
+                for item in layer.usings:
+                    if item.remove is not None:
+                        removed.append(item)
+                    elif item.include and "$(" not in item.include and not item.static:
+                        out.append(GlobalUsing(f"item:{path}:{item.line}", item.include, item.alias, item.conditional))
+            for item in removed:
+                out = [g for g in out if g.alias is not None or g.namespace != item.remove]
+        out += list(directives)
+        return tuple(out)
+
+# --- type references (specs/008-csharp-type-references data-model.md § Resolution of a type reference) -----------
+
+
+@dataclass(frozen=True)
+class GlobalUsing:
+    """A using that applies to every file of a project: `global using`, implicit, `<Using>` item (008 R4, R5)."""
+
+    origin: str  # directive id `path:line:column`, or `implicit:<group>`, `item:<path>:<line>`
+    namespace: str | None = None  # imported namespace
+    alias: str | None = None  # alias name, with `namespace` holding its target
+    conditional: bool = False
+
+
+@dataclass(frozen=True)
+class TypeResult:
+    targets: tuple[Target, ...]  # file targets, or one `unresolved:dotnet:` target for an ambiguous name
+    via: tuple[str, ...]  # ids of the directives the name was resolved through (for the `using` fallback)
+    found: bool  # matched a repository or base-library type (or was ambiguous)
+
+
+_NOT_FOUND = TypeResult((), (), False)
+
+
+def directive_id(path: str, record: UsingRecord) -> str:
+    return f"{path}:{record.line}:{record.column}"
+
+
+def _levels(namespace: str) -> list[str]:
+    """`A.B` → [`A.B`, `A`, ``]."""
+    parts = namespace.split(".") if namespace else []
+    return [".".join(parts[:i]) for i in range(len(parts), 0, -1)] + [""]
+
+
+def _split(full: str) -> tuple[str, str]:
+    namespace, _, name = full.rpartition(".")
+    return namespace, name
+
+
+class FileUsings:
+    """The usings one file sees, grouped by namespace level (008 data-model.md § Resolution)."""
+
+    def __init__(self, path: str, usings: Iterable[UsingRecord], project: Iterable[GlobalUsing] = ()) -> None:
+        self.imports: dict[str, list[tuple[str, str, bool]]] = {}  # level → (namespace, directive id, conditional)
+        self.aliases: dict[str, dict[str, list[tuple[str, str, bool]]]] = {}  # level → alias → (target, id, conditional)
+        project = tuple(project)
+        for record in usings:
+            if record.target is None or record.form == "using_static":
+                continue
+            if record.global_using and project:
+                continue  # already part of the project's global usings
+            level = "" if record.global_using else record.namespace
+            entry = (record.target, directive_id(path, record), False)
+            if record.form == "using_alias" and record.alias:
+                self.aliases.setdefault(level, {}).setdefault(record.alias, []).append(entry)
+            else:
+                self.imports.setdefault(level, []).append(entry)
+        for g in project:
+            if g.namespace is None:
+                continue
+            if g.alias:
+                self.aliases.setdefault("", {}).setdefault(g.alias, []).append((g.namespace, g.origin, g.conditional))
+            else:
+                self.imports.setdefault("", []).append((g.namespace, g.origin, g.conditional))
+
+
+def _with_reason(target: Target, extra: str | None) -> Target:
+    reason = _reason(target.reason, extra)
+    return Target(target.node_id, target.symbol, "heuristic" if reason else target.confidence, reason)
+
+
+class TypeResolver:
+    """Resolves type references over the slice-1 index (same scopes and visibility as `using` resolution)."""
+
+    def __init__(self, resolver: Resolver) -> None:
+        self.r = resolver
+
+    def _repo(self, full: str, ctx: Context) -> dict[str, bool]:
+        return self.r._files("types", full, ctx)
+
+    @staticmethod
+    def _library(full: str, ctx: Context) -> bool:
+        namespace, name = _split(full)
+        return name in ctx.library.get(namespace, frozenset())
+
+    def _edges(self, path: str, full: str, files: dict[str, bool], conditional: bool) -> tuple[Target, ...]:
+        spread = "partial_type" if len(files) > 1 else None
+        out = []
+        for f, only_conditional in sorted(files.items()):
+            if f == path:
+                continue
+            reason = _reason(spread, "msbuild_condition" if (only_conditional or conditional) else None)
+            out.append(Target(f"file:{f}", full, "heuristic" if reason else "resolved", reason))
+        return tuple(out)
+
+    def _found(self, path: str, full: str, ctx: Context, via: tuple[str, ...], conditional: bool) -> TypeResult | None:
+        files = self._repo(full, ctx)
+        if files:
+            return TypeResult(self._edges(path, full, files, conditional), via, True)
+        if self._library(full, ctx):
+            return TypeResult((), via, True)
+        return None
+
+    def resolve(self, path: str, ref: TypeRef, ctx: Context, usings: FileUsings) -> TypeResult:
+        names = [ref.name + "Attribute", ref.name] if ref.kind == "attribute" else [ref.name]
+        for name in names:
+            result = self._resolve_name(path, name, ref, ctx, usings)
+            if result.found:
+                return result
+        return _NOT_FOUND
+
+    def _resolve_name(self, path: str, name: str, ref: TypeRef, ctx: Context, usings: FileUsings) -> TypeResult:
+        if ref.rooted:
+            return self._found(path, name, ctx, (), False) or _NOT_FOUND
+        levels = _levels(ref.namespace)
+        if "." in name:
+            return self._qualified(path, name, levels, ctx, usings)
+        for level in levels:
+            # 1. a type declared directly in this namespace
+            found = self._found(path, f"{level}.{name}" if level else name, ctx, (), False)
+            if found is not None:
+                return found
+            # 2. an alias declared at this level
+            for target, origin, conditional in usings.aliases.get(level, {}).get(name, ()):
+                found = self._found(path, target, ctx, (origin,), conditional)
+                if found is not None:
+                    return found
+            # 3. namespaces imported at this level: one distinct type wins, several are ambiguous
+            matches: dict[str, list[tuple[str, bool]]] = {}
+            for namespace, origin, conditional in usings.imports.get(level, ()):
+                full = f"{namespace}.{name}"
+                if self._repo(full, ctx) or self._library(full, ctx):
+                    matches.setdefault(full, []).append((origin, conditional))
+            if len(matches) == 1:
+                ((full, sources),) = matches.items()
+                conditional = all(c for _, c in sources)
+                via = tuple(sorted({o for o, _ in sources}))
+                return self._found(path, full, ctx, via, conditional) or _NOT_FOUND
+            if len(matches) > 1:
+                ambiguous = Target(f"unresolved:dotnet:{name}", name, "unresolved", "ambiguous")
+                return TypeResult((ambiguous,), (), True)
+        return _NOT_FOUND
+
+    def _qualified(self, path: str, name: str, levels: list[str], ctx: Context, usings: FileUsings) -> TypeResult:
+        first, _, rest = name.partition(".")
+        for level in levels:
+            for target, origin, conditional in usings.aliases.get(level, {}).get(first, ()):
+                found = self._found(path, f"{target}.{rest}", ctx, (origin,), conditional)
+                if found is not None:
+                    return found
+        for level in levels:
+            found = self._found(path, f"{level}.{name}" if level else name, ctx, (), False)
+            if found is not None:
+                return found
+        for level in levels:
+            for namespace, origin, conditional in usings.imports.get(level, ()):
+                found = self._found(path, f"{namespace}.{name}", ctx, (origin,), conditional)
+                if found is not None:
+                    return found
+        return _NOT_FOUND
+
+
+# --- project-wide usings (008 data-model.md § Project usings) ----------------------------------------------------
+
+def global_directives(path: str, usings: Iterable[UsingRecord]) -> list[GlobalUsing]:
+    """A file's `global using` directives as project-wide usings (static ones are not used for type lookup)."""
+    out = []
+    for record in usings:
+        if record.global_using and record.target is not None and record.form != "using_static":
+            alias = record.alias if record.form == "using_alias" else None
+            out.append(GlobalUsing(directive_id(path, record), record.target, alias, False))
+    return out
+
+
+# --- solutions (specs/009-csharp-solutions-project-views research § R3) ------------------------------------------
+
+
+def resolve_solution_member(solution: str, path: str, projects: frozenset[str]) -> Target:
+    """One project entry of a `.sln`/`.slnx`: `$(…)`, non-C#, outside the root and missing entries are unresolved."""
+    if "$(" in path or "@(" in path:
+        return Target(f"unresolved:dotnet:{path}", path, "unresolved", "msbuild_property")
+    relative = path.replace("\\", "/")
+    absolute = relative.startswith("/") or (len(relative) > 1 and relative[1] == ":")
+    joined = posixpath.normpath(posixpath.join(posixpath.dirname(solution), relative)) if not absolute else relative
+    if not joined.lower().endswith(".csproj"):
+        return Target(f"unresolved:dotnet:{joined}", path, "unresolved", "not_csharp")
+    if absolute or joined == ".." or joined.startswith("../"):
+        return Target(f"unresolved:dotnet:{path}", path, "unresolved", "not_found")
+    if joined in projects:
+        return Target(f"project:{joined}", path, "resolved", None)
+    return Target(f"unresolved:dotnet:{joined}", path, "unresolved", "not_found")

@@ -2,21 +2,47 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://graphora.dev/schema/graph.schema.json",
   "title": "Graphora graph document",
-  "description": "Schema version 3. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript and JavaScript.",
+  "description": "Schema version 6. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "snapshot", "extractors", "nodes", "edges", "coverage"],
+  "required": [
+    "schema_version",
+    "snapshot",
+    "extractors",
+    "nodes",
+    "edges",
+    "coverage"
+  ],
   "properties": {
-    "schema_version": { "const": 3 },
-    "snapshot": { "$ref": "#/$defs/snapshot" },
+    "schema_version": {
+      "const": 6
+    },
+    "snapshot": {
+      "$ref": "#/$defs/snapshot"
+    },
     "extractors": {
       "type": "object",
       "minProperties": 1,
-      "additionalProperties": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      }
     },
-    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
-    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
-    "coverage": { "$ref": "#/$defs/coverage" }
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "coverage": {
+      "$ref": "#/$defs/coverage"
+    }
   },
   "$defs": {
     "snapshot": {
@@ -28,44 +54,215 @@
       "minLength": 1,
       "pattern": "^(?!/)(?!\\./)(?!.*(^|/)\\.\\.(/|$)).+$"
     },
-    "ecosystem": { "enum": ["python", "npm"] },
+    "ecosystem": {
+      "enum": [
+        "python",
+        "npm",
+        "dotnet",
+        "nuget"
+      ]
+    },
     "node": {
       "oneOf": [
-        { "$ref": "#/$defs/fileNode" },
-        { "$ref": "#/$defs/externalNode" },
-        { "$ref": "#/$defs/unresolvedNode" },
-        { "$ref": "#/$defs/assetNode" }
+        {
+          "$ref": "#/$defs/fileNode"
+        },
+        {
+          "$ref": "#/$defs/externalNode"
+        },
+        {
+          "$ref": "#/$defs/unresolvedNode"
+        },
+        {
+          "$ref": "#/$defs/assetNode"
+        },
+        {
+          "$ref": "#/$defs/projectNode"
+        },
+        {
+          "$ref": "#/$defs/solutionNode"
+        }
       ]
     },
     "fileNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "path", "language", "definitions"],
+      "required": [
+        "id",
+        "kind",
+        "path",
+        "language",
+        "definitions"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^file:.+$" },
-        "kind": { "const": "file" },
-        "path": { "$ref": "#/$defs/relpath" },
-        "language": { "enum": ["python", "typescript", "javascript"] },
-        "definitions": { "type": "array", "items": { "$ref": "#/$defs/definition" } },
-        "exports": { "type": "array", "items": { "$ref": "#/$defs/export" } }
+        "id": {
+          "type": "string",
+          "pattern": "^file:.+$"
+        },
+        "kind": {
+          "const": "file"
+        },
+        "path": {
+          "$ref": "#/$defs/relpath"
+        },
+        "language": {
+          "enum": [
+            "python",
+            "typescript",
+            "javascript",
+            "csharp"
+          ]
+        },
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/definition"
+          }
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/export"
+          }
+        },
+        "project": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^project:.+\\.csproj$"
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "language": { "const": "python" } } },
-          "then": {
-            "not": { "required": ["exports"] },
+          "if": {
             "properties": {
-              "definitions": {
-                "items": {
-                  "not": { "required": ["exported_as"] },
-                  "properties": { "kind": { "enum": ["class", "function", "method"] } }
-                }
+              "language": {
+                "const": "python"
               }
             }
           },
-          "else": {
-            "required": ["exports"],
-            "properties": { "definitions": { "items": { "required": ["exported_as"] } } }
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "exports"
+                  ]
+                },
+                {
+                  "required": [
+                    "project"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "definitions": {
+                "items": {
+                  "not": {
+                    "required": [
+                      "exported_as"
+                    ]
+                  },
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "class",
+                        "function",
+                        "method"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "language": {
+                "const": "csharp"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "project"
+            ],
+            "not": {
+              "required": [
+                "exports"
+              ]
+            },
+            "properties": {
+              "definitions": {
+                "items": {
+                  "not": {
+                    "required": [
+                      "exported_as"
+                    ]
+                  },
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "class",
+                        "struct",
+                        "record",
+                        "interface",
+                        "enum",
+                        "delegate",
+                        "method"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "language": {
+                "enum": [
+                  "typescript",
+                  "javascript"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "exports"
+            ],
+            "not": {
+              "required": [
+                "project"
+              ]
+            },
+            "properties": {
+              "definitions": {
+                "items": {
+                  "required": [
+                    "exported_as"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "class",
+                        "function",
+                        "method",
+                        "interface",
+                        "type_alias",
+                        "enum"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       ]
@@ -73,47 +270,187 @@
     "definition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "name", "line"],
+      "required": [
+        "kind",
+        "name",
+        "line"
+      ],
       "properties": {
-        "kind": { "enum": ["class", "function", "method", "interface", "type_alias", "enum"] },
-        "name": { "type": "string", "minLength": 1 },
-        "line": { "type": "integer", "minimum": 1 },
+        "kind": {
+          "enum": [
+            "class",
+            "function",
+            "method",
+            "interface",
+            "type_alias",
+            "enum",
+            "struct",
+            "record",
+            "delegate"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
         "exported_as": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
     "export": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "local", "line"],
+      "required": [
+        "name",
+        "local",
+        "line"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "local": { "type": ["string", "null"], "minLength": 1 },
-        "line": { "type": "integer", "minimum": 1 }
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "externalNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "name", "ecosystem", "category"],
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "ecosystem",
+        "category"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^ext:(python|npm):.+$" },
-        "kind": { "const": "external" },
-        "name": { "type": "string", "minLength": 1 },
-        "ecosystem": { "$ref": "#/$defs/ecosystem" },
-        "category": { "enum": ["stdlib", "builtin", "third_party"] }
+        "id": {
+          "type": "string",
+          "pattern": "^ext:(python|npm|dotnet|nuget):.+$"
+        },
+        "kind": {
+          "const": "external"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecosystem": {
+          "$ref": "#/$defs/ecosystem"
+        },
+        "category": {
+          "enum": [
+            "stdlib",
+            "builtin",
+            "third_party"
+          ]
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "ecosystem": { "const": "python" } } },
-          "then": {
-            "properties": { "id": { "pattern": "^ext:python:" }, "category": { "enum": ["stdlib", "third_party"] } }
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "python"
+              }
+            }
           },
-          "else": {
-            "properties": { "id": { "pattern": "^ext:npm:" }, "category": { "enum": ["builtin", "third_party"] } }
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^ext:python:"
+              },
+              "category": {
+                "enum": [
+                  "stdlib",
+                  "third_party"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "npm"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^ext:npm:"
+              },
+              "category": {
+                "enum": [
+                  "builtin",
+                  "third_party"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "dotnet"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^ext:dotnet:"
+              },
+              "category": {
+                "enum": [
+                  "stdlib"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "nuget"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^ext:nuget:"
+              },
+              "category": {
+                "enum": [
+                  "third_party"
+                ]
+              }
+            }
           }
         }
       ]
@@ -121,87 +458,618 @@
     "unresolvedNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "reference", "ecosystem"],
+      "required": [
+        "id",
+        "kind",
+        "reference",
+        "ecosystem"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^unresolved:(python|npm):.+$" },
-        "kind": { "const": "unresolved" },
-        "reference": { "type": "string", "minLength": 1 },
-        "ecosystem": { "$ref": "#/$defs/ecosystem" }
+        "id": {
+          "type": "string",
+          "pattern": "^unresolved:(python|npm|dotnet):.+$"
+        },
+        "kind": {
+          "const": "unresolved"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecosystem": {
+          "enum": [
+            "python",
+            "npm",
+            "dotnet"
+          ]
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "ecosystem": { "const": "python" } } },
-          "then": { "properties": { "id": { "pattern": "^unresolved:python:" } } },
-          "else": { "properties": { "id": { "pattern": "^unresolved:npm:" } } }
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "python"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^unresolved:python:"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "npm"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^unresolved:npm:"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "dotnet"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^unresolved:dotnet:"
+              }
+            }
+          }
         }
       ]
     },
     "assetNode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "kind", "path"],
+      "required": [
+        "id",
+        "kind",
+        "path"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^asset:.+$" },
-        "kind": { "const": "asset" },
-        "path": { "$ref": "#/$defs/relpath" }
+        "id": {
+          "type": "string",
+          "pattern": "^asset:.+$"
+        },
+        "kind": {
+          "const": "asset"
+        },
+        "path": {
+          "$ref": "#/$defs/relpath"
+        }
       }
     },
     "edge": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "id", "source", "target", "type", "form", "type_only", "symbol", "line", "column",
-        "snapshot", "confidence", "extractor", "snippet_hash"
+        "id",
+        "source",
+        "target",
+        "type",
+        "form",
+        "type_only",
+        "symbol",
+        "line",
+        "column",
+        "snapshot",
+        "confidence",
+        "extractor",
+        "snippet_hash"
       ],
       "properties": {
-        "id": { "type": "string", "pattern": "^e:[0-9a-f]{16}$" },
-        "source": { "type": "string", "pattern": "^file:.+$" },
-        "target": { "type": "string", "pattern": "^(file|ext|unresolved|asset):.+$" },
-        "type": { "enum": ["imports", "reexports"] },
-        "form": { "enum": ["static", "dynamic", "require"] },
-        "type_only": { "type": "boolean" },
-        "symbol": { "type": ["string", "null"], "minLength": 1 },
-        "alias": { "type": "string", "minLength": 1 },
-        "line": { "type": "integer", "minimum": 1 },
-        "column": { "type": "integer", "minimum": 1 },
-        "snapshot": { "$ref": "#/$defs/snapshot" },
-        "confidence": { "enum": ["resolved", "heuristic", "unresolved"] },
-        "reason": {
-          "enum": ["not_found", "relative_beyond_top", "namespace_package", "dynamic", "workspace_package"]
+        "id": {
+          "type": "string",
+          "pattern": "^e:[0-9a-f]{16}$"
         },
-        "extractor": { "type": "string", "pattern": "^[a-z0-9-]+@[0-9]+\\.[0-9]+\\.[0-9]+$" },
-        "snippet_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{16}$" }
+        "source": {
+          "type": "string",
+          "pattern": "^(file|project|solution):.+$"
+        },
+        "target": {
+          "type": "string",
+          "pattern": "^(file|ext|unresolved|asset|project):.+$"
+        },
+        "type": {
+          "enum": [
+            "imports",
+            "reexports",
+            "project_reference",
+            "package_reference",
+            "type_reference",
+            "solution_member"
+          ]
+        },
+        "form": {
+          "enum": [
+            "static",
+            "dynamic",
+            "require"
+          ]
+        },
+        "type_only": {
+          "type": "boolean"
+        },
+        "symbol": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "alias": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "snapshot": {
+          "$ref": "#/$defs/snapshot"
+        },
+        "confidence": {
+          "enum": [
+            "resolved",
+            "heuristic",
+            "unresolved"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "not_found",
+            "relative_beyond_top",
+            "namespace_package",
+            "dynamic",
+            "workspace_package",
+            "not_referenced",
+            "no_types",
+            "ambiguous",
+            "msbuild_property",
+            "namespace_spread",
+            "partial_type",
+            "package_prefix",
+            "msbuild_condition",
+            "not_csharp"
+          ]
+        },
+        "extractor": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+@[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "snippet_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{16}$"
+        },
+        "directive": {
+          "enum": [
+            "using",
+            "using_static",
+            "using_alias"
+          ]
+        },
+        "global_using": {
+          "type": "boolean"
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "confidence": { "const": "unresolved" } } },
-          "then": { "required": ["reason"], "properties": { "target": { "pattern": "^unresolved:" } } },
-          "else": { "not": { "required": ["reason"] }, "properties": { "target": { "pattern": "^(file|ext|asset):" } } }
+          "if": {
+            "properties": {
+              "confidence": {
+                "const": "unresolved"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "target": {
+                "pattern": "^unresolved:"
+              },
+              "reason": {
+                "enum": [
+                  "not_found",
+                  "relative_beyond_top",
+                  "namespace_package",
+                  "dynamic",
+                  "workspace_package",
+                  "not_referenced",
+                  "no_types",
+                  "ambiguous",
+                  "msbuild_property",
+                  "not_csharp"
+                ]
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "type": { "const": "reexports" } } },
-          "then": { "properties": { "form": { "const": "static" } } },
-          "else": { "not": { "required": ["alias"] } }
+          "if": {
+            "properties": {
+              "confidence": {
+                "const": "heuristic"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "target": {
+                "pattern": "^(file|ext|asset|project):"
+              },
+              "reason": {
+                "enum": [
+                  "namespace_spread",
+                  "partial_type",
+                  "package_prefix",
+                  "msbuild_condition"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "confidence": {
+                "const": "resolved"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "reason"
+              ]
+            },
+            "properties": {
+              "target": {
+                "pattern": "^(file|ext|asset|project):"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "directive"
+            ]
+          },
+          "then": {
+            "required": [
+              "global_using"
+            ],
+            "properties": {
+              "type": {
+                "const": "imports"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              },
+              "source": {
+                "pattern": "^file:"
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "required": [
+                "global_using"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "alias"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "type": {
+                    "const": "reexports"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "directive"
+                ],
+                "properties": {
+                  "directive": {
+                    "const": "using_alias"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "directive": {
+                "const": "using_alias"
+              }
+            },
+            "required": [
+              "directive"
+            ]
+          },
+          "then": {
+            "required": [
+              "alias"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "reexports"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "form": {
+                "const": "static"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "project_reference"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "pattern": "^project:"
+              },
+              "target": {
+                "pattern": "^(project|unresolved:dotnet):"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "package_reference"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "pattern": "^project:"
+              },
+              "target": {
+                "pattern": "^(ext:nuget|unresolved:dotnet):"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "imports",
+                  "reexports",
+                  "type_reference"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "source": {
+                "pattern": "^file:"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "type_reference"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "directive"
+                  ]
+                },
+                {
+                  "required": [
+                    "alias"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "source": {
+                "pattern": "^file:"
+              },
+              "target": {
+                "pattern": "^(file:|unresolved:dotnet:)"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "solution_member"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "directive"
+                  ]
+                },
+                {
+                  "required": [
+                    "alias"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "source": {
+                "pattern": "^solution:"
+              },
+              "target": {
+                "pattern": "^(project:|unresolved:dotnet:)"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "pattern": "^solution:"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "const": "solution_member"
+              }
+            }
+          }
         }
       ]
     },
     "coverage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["files", "skipped", "summary"],
+      "required": [
+        "files",
+        "skipped",
+        "summary"
+      ],
       "properties": {
-        "files": { "type": "array", "items": { "$ref": "#/$defs/coverageFile" } },
-        "skipped": { "type": "array", "items": { "$ref": "#/$defs/skipped" } },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/coverageFile"
+          }
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skipped"
+          }
+        },
         "summary": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["analyzed", "detected_only", "not_code", "skipped", "by_language"],
+          "required": [
+            "analyzed",
+            "detected_only",
+            "not_code",
+            "skipped",
+            "by_language"
+          ],
           "properties": {
-            "analyzed": { "type": "integer", "minimum": 0 },
-            "detected_only": { "type": "integer", "minimum": 0 },
-            "not_code": { "type": "integer", "minimum": 0 },
-            "skipped": { "type": "integer", "minimum": 0 },
-            "by_language": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 } }
+            "analyzed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "detected_only": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "not_code": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "by_language": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
           }
         }
       }
@@ -209,25 +1077,141 @@
     "coverageFile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "language", "status", "flags"],
+      "required": [
+        "path",
+        "language",
+        "status",
+        "flags"
+      ],
       "properties": {
-        "path": { "$ref": "#/$defs/relpath" },
-        "language": { "type": ["string", "null"] },
-        "status": { "enum": ["analyzed", "detected_only", "not_code"] },
+        "path": {
+          "$ref": "#/$defs/relpath"
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "analyzed",
+            "detected_only",
+            "not_code"
+          ]
+        },
         "flags": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "enum": ["parse_error", "unreadable"] }
+          "items": {
+            "enum": [
+              "parse_error",
+              "unreadable",
+              "ambiguous_project"
+            ]
+          }
+        },
+        "unresolved_type_names": {
+          "type": "integer",
+          "minimum": 0
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "unresolved_type_names"
+            ]
+          },
+          "then": {
+            "properties": {
+              "language": {
+                "const": "csharp"
+              },
+              "status": {
+                "const": "analyzed"
+              }
+            }
+          }
+        }
+      ]
     },
     "skipped": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "reason"],
+      "required": [
+        "path",
+        "reason"
+      ],
       "properties": {
-        "path": { "$ref": "#/$defs/relpath" },
-        "reason": { "enum": ["excluded_dir", "nested_repository", "symlink", "minified", "unreadable_dir"] }
+        "path": {
+          "$ref": "#/$defs/relpath"
+        },
+        "reason": {
+          "enum": [
+            "excluded_dir",
+            "nested_repository",
+            "symlink",
+            "minified",
+            "unreadable_dir"
+          ]
+        }
+      }
+    },
+    "projectNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "path"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^project:.+\\.csproj$"
+        },
+        "kind": {
+          "const": "project"
+        },
+        "path": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/relpath"
+            },
+            {
+              "pattern": "\\.csproj$"
+            }
+          ]
+        }
+      }
+    },
+    "solutionNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "path"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^solution:.+\\.slnx?$"
+        },
+        "kind": {
+          "const": "solution"
+        },
+        "path": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/relpath"
+            },
+            {
+              "pattern": "\\.slnx?$"
+            }
+          ]
+        }
       }
     }
   }

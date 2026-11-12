@@ -1,0 +1,310 @@
+[
+  {
+    "question": "dependents",
+    "target": "src/App/Services/Mailer.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:hosts/Web/Endpoints.cs",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ]
+        },
+        {
+          "node": "file:src/App/Aliases.cs",
+          "chain": [
+            "src/App/Aliases.cs:9"
+          ]
+        },
+        {
+          "node": "file:src/App/Web/Controllers/HomeController.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:17"
+          ]
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/App/Web/Controllers/HomeController.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:dotnet:System.Collections.Generic",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:1"
+          ]
+        },
+        {
+          "node": "ext:dotnet:System.Threading.Tasks",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:2"
+          ]
+        },
+        {
+          "node": "file:src/App/Checks/AuditAttribute.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:13"
+          ]
+        },
+        {
+          "node": "file:src/App/Checks/Traced.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:14"
+          ]
+        },
+        {
+          "node": "file:src/App/Extensions/StringExtensions.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:4"
+          ]
+        },
+        {
+          "node": "file:src/App/Jobs/Task.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:5"
+          ]
+        },
+        {
+          "node": "file:src/App/Legacy/Timer.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:8"
+          ]
+        },
+        {
+          "node": "file:src/App/Models/User.Rules.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:18"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:src/App/Models/User.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:18"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:src/App/Services/Mailer.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:17"
+          ]
+        },
+        {
+          "node": "file:src/App/Settings.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:22"
+          ]
+        },
+        {
+          "node": "file:src/App/Timers/Timer.cs",
+          "chain": [
+            "src/App/Web/Controllers/HomeController.cs:7"
+          ]
+        }
+      ],
+      "unresolved": [
+        "src/App/Web/Controllers/HomeController.cs:9 not_found",
+        "src/App/Web/Controllers/HomeController.cs:20 ambiguous",
+        "src/App/Web/Controllers/HomeController.cs:22 ambiguous"
+      ],
+      "total": 12,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/App/Services/Clock.cs",
+    "options": {
+      "symbol": "Clock"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/App/Services/Mailer.cs",
+          "chain": [
+            "src/App/Services/Mailer.cs:5"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "hosts/Web/Web.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:src/App/App.csproj",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/App/App.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [],
+      "unresolved": [],
+      "total": 0,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/App/App.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:hosts/Web/Web.csproj",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ]
+        },
+        {
+          "node": "project:hosts/Worker/Worker.csproj",
+          "chain": [
+            "hosts/Worker/GlobalUsings.cs:2"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "impact",
+    "target": "src/App/App.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:hosts/Web/Web.csproj",
+          "chain": [
+            "hosts/Web/Endpoints.cs:5"
+          ],
+          "distance": 1
+        },
+        {
+          "node": "project:hosts/Worker/Worker.csproj",
+          "chain": [
+            "hosts/Worker/GlobalUsings.cs:2"
+          ],
+          "distance": 1
+        }
+      ],
+      "total": 2,
+      "cut": false,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "projects",
+    "target": null,
+    "options": {},
+    "expected": {
+      "projects": [
+        {
+          "project": "project:hosts/Web/Web.csproj",
+          "path": "hosts/Web/Web.csproj",
+          "files": 2,
+          "solutions": [],
+          "references": [
+            "project:src/App/App.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/App/App.csproj"
+          ],
+          "used_by": []
+        },
+        {
+          "project": "project:hosts/Worker/Worker.csproj",
+          "path": "hosts/Worker/Worker.csproj",
+          "files": 2,
+          "solutions": [],
+          "references": [
+            "project:src/App/App.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/App/App.csproj"
+          ],
+          "used_by": []
+        },
+        {
+          "project": "project:src/App/App.csproj",
+          "path": "src/App/App.csproj",
+          "files": 15,
+          "solutions": [],
+          "references": [],
+          "packages": [],
+          "uses": [],
+          "used_by": [
+            "project:hosts/Web/Web.csproj",
+            "project:hosts/Worker/Worker.csproj"
+          ]
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

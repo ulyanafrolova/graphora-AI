@@ -13,7 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from graphora.adapters import js, python
+from graphora.adapters import csharp, js, msbuild, python
+from graphora.adapters.msbuild import sln
+from graphora.resolve import csharp as cs_resolve
 from graphora.resolve import js as js_resolve
 from graphora.resolve import python as py_resolve
 
@@ -27,6 +29,13 @@ COMPONENTS = {
     "python-stdlib": (py_resolve.STDLIB_VERSION, ["resolve/data/stdlib_modules.txt"], []),
     "js-resolver": (js_resolve.RESOLVER_VERSION, ["resolve/js.py", "resolve/tsconfig.py"], []),
     "node-builtins": (js_resolve.BUILTINS_VERSION, ["resolve/data/node_builtins.txt"], []),
+    "csharp-adapter": (csharp.VERSION, ["adapters/csharp/*.py", "adapters/position.py"], ["tree-sitter", "tree-sitter-c-sharp"]),
+    "sln-reader": (sln.VERSION, ["adapters/msbuild/sln.py"], []),
+    "csproj-reader": (msbuild.VERSION, ["adapters/msbuild/__init__.py", "adapters/msbuild/csproj.py"], []),
+    "csharp-resolver": (cs_resolve.RESOLVER_VERSION, ["resolve/csharp.py"], []),
+    "dotnet-namespaces": (cs_resolve.NAMESPACES_VERSION, ["resolve/data/dotnet_namespaces.txt"], []),
+    "dotnet-types": (cs_resolve.TYPES_VERSION, ["resolve/data/dotnet_types.txt"], []),
+    "dotnet-implicit-usings": (cs_resolve.IMPLICIT_USINGS_VERSION, ["resolve/data/implicit_usings.txt"], []),
 }
 
 

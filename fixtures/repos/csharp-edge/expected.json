@@ -1,0 +1,335 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {
+      "id": "ext:dotnet:System.Text.Json",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "ext:nuget:Pkg",
+      "kind": "external",
+      "category": "third_party",
+      "ecosystem": "nuget"
+    },
+    {
+      "id": "ext:python:os",
+      "kind": "external",
+      "category": "stdlib",
+      "ecosystem": "python"
+    },
+    {
+      "id": "file:Broken/Code.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:Broken/Broken.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Broken.Code",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:Evil/Thing.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:Evil/Evil.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Evil.Thing",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:Imports/Use.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": "project:Imports/Imports.csproj",
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Imports.Use",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "id": "file:Loose/Helper.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": null,
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Loose.Util.Helper",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:Loose/Main.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": null,
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Main",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "file:Two/Shared.cs",
+      "kind": "file",
+      "language": "csharp",
+      "project": null,
+      "definitions": [
+        {
+          "kind": "class",
+          "name": "Two.Things.Thing",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "file:tools/gen.py",
+      "kind": "file",
+      "language": "python",
+      "definitions": []
+    },
+    {
+      "id": "project:Broken/Broken.csproj",
+      "kind": "project",
+      "path": "Broken/Broken.csproj"
+    },
+    {
+      "id": "project:Evil/Evil.csproj",
+      "kind": "project",
+      "path": "Evil/Evil.csproj"
+    },
+    {
+      "id": "project:Imports/Imports.csproj",
+      "kind": "project",
+      "path": "Imports/Imports.csproj"
+    },
+    {
+      "id": "project:Two/A.csproj",
+      "kind": "project",
+      "path": "Two/A.csproj"
+    },
+    {
+      "id": "project:Two/B.csproj",
+      "kind": "project",
+      "path": "Two/B.csproj"
+    },
+    {
+      "id": "unresolved:dotnet:Injected",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    },
+    {
+      "id": "unresolved:dotnet:Loose.Util",
+      "kind": "unresolved",
+      "ecosystem": "dotnet"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:Broken/Code.cs",
+      "line": 1,
+      "target": "unresolved:dotnet:Loose.Util",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Loose.Util",
+      "confidence": "unresolved",
+      "reason": "not_referenced",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:Imports/Use.cs",
+      "line": 1,
+      "target": "ext:nuget:Pkg",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Pkg.Client",
+      "confidence": "heuristic",
+      "reason": "package_prefix",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:Imports/Use.cs",
+      "line": 2,
+      "target": "unresolved:dotnet:Injected",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Injected",
+      "confidence": "unresolved",
+      "reason": "not_found",
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:Loose/Main.cs",
+      "line": 1,
+      "target": "file:Loose/Helper.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Loose.Util",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:Loose/Main.cs",
+      "line": 2,
+      "target": "file:Two/Shared.cs",
+      "type": "imports",
+      "form": "static",
+      "symbol": "Two.Things",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:Loose/Main.cs",
+      "line": 3,
+      "target": "ext:dotnet:System.Text.Json",
+      "type": "imports",
+      "form": "static",
+      "symbol": "System.Text.Json",
+      "confidence": "resolved",
+      "reason": null,
+      "directive": "using",
+      "global_using": false
+    },
+    {
+      "source": "file:tools/gen.py",
+      "line": 1,
+      "target": "ext:python:os",
+      "type": "imports",
+      "form": "static",
+      "symbol": null,
+      "confidence": "resolved",
+      "reason": null
+    },
+    {
+      "source": "project:Imports/Imports.csproj",
+      "line": 6,
+      "target": "ext:nuget:Pkg",
+      "type": "package_reference",
+      "form": "static",
+      "symbol": "Pkg",
+      "confidence": "resolved",
+      "reason": null
+    }
+  ],
+  "coverage": [
+    {
+      "path": "Broken/Broken.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": [
+        "parse_error"
+      ]
+    },
+    {
+      "path": "Broken/Code.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "Evil/Evil.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": [
+        "parse_error"
+      ]
+    },
+    {
+      "path": "Evil/Thing.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "Imports/Imports.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "Imports/Use.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "Imports/evil.targets",
+      "language": null,
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "Loose/Helper.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "Loose/Main.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "README.md",
+      "language": null,
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "Two/A.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "Two/B.csproj",
+      "language": "csharp",
+      "status": "not_code",
+      "flags": []
+    },
+    {
+      "path": "Two/Shared.cs",
+      "language": "csharp",
+      "status": "analyzed",
+      "flags": [
+        "ambiguous_project"
+      ],
+      "unresolved_type_names": 0
+    },
+    {
+      "path": "tools/gen.py",
+      "language": "python",
+      "status": "analyzed",
+      "flags": []
+    }
+  ],
+  "skipped": []
+}

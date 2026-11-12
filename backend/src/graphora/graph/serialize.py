@@ -7,9 +7,21 @@ import json
 from collections import Counter
 from typing import Any
 
-from graphora.graph.model import AssetNode, Definition, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
+from graphora.graph.model import (
+    AssetNode,
+    CoverageFile,
+    Definition,
+    Edge,
+    ExternalNode,
+    FileNode,
+    GraphDocument,
+    Node,
+    ProjectNode,
+    SolutionNode,
+    UnresolvedNode,
+)
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 6
 
 
 def _sha16(text: str) -> str:
@@ -47,7 +59,9 @@ def _node_dict(node: Node) -> dict[str, Any]:
             "language": node.language,
             "definitions": [_definition_dict(d) for d in definitions],
         }
-        if node.language != "python":
+        if node.language == "csharp":
+            out["project"] = node.project
+        elif node.language != "python":
             exports = sorted(node.exports or (), key=lambda x: (x.name, x.line))
             out["exports"] = [{"name": x.name, "local": x.local, "line": x.line} for x in exports]
         return out
@@ -55,6 +69,10 @@ def _node_dict(node: Node) -> dict[str, Any]:
         return {"id": node.id, "kind": "external", "name": node.name, "ecosystem": node.ecosystem, "category": node.category}
     if isinstance(node, UnresolvedNode):
         return {"id": node.id, "kind": "unresolved", "reference": node.reference, "ecosystem": node.ecosystem}
+    if isinstance(node, ProjectNode):
+        return {"id": node.id, "kind": "project", "path": node.path}
+    if isinstance(node, SolutionNode):
+        return {"id": node.id, "kind": "solution", "path": node.path}
     assert isinstance(node, AssetNode)
     return {"id": node.id, "kind": "asset", "path": node.path}
 
@@ -79,6 +97,16 @@ def _edge_dict(edge: Edge) -> dict[str, Any]:
         out["reason"] = edge.reason
     if edge.alias is not None:
         out["alias"] = edge.alias
+    if edge.directive is not None:
+        out["directive"] = edge.directive
+        out["global_using"] = edge.global_using
+    return out
+
+
+def _coverage_file(f: CoverageFile) -> dict[str, Any]:
+    out: dict[str, Any] = {"path": f.path, "language": f.language, "status": f.status, "flags": sorted(f.flags)}
+    if f.unresolved_type_names is not None:
+        out["unresolved_type_names"] = f.unresolved_type_names
     return out
 
 
@@ -94,10 +122,7 @@ def to_dict(doc: GraphDocument) -> dict[str, Any]:
         "nodes": [_node_dict(n) for n in sorted(doc.nodes, key=lambda n: n.id)],
         "edges": [_edge_dict(e) for e in sorted(doc.edges, key=edge_sort_key)],
         "coverage": {
-            "files": [
-                {"path": f.path, "language": f.language, "status": f.status, "flags": sorted(f.flags)}
-                for f in files
-            ],
+            "files": [_coverage_file(f) for f in files],
             "skipped": [{"path": s.path, "reason": s.reason} for s in skipped],
             "summary": {
                 "analyzed": statuses["analyzed"],

@@ -1,6 +1,6 @@
 """Small synthetic graph documents for query tests (specs/004-graph-queries tasks T006, T008)."""
 
-from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, UnresolvedNode
+from graphora.graph.model import AssetNode, CoverageFile, Edge, ExternalNode, FileNode, GraphDocument, ProjectNode, UnresolvedNode
 
 SNAP = "content:0123456789abcdef"
 
@@ -11,6 +11,8 @@ def edge(source, target, line=1, *, column=1, symbol=None, confidence="resolved"
     dst = target if ":" in target else f"file:{target}"
     if dst.startswith("unresolved:"):
         confidence, reason = "unresolved", reason or "not_found"
+    elif confidence == "heuristic":
+        reason = reason or "namespace_spread"  # v4: a heuristic edge carries a reason
     return Edge(src, dst, symbol, line, column, SNAP, confidence, reason, "python-adapter@0.2.0", "sha256:0000000000000000", **extra)
 
 
@@ -19,6 +21,8 @@ def _node(node_id: str):
     if kind == "file":
         if rest.endswith((".ts", ".tsx")):
             return FileNode(rest, "typescript", (), ())
+        if rest.endswith(".cs"):
+            return FileNode(rest, "csharp")
         return FileNode(rest, "python")
     if kind == "ext":
         ecosystem, _, name = rest.partition(":")
@@ -26,6 +30,8 @@ def _node(node_id: str):
     if kind == "unresolved":
         ecosystem, _, ref = rest.partition(":")
         return UnresolvedNode(ref, ecosystem)
+    if kind == "project":
+        return ProjectNode(rest)
     return AssetNode(rest)
 
 

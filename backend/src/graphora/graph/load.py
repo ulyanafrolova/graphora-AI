@@ -16,11 +16,14 @@ from graphora.graph.model import (
     FileNode,
     GraphDocument,
     Node,
+    ProjectNode,
     Skipped,
+    SolutionNode,
     UnresolvedNode,
 )
 
-_LANGUAGES = ("python", "typescript", "javascript")
+_LANGUAGES = ("python", "typescript", "javascript", "csharp")
+_PROJECT_EDGES = ("project_reference", "package_reference")
 
 
 class InvalidGraph(Exception):
@@ -105,7 +108,8 @@ def _node(raw: Any, where: str) -> Node:
                 Export(_str(x, "name", f"{where}.exports[{i}]"), _opt_str(x, "local", f"{where}.exports[{i}]"), _int(x, "line", f"{where}.exports[{i}]"))
                 for i, x in enumerate(_list(raw, "exports", where))
             )
-        node = FileNode(_str(raw, "path", where), language, definitions, exports)
+        project = _opt_str(raw, "project", where) if isinstance(raw, dict) and "project" in raw else None
+        node = FileNode(_str(raw, "path", where), language, definitions, exports, project)
     elif kind == "external":
         node = ExternalNode(
             _str(raw, "name", where),
@@ -119,6 +123,10 @@ def _node(raw: Any, where: str) -> Node:
         )
     elif kind == "asset":
         node = AssetNode(_str(raw, "path", where))
+    elif kind == "project":
+        node = ProjectNode(_str(raw, "path", where))
+    elif kind == "solution":
+        node = SolutionNode(_str(raw, "path", where))
     else:
         raise InvalidGraph(f"{where}.kind: unknown value {kind!r}")
     stored = _str(raw, "id", where)
@@ -132,6 +140,12 @@ def _edge(raw: Any, where: str) -> Edge:
     if isinstance(raw, dict) and "reason" in raw:
         reason = _enum(raw["reason"], get_args(model.Reason), f"{where}.reason")
     alias = _opt_str(raw, "alias", where) if isinstance(raw, dict) and "alias" in raw else None
+    directive = None
+    global_using = None
+    if isinstance(raw, dict) and "directive" in raw:
+        directive = _enum(raw["directive"], get_args(model.Directive), f"{where}.directive")
+    if isinstance(raw, dict) and "global_using" in raw:
+        global_using = _bool(raw, "global_using", where)
     try:
         edge = Edge(
             source=_str(raw, "source", where),
@@ -148,6 +162,8 @@ def _edge(raw: Any, where: str) -> Edge:
             form=_enum(_str(raw, "form", where), get_args(model.Form), f"{where}.form"),
             type_only=_bool(raw, "type_only", where),
             alias=alias,
+            directive=directive,
+            global_using=global_using,
         )
     except ValueError as exc:
         raise InvalidGraph(f"{where}: {exc}") from None
@@ -162,7 +178,13 @@ def _check_edges(edges: tuple[Edge, ...], nodes: dict[str, Node], snapshot: str)
         where = f"edges[{i}]"
         if e.snapshot != snapshot:
             raise InvalidGraph(f"{where}.snapshot: {e.snapshot} differs from the document snapshot {snapshot}")
-        if not isinstance(nodes.get(e.source), FileNode):
+        if e.type == "solution_member":
+            if not isinstance(nodes.get(e.source), SolutionNode):
+                raise InvalidGraph(f"{where}.source: {e.source} is not a solution node of the document")
+        elif e.type in _PROJECT_EDGES:
+            if not isinstance(nodes.get(e.source), ProjectNode):
+                raise InvalidGraph(f"{where}.source: {e.source} is not a project node of the document")
+        elif not isinstance(nodes.get(e.source), FileNode):
             raise InvalidGraph(f"{where}.source: {e.source} is not a file node of the document")
         if e.target not in nodes:
             raise InvalidGraph(f"{where}.target: {e.target} is not a node of the document")
@@ -201,6 +223,7 @@ def loads(data: bytes) -> GraphDocument:
             _opt_str(f, "language", f"coverage.files[{i}]"),
             _enum(_str(f, "status", f"coverage.files[{i}]"), get_args(model.Status), f"coverage.files[{i}].status"),
             tuple(_enum(x, get_args(model.Flag), f"coverage.files[{i}].flags") for x in _list(f, "flags", f"coverage.files[{i}]")),
+            _int(f, "unresolved_type_names", f"coverage.files[{i}]") if isinstance(f, dict) and "unresolved_type_names" in f else None,
         )
         for i, f in enumerate(_list(coverage, "files", "coverage"))
     )

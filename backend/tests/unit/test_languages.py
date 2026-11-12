@@ -11,7 +11,8 @@ def test_detected_only(ext, language):
 def test_detected_only_table_matches_data_model():
     assert DETECTED_ONLY_EXTENSIONS == {
         ".vue": "vue", ".svelte": "svelte", ".astro": "astro",
-        ".go": "go", ".java": "java", ".kt": "kotlin", ".kts": "kotlin", ".rs": "rust", ".cs": "csharp",
+        ".go": "go", ".java": "java", ".kt": "kotlin", ".kts": "kotlin", ".rs": "rust",
+        ".cshtml": "razor", ".razor": "razor", ".fs": "fsharp", ".vb": "vb",
         ".c": "c", ".h": "c", ".cpp": "cpp", ".cc": "cpp", ".hpp": "cpp", ".rb": "ruby", ".php": "php",
         ".swift": "swift", ".scala": "scala", ".sh": "shell",
     }
@@ -30,6 +31,16 @@ def test_typescript_analyzed(path):
 @pytest.mark.parametrize("path", ["a.js", "a.jsx", "a.mjs", "a.cjs"])
 def test_javascript_analyzed(path):
     assert classify(path) == ("javascript", "analyzed")
+
+
+@pytest.mark.parametrize("path", ["a.cs", "src/App/Program.cs", "B.CS"])
+def test_csharp_analyzed(path):
+    assert classify(path) == ("csharp", "analyzed")
+
+
+@pytest.mark.parametrize("path", ["src/App/App.csproj", "App.sln", "App.slnx", "Directory.Build.props", "src/Directory.Packages.props"])
+def test_csharp_project_files_are_not_code(path):
+    assert classify(path) == ("csharp", "not_code")
 
 
 def test_jsconfig_marker():

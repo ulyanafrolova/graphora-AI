@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Core/Core.csproj" />
+    <Project Path="src/Infra/Infra.csproj" />
+    <Project Path="src/Web/Web.csproj" />
+    <Project Path="src/LoopA/LoopA.csproj" />
+  </Folder>
+</Solution>

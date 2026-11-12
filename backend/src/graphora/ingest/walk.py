@@ -68,6 +68,13 @@ class WalkResult:
     special: frozenset[str] = frozenset()  # FIFOs, sockets, devices: listed, never opened (a FIFO read blocks)
 
 
+_BUILD_OUTPUT = frozenset({"bin", "obj"})
+
+
+def _is_csproj(entry: os.DirEntry) -> bool:
+    return entry.name.lower().endswith(".csproj") and not entry.is_symlink() and entry.is_file(follow_symlinks=False)
+
+
 def is_excluded_path(rel: str) -> bool:
     """Name-based skip rules, also applied to paths read from git trees."""
     parts = rel.split("/")
@@ -95,13 +102,18 @@ def walk(root: Path, max_files: int, max_bytes: int, deadline: Deadline | None =
             skipped.append(Skipped(rel_dir, "unreadable_dir"))
             continue
         subdirs = []
+        # 007 research R3: MSBuild output folders are skipped only next to a project file, so a `bin/` of scripts
+        # in a Python or shell repository is still walked.
+        build_output = _BUILD_OUTPUT if any(_is_csproj(e) for e in entries) else frozenset()
         for entry in entries:
             if deadline is not None:
                 deadline.check()
             rel = f"{rel_dir}/{entry.name}" if rel_dir else entry.name
             if entry.is_symlink():
                 skipped.append(Skipped(rel, "symlink"))
-            elif entry.name == ".git" or (entry.is_dir(follow_symlinks=False) and entry.name in EXCLUDED_DIRS):
+            elif entry.name == ".git" or (
+                entry.is_dir(follow_symlinks=False) and (entry.name in EXCLUDED_DIRS or entry.name.lower() in build_output)
+            ):
                 skipped.append(Skipped(rel, "excluded_dir"))
             elif entry.is_dir(follow_symlinks=False):
                 if os.path.lexists(os.path.join(entry.path, ".git")):

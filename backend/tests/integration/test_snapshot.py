@@ -61,6 +61,23 @@ def test_change_inside_skipped_dir_stays_clean(tmp_path):
     assert _snapshot(root) == sha
 
 
+def test_change_in_build_output_next_to_a_csproj_stays_clean(tmp_path):
+    """007 research R3: `obj/` next to a `.csproj` is skipped, so rebuilding does not make the tree dirty."""
+    root = tmp_path / "r"
+    sha = _repo(root, {"App/App.csproj": "<Project />\n", "App/P.cs": "class P {}\n", "App/obj/G.g.cs": "class G {}\n"})
+    (root / "App" / "obj" / "G.g.cs").write_text("class G2 {}\n")
+    (root / "App" / "bin").mkdir()
+    (root / "App" / "bin" / "App.dll").write_bytes(b"MZ")
+    assert _snapshot(root) == sha
+
+
+def test_change_in_bin_without_a_csproj_is_dirty(tmp_path):
+    root = tmp_path / "r"
+    sha = _repo(root, {"tools/bin/run.py": "import os\n"})
+    (root / "tools" / "bin" / "run.py").write_text("import sys\n")
+    assert _snapshot(root).startswith(f"{sha}+dirty:")
+
+
 @pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root reads everything")
 def test_unreadable_dir_is_left_out_like_other_skipped_dirs(tmp_path):
     """Issue #10: committed files under an unreadable_dir folder are not compared, as for any skipped folder."""

@@ -11,7 +11,7 @@ from graphora.mcp import Served, create_server
 from mcp_client import call, calls, canonical, instructions, list_tools, text
 from synthetic import SNAP, edge, make_doc
 
-GRAPH_TOOLS = ["graph_overview", "find_definitions", "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files"]
+GRAPH_TOOLS = ["graph_overview", "find_definitions", "dependencies", "dependents", "impact", "neighbors", "cycles", "projects", "key_files"]
 
 
 def server(*edges, **doc):
@@ -34,6 +34,7 @@ def test_arguments_and_defaults():
         "include_type_only": True,
         "follow_barrels": False,
         "limit": 50,
+        "level": "file",
     }
     assert defaults["dependents"] == {
         "target": None,
@@ -41,9 +42,11 @@ def test_arguments_and_defaults():
         "include_type_only": True,
         "follow_barrels": False,
         "limit": 50,
+        "level": "file",
     }
     assert defaults["key_files"] == {"include_type_only": True, "limit": 10}
-    assert defaults["cycles"] == {"include_type_only": True, "limit": 50}
+    assert defaults["cycles"] == {"include_type_only": True, "limit": 50, "level": "file"}
+    assert schemas["dependencies"]["properties"]["level"]["enum"] == ["file", "project"]
     assert schemas["impact"]["required"] == ["target"]
     assert "required" not in schemas["cycles"]
 
@@ -162,3 +165,15 @@ def test_find_definitions_tool():
     result = call(srv, "find_definitions", name="AuthService")
     assert canonical(result.structured_content) == dumps(definitions(ix, "AuthService", limit=50))
     assert call(srv, "find_definitions", name="").is_error
+
+
+
+def test_project_level_answer_equals_the_query_layer():
+    """009: `level="project"` gives the same answer as `queries.dependents(..., level="project")`."""
+    a = FileNode("a/X.cs", "csharp", (), None, "project:a/A.csproj")
+    b = FileNode("b/Y.cs", "csharp", (), None, "project:b/B.csproj")
+    srv, ix = server(edge("a/X.cs", "b/Y.cs", 3, type="type_reference", symbol="B.Y"), edge("project:a/A.csproj", "project:b/B.csproj", 4, type="project_reference"), nodes=(a, b))
+    result = call(srv, "dependents", target="b/B.csproj", level="project")
+    assert canonical(result.structured_content) == dumps(dependents(ix, "b/B.csproj", level="project", limit=50))
+    error = call(srv, "dependents", target="b/B.csproj", level="project", symbol="X")
+    assert error.is_error and "project level" in text(error)

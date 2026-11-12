@@ -137,3 +137,46 @@ def test_definitions_json(graph):
 def test_definitions_usage_errors(graph, args):
     code, out, _ = run_query(graph, "definitions", *args)
     assert (code, out) == (2, b"")
+
+
+# --- 009: --level project (contracts/cli.md) --------------------------------------------------------------------
+
+
+@pytest.fixture
+def cs_graph(tmp_path):
+    path = tmp_path / "cs.json"
+    path.write_bytes(analyzed_graph("csharp-multiproject"))
+    return str(path)
+
+
+def test_project_level_json_is_the_answer(cs_graph):
+    code, out, err = run_query(cs_graph, "dependencies", "src/Web/Web.csproj", "--level", "project", "--format", "json")
+    assert (code, err) == (0, "")
+    ix = queries.index(loads(analyzed_graph("csharp-multiproject")))
+    assert out == dumps(queries.dependencies(ix, "src/Web/Web.csproj", level="project"))
+    assert json.loads(out)["options"]["level"] == "project"
+
+
+def test_project_level_text_marks_declared_only(cs_graph):
+    code, out, err = run_query(cs_graph, "dependencies", "src/Web/Web.csproj", "--level", "project")
+    assert code == 0, err
+    assert b"(declared, not used by code)" in out
+
+
+@pytest.mark.parametrize(
+    "extra, message",
+    [
+        (("dependents", "src/Core/Core.csproj", "--symbol", "X"), "--symbol cannot be used with --level project"),
+        (("impact", "src/Core/Core.csproj", "--follow-barrels"), "--follow-barrels cannot be used with --level project"),
+        (("cycles", "--no-type-only"), "--no-type-only cannot be used with --level project"),
+        (("neighbors", "src/Core/Core.csproj"), "--level is only for dependencies, dependents, impact, cycles"),
+    ],
+)
+def test_project_level_usage_errors(cs_graph, extra, message):
+    code, out, err = run_query(cs_graph, *extra, "--level", "project")
+    assert (code, out) == (2, b"") and message in err
+
+
+def test_not_a_project(cs_graph):
+    code, _, err = run_query(cs_graph, "dependencies", "README.md", "--level", "project")
+    assert code == 8 and "README.md is not a project" in err  # the existing not-found exit status

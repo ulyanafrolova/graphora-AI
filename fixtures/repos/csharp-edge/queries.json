@@ -1,0 +1,36 @@
+[
+  {
+    "question": "dependencies",
+    "target": "Loose/Main.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:dotnet:System.Text.Json",
+          "chain": [
+            "Loose/Main.cs:3"
+          ]
+        },
+        {
+          "node": "file:Loose/Helper.cs",
+          "chain": [
+            "Loose/Main.cs:1"
+          ]
+        },
+        {
+          "node": "file:Two/Shared.cs",
+          "chain": [
+            "Loose/Main.cs:2"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

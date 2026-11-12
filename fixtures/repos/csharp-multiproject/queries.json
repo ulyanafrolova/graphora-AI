@@ -1,0 +1,378 @@
+[
+  {
+    "question": "dependencies",
+    "target": "src/Web/Web.csproj",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "ext:nuget:Microsoft.Extensions.Logging",
+          "chain": [
+            "project:src/Web/Web.csproj:16"
+          ]
+        },
+        {
+          "node": "ext:nuget:Serilog",
+          "chain": [
+            "project:src/Web/Web.csproj:15"
+          ]
+        },
+        {
+          "node": "project:src/Infra/Infra.csproj",
+          "chain": [
+            "project:src/Web/Web.csproj:8"
+          ]
+        },
+        {
+          "node": "project:src/Tools/Tools.csproj",
+          "chain": [
+            "project:src/Web/Web.csproj:11"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "unresolved": [
+        "project:src/Web/Web.csproj:9 not_found",
+        "project:src/Web/Web.csproj:10 msbuild_property"
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/Core/Domain/Order.cs",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:src/Infra/Store.cs",
+          "chain": [
+            "src/Infra/Store.cs:1"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:src/Web/Controllers/HomeController.cs",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:1"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "file:tests/Core.Tests/OrderTests.cs",
+          "chain": [
+            "tests/Core.Tests/OrderTests.cs:1"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "src/Core/Core.csproj",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "project:src/Infra/Infra.csproj",
+          "chain": [
+            "project:src/Infra/Infra.csproj:4"
+          ]
+        },
+        {
+          "node": "project:tests/Core.Tests/Core.Tests.csproj",
+          "chain": [
+            "project:tests/Core.Tests/Core.Tests.csproj:4"
+          ]
+        },
+        {
+          "node": "solution:Graphora.sln",
+          "chain": [
+            "solution:Graphora.sln:4"
+          ]
+        },
+        {
+          "node": "solution:Graphora.slnx",
+          "chain": [
+            "solution:Graphora.slnx:3"
+          ]
+        }
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/Web/Web.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "ext:nuget:Microsoft.Extensions.Logging",
+          "chain": [
+            "project:src/Web/Web.csproj:16"
+          ],
+          "declared_only": true
+        },
+        {
+          "node": "ext:nuget:Serilog",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:7"
+          ],
+          "confidence": "heuristic"
+        },
+        {
+          "node": "project:src/Core/Core.csproj",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:1"
+          ]
+        },
+        {
+          "node": "project:src/Infra/Infra.csproj",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:3"
+          ]
+        },
+        {
+          "node": "project:src/Tools/Tools.csproj",
+          "chain": [
+            "src/Web/Controllers/HomeController.cs:4"
+          ],
+          "confidence": "heuristic"
+        }
+      ],
+      "unresolved": [
+        "project:src/Web/Web.csproj:9 not_found",
+        "project:src/Web/Web.csproj:10 msbuild_property"
+      ],
+      "total": 5,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependencies",
+    "target": "src/LoopA/LoopA.csproj",
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "project:src/LoopB/LoopB.csproj",
+          "chain": [
+            "src/LoopA/Alpha.cs:7"
+          ]
+        },
+        {
+          "node": "project:src/Tools/Tools.csproj",
+          "chain": [
+            "project:src/LoopA/LoopA.csproj:5"
+          ],
+          "declared_only": true
+        }
+      ],
+      "unresolved": [],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "cycles",
+    "target": null,
+    "options": {
+      "level": "project"
+    },
+    "expected": {
+      "groups": [
+        {
+          "files": [
+            "project:src/LoopA/LoopA.csproj",
+            "project:src/LoopB/LoopB.csproj"
+          ],
+          "cycle": [
+            "src/LoopA/Alpha.cs:7",
+            "src/LoopB/Beta.cs:7"
+          ],
+          "type_only": false
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "projects",
+    "target": null,
+    "options": {},
+    "expected": {
+      "projects": [
+        {
+          "project": "project:src/Core/Core.csproj",
+          "path": "src/Core/Core.csproj",
+          "files": 3,
+          "solutions": [
+            "solution:Graphora.sln",
+            "solution:Graphora.slnx"
+          ],
+          "references": [],
+          "packages": [
+            "ext:nuget:Foo",
+            "ext:nuget:Foo.Bar"
+          ],
+          "uses": [],
+          "used_by": [
+            "project:src/Infra/Infra.csproj",
+            "project:src/Web/Web.csproj",
+            "project:tests/Core.Tests/Core.Tests.csproj"
+          ]
+        },
+        {
+          "project": "project:src/Infra/Infra.csproj",
+          "path": "src/Infra/Infra.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln",
+            "solution:Graphora.slnx"
+          ],
+          "references": [
+            "project:src/Core/Core.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/Core/Core.csproj"
+          ],
+          "used_by": [
+            "project:src/Web/Web.csproj"
+          ]
+        },
+        {
+          "project": "project:src/LoopA/LoopA.csproj",
+          "path": "src/LoopA/LoopA.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.slnx"
+          ],
+          "references": [
+            "project:src/LoopB/LoopB.csproj",
+            "project:src/Tools/Tools.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/LoopB/LoopB.csproj"
+          ],
+          "used_by": [
+            "project:src/LoopB/LoopB.csproj"
+          ]
+        },
+        {
+          "project": "project:src/LoopB/LoopB.csproj",
+          "path": "src/LoopB/LoopB.csproj",
+          "files": 1,
+          "solutions": [],
+          "references": [
+            "project:src/LoopA/LoopA.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/LoopA/LoopA.csproj"
+          ],
+          "used_by": [
+            "project:src/LoopA/LoopA.csproj"
+          ]
+        },
+        {
+          "project": "project:src/Tools/Tools.csproj",
+          "path": "src/Tools/Tools.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln"
+          ],
+          "references": [],
+          "packages": [],
+          "uses": [],
+          "used_by": [
+            "project:src/Web/Web.csproj"
+          ]
+        },
+        {
+          "project": "project:src/Web/Web.csproj",
+          "path": "src/Web/Web.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln",
+            "solution:Graphora.slnx"
+          ],
+          "references": [
+            "project:src/Infra/Infra.csproj",
+            "project:src/Tools/Tools.csproj"
+          ],
+          "packages": [
+            "ext:nuget:Microsoft.Extensions.Logging",
+            "ext:nuget:Serilog"
+          ],
+          "uses": [
+            "project:src/Core/Core.csproj",
+            "project:src/Infra/Infra.csproj",
+            "project:src/Tools/Tools.csproj"
+          ],
+          "used_by": []
+        },
+        {
+          "project": "project:tests/Core.Tests/Core.Tests.csproj",
+          "path": "tests/Core.Tests/Core.Tests.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln"
+          ],
+          "references": [
+            "project:src/Core/Core.csproj"
+          ],
+          "packages": [
+            "ext:nuget:xunit"
+          ],
+          "uses": [
+            "project:src/Core/Core.csproj"
+          ],
+          "used_by": []
+        }
+      ],
+      "total": 7,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
+  }
+]
