@@ -82,3 +82,17 @@ def test_thousand_csharp_files_in_20_projects_under_30s(tmp_path, validator):
     assert "analyzed 1000 files, 12469 edges (0 unresolved)" in err
     assert elapsed < 30, f"took {elapsed:.1f}s"
     validator.validate(json.loads(out))
+
+    # 009 SC-005: project-level answers on the same graph in under 2 seconds in total
+    from graphora.graph import queries
+    from graphora.graph.load import loads
+
+    ix = queries.index(loads(out))
+    start = time.monotonic()
+    impact = queries.impact(ix, "P0/P0.csproj", level="project")
+    loops = queries.cycles(ix, level="project")
+    summary = queries.projects(ix)
+    elapsed = time.monotonic() - start
+    assert [i.distance for i in impact.items] == list(range(1, 20))  # P1 … P19, one project further each
+    assert loops.groups == () and summary.total == 20
+    assert elapsed < 2, f"project level took {elapsed:.2f}s"

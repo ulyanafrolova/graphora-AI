@@ -136,7 +136,7 @@ CLI and MCP.
 
 - [X] T011 [P] Extend `backend/tests/integration/test_safety_cs.py`: a `.slnx` with a `DOCTYPE` entity bomb and a `.sln`
   listing `..\..\outside\X.csproj`; no process, no read outside the root, `parse_error` / `not_found` as specified.
-- [ ] T012 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: after analysis, project-level
+- [X] T012 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: after analysis, project-level
   `impact` of `P0` and `cycles` answer in under 2 s in total (SC-005).
 - [ ] T013 Docs: `README.md` (status row for 009, schema v6 diagram: solution node, `solution_member`; quick start
   example of `--level project` and `projects`), `docs/product/project-context.md` § 7 (C# complete for issue #19);
