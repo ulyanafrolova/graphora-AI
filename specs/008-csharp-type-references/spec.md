@@ -16,7 +16,8 @@ uses), global and implicit usings across a project, `<Using>` items, aliases in 
 
 - Q: What happens to the slice-1 `using` edges to repository files once type references are found? → A: Type
   references become the file → file edges. A `using` keeps its edges to repository files only when no type from
-  its namespace (or its alias) is referenced in the file; those fallback edges stay `heuristic`. Edges from a
+  its namespace (or its alias) is referenced in the file; those fallback edges keep their slice-1 confidence
+  (`heuristic` when the namespace spans several files). Edges from a
   `using` to base-library namespaces, packages and placeholders are unchanged.
 
 - During planning (2026-11-12) SC-002 was corrected: it is measured on the slice-2 fixture, because
@@ -50,7 +51,8 @@ file edge matches a type the file writes, at the first line it is written, with 
    `using`, **When** analyzed, **Then** there is an edge to the file declaring `App.Settings` (enclosing
    namespaces are visible).
 5. **Given** a file with `using App.Extensions;` where no type of `App.Extensions` is written (only extension
-   methods are called), **When** analyzed, **Then** the slice-1 `heuristic` edges from that `using` remain.
+   methods are called), **When** analyzed, **Then** the slice-1 edges from that `using` remain, with their slice-1
+   confidence.
 6. **Given** `Timer` declared in two namespaces that the file both imports, **When** analyzed, **Then** the
    reference is `unresolved` with reason `ambiguous`, and no file is picked.
 7. **Given** a reference to a `partial` class split over two files, **When** analyzed, **Then** there are edges to

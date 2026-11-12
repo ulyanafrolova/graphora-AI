@@ -53,11 +53,12 @@ Done and merged into `main` (features 001–006, graph schema v3):
 | 005 | Storage and HTTP API | PostgreSQL store per (repository, snapshot), read-only API (`graphora serve`) |
 | 006 | MCP server | Read-only graph tools for coding agents over stdio (`graphora mcp`), from a graph file or the store |
 
-In progress (PR #22, issue #19, graph schema v4):
+In progress (PR #22, issue #19, graph schema v5):
 
 | # | Feature | What it gives |
 |---|---|---|
 | 007 | C# analysis, slice 1 | `using` → namespace → declaring files, `.csproj` project and package references read as data, `dotnet`/`nuget` externals, `bin`/`obj` skipped next to a `.csproj` |
+| 008 | C# analysis, slice 2 | Type references give exact file → file edges; `global using`, implicit usings, `<Using>` items and `Directory.Build.props`; unresolved type names counted per file |
 
 Next on the roadmap: end-to-end pipeline, claim verifier and agents, `/ask` with
 streaming, hotspots, web UI, frontend ↔ backend bridge, benchmark.
@@ -78,7 +79,7 @@ flowchart LR
     end
 
     src --> ingest
-    build --> json[("graph.json<br/>schema v4")]
+    build --> json[("graph.json<br/>schema v5")]
     build --> store[("store/<br/>PostgreSQL")]
 
     json --> queries["graph/queries<br/>NetworkX"]
@@ -118,7 +119,7 @@ graph.
 ## Graph schema
 
 The contract between backend and frontend is [schema/graph.schema.json](schema/graph.schema.json)
-(`schema_version: 4`). One document per snapshot:
+(`schema_version: 5`). One document per snapshot:
 
 ```mermaid
 erDiagram
@@ -134,7 +135,7 @@ erDiagram
     COVERAGE ||--o{ SKIPPED : skipped
 
     DOCUMENT {
-        int schema_version "4"
+        int schema_version "5"
         string snapshot
         map extractors "name -> semver"
     }
@@ -154,7 +155,7 @@ erDiagram
     }
     EDGE {
         string id
-        enum type "imports | reexports | project_reference | package_reference"
+        enum type "imports | reexports | project_reference | package_reference | type_reference"
         enum form "static | dynamic | require"
         enum directive "C#: using | using_static | using_alias"
         bool global_using
@@ -185,6 +186,7 @@ erDiagram
         string language
         enum status "analyzed | detected_only | not_code"
         list flags
+        int unresolved_type_names "C# only"
     }
     SKIPPED {
         string path

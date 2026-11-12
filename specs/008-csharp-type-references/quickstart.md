@@ -28,16 +28,17 @@ All fixtures validate against schema v5; Python and TS/JS outputs differ from v4
 ```
 uv run graphora analyze ../fixtures/repos/csharp-types/repo --out /tmp/types.json
 uv run graphora query /tmp/types.json dependents src/App/Services/Mailer.cs
-uv run graphora query /tmp/types.json dependencies src/App/Program.cs
+uv run graphora query /tmp/types.json dependencies src/App/Web/Controllers/HomeController.cs
 ```
 
 Check:
 
-- each dependent of `Mailer.cs` is listed at the line where it first writes `Mailer`, without "(likely)";
-- `Program.cs` has no link to `Clock.cs` or `Queue.cs` (it writes only `Mailer`), and a "(likely)" link from its
-  extension-method-only `using`;
-- the file that writes `Timer` with two imported `Timer` types shows `unresolved: ambiguous`;
-- `coverage.files` shows `unresolved_type_names` for the file that uses a package type.
+- each dependent of `Mailer.cs` (`Endpoints.cs`, `Aliases.cs`, `HomeController.cs`) is listed at the line where it
+  first writes `Mailer` (or its alias `Mail`), without "(likely)";
+- `HomeController.cs` has no link to `Clock.cs`, `Envelope.cs` or `Queue.cs` (it writes only `Mailer` from
+  `App.Services`); its extension-method-only `using App.Extensions;` keeps its slice-1 edge (line 4);
+- `Timer` (two imported repository types) and `Task` (repository and base library) show `unresolved: ambiguous`;
+- `coverage.files` shows `unresolved_type_names: 1` for `HomeController.cs` (`ILogger`, a package type).
 
 ## 4. Determinism and performance
 
