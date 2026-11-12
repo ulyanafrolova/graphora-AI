@@ -356,3 +356,25 @@ def test_dotnet_types_list():
         ("Microsoft.AspNetCore.App", "Microsoft.AspNetCore.Mvc", "Controller"),
     } <= triples
     assert ("Microsoft.NETCore.App", "Microsoft.AspNetCore.Mvc", "Controller") not in triples
+
+
+def test_implicit_usings_list():
+    header, lines = _data_lines("implicit_usings.txt")
+    assert header == "# dotnet-implicit-usings@10.0.100"
+    assert lines == sorted(set(lines))
+    groups: dict[str, set[str]] = {}
+    for line in lines:
+        group, namespace = line.split(" ")
+        groups.setdefault(group, set()).add(namespace)
+    assert set(groups) == {"base", "web", "worker", "winforms"}
+    assert groups["base"] == {
+        "System",
+        "System.Collections.Generic",
+        "System.IO",
+        "System.Linq",
+        "System.Net.Http",
+        "System.Threading",
+        "System.Threading.Tasks",
+    }
+    assert "Microsoft.AspNetCore.Builder" in groups["web"]
+    assert groups["winforms"] == {"System.Drawing", "System.Windows.Forms"}

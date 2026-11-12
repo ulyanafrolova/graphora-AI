@@ -40,13 +40,13 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
   both data files; `dotnet_namespaces.txt` must not change. Add `NAMESPACES`-style loader test in
   `backend/tests/unit/test_cs_resolve.py` that `System.Collections.Generic List`, `System.Threading.Tasks Task` and
   `Microsoft.AspNetCore.Mvc Controller` (ASP.NET only) are present.
-- [ ] T002 [P] Create `backend/scripts/gen_implicit_usings.py` and generate
+- [X] T002 [P] Create `backend/scripts/gen_implicit_usings.py` and generate
   `backend/src/graphora/resolve/data/implicit_usings.txt` (research R4): it downloads, at the pinned tags, the props
   files listed in R4 (`dotnet/sdk` `v10.0.100`: `Microsoft.NET.Sdk.CSharp.props`, `WebSdk/Web/Targets/Sdk.Server.props`,
   `WebSdk/Worker/Targets/Microsoft.NET.Sdk.Worker.props`; `dotnet/winforms` `v10.0.0`; `dotnet/wpf` `v10.0.0`), reads
   them with expat (DTDs refused), and keeps `<Using Include>` items inside an `ItemGroup` whose `Condition` tests
   `ImplicitUsings`. Output: `# dotnet-implicit-usings@10.0.100`, then `<group> <namespace>` lines with groups
-  `base`, `web`, `worker`, `winforms`, `wpf`, sorted. Module docstring as in the other generators (network, never run
+  `base`, `web`, `worker`, `winforms`, sorted (WPF defines no implicit usings, so no `wpf` group). Module docstring as in the other generators (network, never run
   by tests or `analyze`). Test in `backend/tests/unit/test_cs_resolve.py`: `base` is exactly the seven namespaces
   in R4, `web` contains `Microsoft.AspNetCore.Builder`.
 
