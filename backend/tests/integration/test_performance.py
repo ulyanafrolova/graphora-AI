@@ -45,3 +45,31 @@ def test_thousand_ts_files_under_30s(tmp_path):
     assert code == 0, err
     assert "analyzed 1000 files, 4000 edges (0 unresolved)" in err
     assert elapsed < 30, f"took {elapsed:.1f}s"
+
+
+@pytest.mark.slow
+def test_thousand_csharp_files_in_20_projects_under_30s(tmp_path, validator):
+    """007 SC-005: 1,000 C# files in 20 chained projects (transitive visibility, spread namespaces) in under 30 s."""
+    import json
+
+    for i in range(20):
+        project = tmp_path / f"P{i}"
+        project.mkdir()
+        reference = f'<ItemGroup><ProjectReference Include="..\\P{i - 1}\\P{i - 1}.csproj" /></ItemGroup>' if i else ""
+        (project / f"P{i}.csproj").write_text(f'<Project Sdk="Microsoft.NET.Sdk">{reference}</Project>\n')
+        for m in range(50):
+            usings = ["using System.Linq;", f"using P{i}.Area{(m + 1) % 5};"]
+            if i:
+                usings.append(f"using P{i - 1}.Area{m % 5};")
+            body = f"namespace P{i}.Area{m % 5}\n{{\n    public class C{m}\n    {{\n        public int Run() => {m};\n    }}\n}}\n"
+            (project / f"C{m}.cs").write_text("\n".join(usings) + "\n\n" + body)
+
+    start = time.monotonic()
+    code, out, err = run_analyze(tmp_path)
+    elapsed = time.monotonic() - start
+
+    assert code == 0, err
+    # per file: 1 System.Linq + 10 files of a sibling namespace (+ 10 of the referenced project's namespace); 19 references
+    assert "analyzed 1000 files, 20519 edges (0 unresolved)" in err
+    assert elapsed < 30, f"took {elapsed:.1f}s"
+    validator.validate(json.loads(out))

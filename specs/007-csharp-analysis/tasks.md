@@ -258,7 +258,7 @@ fixtures.
   `csharp-edge` and a temporary repo with `ProjectReference Include="..\..\outside\X.csproj"`, a billion-laughs
   `DOCTYPE`, and `<Import>` starts no subprocess (`subprocess.Popen`, `os.system`, `os.exec*` patched to fail),
   opens no path outside the root (patched `open`/`os.open` recorder), and finishes within one second.
-- [ ] T016 [P] Extend `backend/tests/integration/test_performance.py` (marked `slow`, SC-005): generate about 1,000
+- [X] T016 [P] Extend `backend/tests/integration/test_performance.py` (marked `slow`, SC-005): generate about 1,000
   `.cs` files across 20 projects with project references, namespaces shared by several files and usings; assert
   analysis under 30 seconds and schema-valid output.
 - [ ] T017 Update docs for the slice: `README.md` feature status table and quick start (C# row, `dotnet`/`nuget`
