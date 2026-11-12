@@ -217,6 +217,7 @@ def loads(data: bytes) -> GraphDocument:
             _opt_str(f, "language", f"coverage.files[{i}]"),
             _enum(_str(f, "status", f"coverage.files[{i}]"), get_args(model.Status), f"coverage.files[{i}].status"),
             tuple(_enum(x, get_args(model.Flag), f"coverage.files[{i}].flags") for x in _list(f, "flags", f"coverage.files[{i}]")),
+            _int(f, "unresolved_type_names", f"coverage.files[{i}]") if isinstance(f, dict) and "unresolved_type_names" in f else None,
         )
         for i, f in enumerate(_list(coverage, "files", "coverage"))
     )

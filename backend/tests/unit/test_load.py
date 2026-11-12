@@ -55,7 +55,7 @@ def test_not_an_object():
     _invalid(b"[1, 2]", "object")
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 5])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 6])
 def test_schema_version(version):
     doc = _doc()
     doc["schema_version"] = version
@@ -141,7 +141,7 @@ def _cs_bytes(**edge_changes) -> bytes:
                 ProjectNode("B/B.csproj"),
             ),
             (edge, using),
-            (CoverageFile("A/P.cs", "csharp", "analyzed", ("ambiguous_project",)),),
+            (CoverageFile("A/P.cs", "csharp", "analyzed", ("ambiguous_project",), 2),),
             (),
         )
     )

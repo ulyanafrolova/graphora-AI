@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://graphora.dev/schema/graph.schema.json",
   "title": "Graphora graph document",
-  "description": "Schema version 4. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
+  "description": "Schema version 5. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,7 +15,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 4
+      "const": 5
     },
     "snapshot": {
       "$ref": "#/$defs/snapshot"
@@ -589,7 +589,8 @@
             "imports",
             "reexports",
             "project_reference",
-            "package_reference"
+            "package_reference",
+            "type_reference"
           ]
         },
         "form": {
@@ -898,7 +899,8 @@
               "type": {
                 "enum": [
                   "imports",
-                  "reexports"
+                  "reexports",
+                  "type_reference"
                 ]
               }
             }
@@ -907,6 +909,45 @@
             "properties": {
               "source": {
                 "pattern": "^file:"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "type_reference"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "directive"
+                  ]
+                },
+                {
+                  "required": [
+                    "alias"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "source": {
+                "pattern": "^file:"
+              },
+              "target": {
+                "pattern": "^(file:|unresolved:dotnet:)"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
               }
             }
           }
@@ -1008,8 +1049,31 @@
               "ambiguous_project"
             ]
           }
+        },
+        "unresolved_type_names": {
+          "type": "integer",
+          "minimum": 0
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "unresolved_type_names"
+            ]
+          },
+          "then": {
+            "properties": {
+              "language": {
+                "const": "csharp"
+              },
+              "status": {
+                "const": "analyzed"
+              }
+            }
+          }
+        }
+      ]
     },
     "skipped": {
       "type": "object",

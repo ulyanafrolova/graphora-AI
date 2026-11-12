@@ -1,6 +1,6 @@
 """In-memory graph model. Field meanings are defined in specs/001-python-graph-cli/data-model.md and the v2
 changes in specs/003-ts-js-analysis/data-model.md. v3 adds the `unreadable_dir` skip reason (issue #10). v4 adds C#
-(specs/007-csharp-analysis/data-model.md)."""
+(specs/007-csharp-analysis/data-model.md), v5 C# type references (specs/008-csharp-type-references/data-model.md)."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ DefinitionKind = Literal["class", "function", "method", "interface", "type_alias
 Category = Literal["stdlib", "builtin", "third_party"]
 Ecosystem = Literal["python", "npm", "dotnet", "nuget"]
 Form = Literal["static", "dynamic", "require"]
-EdgeType = Literal["imports", "reexports", "project_reference", "package_reference"]
+EdgeType = Literal["imports", "reexports", "project_reference", "package_reference", "type_reference"]
 Directive = Literal["using", "using_static", "using_alias"]
 
 UNRESOLVED_REASONS: frozenset[str] = frozenset(get_args(UnresolvedReason))
@@ -143,6 +143,8 @@ class Edge:
             raise ValueError("alias is allowed only on 'reexports' and 'using_alias' edges")
         if self.directive == "using_alias" and self.alias is None:
             raise ValueError("a 'using_alias' edge needs an alias")
+        if self.type == "type_reference" and (self.directive is not None or self.alias is not None):
+            raise ValueError("a 'type_reference' edge has no directive and no alias")
         if self.type == "reexports" and self.form != "static":
             raise ValueError("'reexports' edges always have form 'static'")
 
@@ -153,6 +155,7 @@ class CoverageFile:
     language: str | None
     status: Status
     flags: tuple[Flag, ...] = ()
+    unresolved_type_names: int | None = None  # 008: analyzed C# files only
 
 
 @dataclass(frozen=True)

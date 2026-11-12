@@ -9,6 +9,7 @@ from typing import Any
 
 from graphora.graph.model import (
     AssetNode,
+    CoverageFile,
     Definition,
     Edge,
     ExternalNode,
@@ -19,7 +20,7 @@ from graphora.graph.model import (
     UnresolvedNode,
 )
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 def _sha16(text: str) -> str:
@@ -99,6 +100,13 @@ def _edge_dict(edge: Edge) -> dict[str, Any]:
     return out
 
 
+def _coverage_file(f: CoverageFile) -> dict[str, Any]:
+    out: dict[str, Any] = {"path": f.path, "language": f.language, "status": f.status, "flags": sorted(f.flags)}
+    if f.unresolved_type_names is not None:
+        out["unresolved_type_names"] = f.unresolved_type_names
+    return out
+
+
 def to_dict(doc: GraphDocument) -> dict[str, Any]:
     files = sorted(doc.files, key=lambda f: f.path)
     skipped = sorted(doc.skipped, key=lambda s: s.path)
@@ -111,10 +119,7 @@ def to_dict(doc: GraphDocument) -> dict[str, Any]:
         "nodes": [_node_dict(n) for n in sorted(doc.nodes, key=lambda n: n.id)],
         "edges": [_edge_dict(e) for e in sorted(doc.edges, key=edge_sort_key)],
         "coverage": {
-            "files": [
-                {"path": f.path, "language": f.language, "status": f.status, "flags": sorted(f.flags)}
-                for f in files
-            ],
+            "files": [_coverage_file(f) for f in files],
             "skipped": [{"path": s.path, "reason": s.reason} for s in skipped],
             "summary": {
                 "analyzed": statuses["analyzed"],

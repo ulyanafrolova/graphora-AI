@@ -1,4 +1,4 @@
-"""Schema v4 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
+"""Schema v5 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
 
 import copy
 
@@ -167,7 +167,7 @@ def test_unresolved_without_ecosystem_rejected(ts_doc, validator):
     assert not validator.is_valid(bad)
 
 
-@pytest.mark.parametrize("version", [1, 2, 3])
+@pytest.mark.parametrize("version", [1, 2, 3, 4])
 def test_old_schema_version_rejected(doc, validator, version):
     bad = copy.deepcopy(doc)
     bad["schema_version"] = version
@@ -285,4 +285,49 @@ def test_cs_invalid_rejected(cs_doc, validator, case):
 def test_python_record_rejected(doc, validator):
     bad = copy.deepcopy(doc)
     bad["nodes"][0]["definitions"][0]["kind"] = "record"
+    assert not validator.is_valid(bad)
+
+
+# --- v5: C# type references (specs/008-csharp-type-references/contracts/graph.schema.json) -----------------------
+
+
+@pytest.fixture
+def types_doc(cs_doc):
+    """cs_doc plus a resolved, a partial and an ambiguous type reference, and an unresolved-type-name count."""
+    doc = copy.deepcopy(cs_doc)
+    base = {k: v for k, v in _cs_edge(doc, 2).items() if k not in ("directive", "global_using")}
+    doc["edges"] += [
+        dict(base, type="type_reference", line=20, symbol="App.U"),
+        dict(base, type="type_reference", line=21, target="file:App/M.cs", confidence="heuristic", reason="partial_type", symbol="App.M"),
+        dict(base, type="type_reference", line=22, target="unresolved:dotnet:Missing", confidence="unresolved", reason="ambiguous", symbol="Missing"),
+    ]
+    doc["coverage"]["files"][0]["unresolved_type_names"] = 2
+    return doc
+
+
+def _ref(doc, line):
+    return next(e for e in doc["edges"] if e["type"] == "type_reference" and e["line"] == line)
+
+
+def test_types_document_valid(types_doc, validator):
+    validator.validate(types_doc)
+
+
+TYPES_INVALID = {
+    "type_reference with directive": lambda d: _ref(d, 20).update(directive="using", global_using=False),
+    "type_reference with alias": lambda d: _ref(d, 20).update(alias="X"),
+    "type_reference to external": lambda d: _ref(d, 20).update(target="ext:dotnet:System.Linq"),
+    "type_reference from project": lambda d: _ref(d, 20).update(source="project:App/App.csproj"),
+    "type_reference to npm placeholder": lambda d: _ref(d, 22).update(target="unresolved:npm:Missing"),
+    "count on a python file": lambda d: d["coverage"]["files"][0].update(language="python"),
+    "count on a project file": lambda d: d["coverage"]["files"][0].update(path="App/App.csproj", status="not_code"),
+    "negative count": lambda d: d["coverage"]["files"][0].update(unresolved_type_names=-1),
+    "v4 document": lambda d: d.update(schema_version=4),
+}
+
+
+@pytest.mark.parametrize("case", sorted(TYPES_INVALID))
+def test_types_invalid_rejected(types_doc, validator, case):
+    bad = copy.deepcopy(types_doc)
+    TYPES_INVALID[case](bad)
     assert not validator.is_valid(bad)

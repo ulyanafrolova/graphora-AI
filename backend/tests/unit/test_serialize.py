@@ -77,8 +77,8 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_4():
-    assert to_dict(_doc())["schema_version"] == 4
+def test_schema_version_5():
+    assert to_dict(_doc())["schema_version"] == 5
 
 
 def test_sort_orders():
@@ -239,3 +239,11 @@ def test_directive_fields_only_on_csharp_using_edges():
 def test_edge_rules(confidence, reason, extra):
     with pytest.raises(ValueError):
         Edge("file:a.cs", "file:b.cs", None, 1, 1, SNAP, confidence, reason, "csharp-adapter@0.1.0", "sha256:0000000000000000", **extra)
+
+
+def test_type_reference_rules_and_count():
+    with pytest.raises(ValueError):
+        Edge("file:a.cs", "file:b.cs", "B", 1, 1, SNAP, "resolved", None, "csharp-adapter@0.2.0", "sha256:0000000000000000", type="type_reference", alias="X")
+    doc = GraphDocument(SNAP, {}, (), (), (CoverageFile("a.cs", "csharp", "analyzed", (), 3), CoverageFile("b.py", "python", "analyzed")), ())
+    files = to_dict(doc)["coverage"]["files"]
+    assert files[0]["unresolved_type_names"] == 3 and "unresolved_type_names" not in files[1]

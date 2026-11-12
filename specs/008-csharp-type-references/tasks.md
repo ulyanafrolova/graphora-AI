@@ -54,7 +54,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 
 ## Phase 2: Foundational (schema v5)
 
-- [ ] T003 Move the graph format to schema v5 (research R6, R8, R9; data-model.md):
+- [X] T003 Move the graph format to schema v5 (research R6, R8, R9; data-model.md):
   - copy `specs/008-csharp-type-references/contracts/graph.schema.json` to `schema/graph.schema.json`;
   - `backend/src/graphora/graph/model.py`: `EdgeType` adds `"type_reference"`; `Edge.__post_init__` rejects
     `directive` or `alias` on a `type_reference` edge; `CoverageFile` gains `unresolved_type_names: int | None =
