@@ -161,7 +161,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T014 [P] Extend `backend/tests/integration/test_safety_cs.py`: a `Directory.Build.props` with a `DOCTYPE` and
+- [X] T014 [P] Extend `backend/tests/integration/test_safety_cs.py`: a `Directory.Build.props` with a `DOCTYPE` and
   one with `<Import Project="..\..\outside\x.props" />` and a `$(…)` `<Using>`; no process started, no path outside the
   root opened, both `parse_error`/ignored as specified.
 - [ ] T015 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: generated files also declare

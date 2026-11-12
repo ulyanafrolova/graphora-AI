@@ -95,3 +95,38 @@ def test_csharp_edge_fixture_reads_only_its_own_files(tmp_path, monkeypatch):
     code, out, err = run_analyze(root)
     assert code == 0, err
     assert "Injected" not in {n["id"].rsplit(":", 1)[-1] for n in json.loads(out)["nodes"] if n["kind"] == "external"}
+
+
+def test_directory_build_props_are_data(tmp_path, monkeypatch):
+    """008 research R5: Directory.Build.props is read as data; imports and $(…) are never followed."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "x.props").write_text('<Project><ItemGroup><Using Include="Secret" /></ItemGroup></Project>\n')
+    (outside / "Secret.cs").write_text("namespace Secret { public class Leak { } }\n")
+    root = tmp_path / "repo"
+    (root / "safe" / "App").mkdir(parents=True)
+    (root / "safe" / "Directory.Build.props").write_text(
+        '<Project>\n  <Import Project="..\\..\\outside\\x.props" />\n'
+        '  <ItemGroup><Using Include="$(Injected)" /></ItemGroup>\n</Project>\n'
+    )
+    (root / "safe" / "App" / "App.csproj").write_text("<Project />\n")
+    (root / "safe" / "App" / "P.cs").write_text("class P { Leak l; }\n")
+    (root / "bomb" / "B").mkdir(parents=True)
+    lol = "".join(f'<!ENTITY l{i} "{"".join(f"&l{i - 1};" for _ in range(10))}">' for i in range(1, 10))
+    (root / "bomb" / "Directory.Build.props").write_text(f'<!DOCTYPE b [<!ENTITY l0 "x">{lol}]>\n<Project>&l9;</Project>\n')
+    (root / "bomb" / "B" / "B.csproj").write_text("<Project />\n")
+    (root / "bomb" / "B" / "Q.cs").write_text("class Q { }\n")
+
+    _no_processes(monkeypatch)
+    opened = _record_opens(monkeypatch)
+    start = time.monotonic()
+    code, out, err = run_analyze(root)
+    assert code == 0, err
+    assert time.monotonic() - start < 1.0
+    assert not [p for p in opened if p.startswith(str(outside))]
+    doc = json.loads(out)
+    assert [e for e in doc["edges"] if e["type"] == "type_reference"] == []  # `Leak` stays unknown
+    coverage = {f["path"]: f for f in doc["coverage"]["files"]}
+    assert coverage["safe/App/P.cs"]["unresolved_type_names"] == 1
+    assert coverage["bomb/Directory.Build.props"]["flags"] == ["parse_error"]
+    assert "ignoring bomb/Directory.Build.props" in err
