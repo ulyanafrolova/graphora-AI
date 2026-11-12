@@ -151,7 +151,7 @@ one project (or among project-less files).
     `dotnet-namespaces` (`resolve/data/dotnet_namespaces.txt`);
   - tests: `backend/tests/unit/test_languages.py`, `backend/tests/unit/test_build_analyze.py` (a two-file C#
     folder end to end, schema-valid).
-- [ ] T008 [US1] Add fixture `fixtures/repos/csharp-basic/` with `repo/`, hand-written `expected.json` and
+- [X] T008 [US1] Add fixture `fixtures/repos/csharp-basic/` with `repo/`, hand-written `expected.json` and
   `queries.json` (research R10): one `App/App.csproj`; block, nested and file-scoped namespaces; a
   global-namespace type; nested types; every definition kind; a `partial` class over two files; plain, static,
   alias, namespace-alias and `global using`; a `using` inside a namespace block resolved by relative lookup;
