@@ -97,7 +97,7 @@ CLI and MCP.
 
 **Independent Test**: `uv run pytest tests/unit/test_sln.py tests/golden -k csharp-multiproject`.
 
-- [ ] T007 [P] [US2] Create `backend/src/graphora/adapters/msbuild/sln.py` (`sln-reader@0.1.0`, research R1, R2):
+- [X] T007 [P] [US2] Create `backend/src/graphora/adapters/msbuild/sln.py` (`sln-reader@0.1.0`, research R1, R2):
   `read_sln(data) -> SolutionFacts` (UTF-8 with BOM, header line within the first 3 lines, `Project("{TYPE}") =
   "Name", "Path", "{GUID}"` entries with type GUID, path, line, column, line text; solution folders by GUID
   `2150E333-8FDC-42A3-9474-1A3956D46DE8`) and `read_slnx(data)` (expat, DTD refused, `Project Path=` anywhere,
