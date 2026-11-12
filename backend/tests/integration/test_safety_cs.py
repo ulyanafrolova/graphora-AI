@@ -130,3 +130,32 @@ def test_directory_build_props_are_data(tmp_path, monkeypatch):
     assert coverage["safe/App/P.cs"]["unresolved_type_names"] == 1
     assert coverage["bomb/Directory.Build.props"]["flags"] == ["parse_error"]
     assert "ignoring bomb/Directory.Build.props" in err
+
+
+def test_solution_files_are_data(tmp_path, monkeypatch):
+    """009 research R1–R3: solution files are read as data; entries outside the root are never read."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "X.csproj").write_text('<Project><ItemGroup><PackageReference Include="FromOutside" /></ItemGroup></Project>\n')
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "App.sln").write_text(
+        "Microsoft Visual Studio Solution File, Format Version 12.00\n"
+        'Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "X", "..\\outside\\X.csproj", "{1}"\nEndProject\n'
+    )
+    lol = "".join(f'<!ENTITY l{i} "{"".join(f"&l{i - 1};" for _ in range(10))}">' for i in range(1, 10))
+    (root / "Bomb.slnx").write_text(f'<!DOCTYPE s [<!ENTITY l0 "x">{lol}]>\n<Solution><Project Path="&l9;" /></Solution>\n')
+    (root / "P.cs").write_text("class P { }\n")
+
+    _no_processes(monkeypatch)
+    opened = _record_opens(monkeypatch)
+    start = time.monotonic()
+    code, out, err = run_analyze(root)
+    assert code == 0, err
+    assert time.monotonic() - start < 1.0
+    assert not [p for p in opened if p.startswith(str(outside))]
+    doc = json.loads(out)
+    member = next(e for e in doc["edges"] if e["type"] == "solution_member")
+    assert (member["confidence"], member["reason"]) == ("unresolved", "not_found")
+    assert not [n for n in doc["nodes"] if "FromOutside" in n["id"]]
+    assert {f["path"]: f["flags"] for f in doc["coverage"]["files"]}["Bomb.slnx"] == ["parse_error"]

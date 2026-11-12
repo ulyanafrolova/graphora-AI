@@ -134,7 +134,7 @@ CLI and MCP.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T011 [P] Extend `backend/tests/integration/test_safety_cs.py`: a `.slnx` with a `DOCTYPE` entity bomb and a `.sln`
+- [X] T011 [P] Extend `backend/tests/integration/test_safety_cs.py`: a `.slnx` with a `DOCTYPE` entity bomb and a `.sln`
   listing `..\..\outside\X.csproj`; no process, no read outside the root, `parse_error` / `not_found` as specified.
 - [ ] T012 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: after analysis, project-level
   `impact` of `P0` and `cycles` answer in under 2 s in total (SC-005).
