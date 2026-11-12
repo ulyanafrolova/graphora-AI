@@ -329,7 +329,10 @@ def _analyze(args: argparse.Namespace) -> int:
     for line in report.info:
         _log("info", line)
     for path in report.warnings:
-        _log("warning", f"ignoring {path}: not valid JSON-with-comments")
+        if path.lower().endswith(".csproj"):
+            _log("warning", f"ignoring {path}: not well-formed XML or has a DOCTYPE")
+        else:
+            _log("warning", f"ignoring {path}: not valid JSON-with-comments")
     _log(
         "info",
         f"analyzed {report.files} files, {report.edges} edges ({report.unresolved} unresolved), snapshot {report.snapshot}",

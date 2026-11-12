@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from graphora.adapters import csharp, js, python
+from graphora.adapters import csharp, js, msbuild, python
 from conftest import FIXTURES, REPO_ROOT, edge_key, project, run_analyze
 
 FIXTURE_NAMES = sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file())
@@ -44,7 +44,14 @@ def test_matches_expected(name, section, validator):
 def test_provenance_consistent(name):
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
-    extractors = {"python": python.EXTRACTOR, "typescript": js.EXTRACTOR, "javascript": js.EXTRACTOR, "csharp": csharp.EXTRACTOR}
+    languages.update({n["id"]: "msbuild" for n in doc["nodes"] if n["kind"] == "project"})
+    extractors = {
+        "python": python.EXTRACTOR,
+        "typescript": js.EXTRACTOR,
+        "javascript": js.EXTRACTOR,
+        "csharp": csharp.EXTRACTOR,
+        "msbuild": msbuild.EXTRACTOR,
+    }
     for edge in doc["edges"]:
         assert edge["snapshot"] == doc["snapshot"]
         assert edge["extractor"] == extractors[languages[edge["source"]]]
@@ -119,6 +126,7 @@ def test_ecosystems_separate(name):
     """003 US3, 007 R7: a target's ecosystem always matches its source file's language."""
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
+    languages.update({n["id"]: "csharp" for n in doc["nodes"] if n["kind"] == "project"})
     allowed = {"python": {"python"}, "typescript": {"npm"}, "javascript": {"npm"}, "csharp": {"dotnet", "nuget"}}
     for edge in doc["edges"]:
         if edge["target"].startswith(("ext:", "unresolved:")):
@@ -143,3 +151,13 @@ def test_edge_ids_unique_and_endpoints_exist(name):
     assert len(ids) == len(set(ids))
     nodes = {n["id"] for n in doc["nodes"]}
     assert all(e["source"] in nodes and e["target"] in nodes for e in doc["edges"])
+
+
+@pytest.mark.parametrize("name", FIXTURE_NAMES)
+def test_csharp_files_point_at_existing_projects(name):
+    """007 FR-009: a C# file's `project` is null or a project node of the same document."""
+    doc = json.loads(_analyze(FIXTURES / name / "repo"))
+    projects = {n["id"] for n in doc["nodes"] if n["kind"] == "project"}
+    for n in doc["nodes"]:
+        if n["kind"] == "file" and n["language"] == "csharp":
+            assert n["project"] is None or n["project"] in projects, n["id"]

@@ -202,7 +202,7 @@ hand-written `expected.json` files.
   - packages per project for FR-013 step 4: exactly one id equal to or a `.`-prefix of the namespace
     (case-insensitive) → `heuristic: package_prefix`; several → `unresolved: ambiguous`;
   - tests in `backend/tests/unit/test_cs_resolve.py` for every remaining row of the data-model tables.
-- [ ] T011 [US2] Wire projects into the build and CLI (depends on T010):
+- [X] T011 [US2] Wire projects into the build and CLI (depends on T010):
   - `backend/src/graphora/graph/build.py`: read every walked `.csproj`; project nodes (also for `parse_error`
     ones); `project_reference`/`package_reference` edges with `extractor="csproj-reader@0.1.0"`, `symbol` = the
     `Include` entry as written, `form="static"`, `type_only=False`; `nuget` external nodes; `parse_error`

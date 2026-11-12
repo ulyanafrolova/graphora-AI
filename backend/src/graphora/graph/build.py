@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 
-from graphora.adapters import csharp, js, python
+from graphora.adapters import csharp, js, msbuild, python
 from graphora.adapters.csharp import extract as cs_extract
+from graphora.adapters.msbuild import csproj
 from graphora.adapters.js import extract as js_extract
 from graphora.adapters.python import extract as py_extract
 from graphora.adapters.text import decode_python as _decode
@@ -21,6 +22,7 @@ from graphora.graph.model import (
     FileNode,
     GraphDocument,
     Node,
+    ProjectNode,
     UnresolvedNode,
 )
 from graphora.graph.serialize import snippet_hash
@@ -45,6 +47,7 @@ class Analysis:
 def current_extractors() -> dict[str, str]:
     """The extractor versions this code writes into every document (005 research § R6)."""
     return {
+        "csproj-reader": msbuild.VERSION,
         "csharp-adapter": csharp.VERSION,
         "csharp-resolver": cs_resolve.RESOLVER_VERSION,
         "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
@@ -140,9 +143,44 @@ def _node_for(target: str) -> Node | None:
     return None
 
 
+def _project_graph(projects: cs_resolve.Projects, snapshot: str, nodes: dict[str, Node], edges: list[Edge]) -> None:
+    """Project nodes and their reference edges (specs/007-csharp-analysis data-model.md § Project reference edge)."""
+    for path, project_facts in projects.facts.items():
+        node = ProjectNode(path)
+        nodes[node.id] = node
+        for item in project_facts.items:
+            if item.kind == "ProjectReference":
+                target = cs_resolve.resolve_project_reference(path, item, projects.paths)
+                edge_type = "project_reference"
+            elif item.kind == "PackageReference":
+                target = cs_resolve.resolve_package_reference(item, projects.spellings)
+                edge_type = "package_reference"
+            else:
+                continue
+            extra = _node_for(target.node_id)
+            if extra is not None:
+                nodes.setdefault(extra.id, extra)
+            edges.append(
+                Edge(
+                    source=node.id,
+                    target=target.node_id,
+                    symbol=target.symbol,
+                    line=item.line,
+                    column=item.column,
+                    snapshot=snapshot,
+                    confidence=target.confidence,
+                    reason=target.reason,
+                    extractor=msbuild.EXTRACTOR,
+                    snippet_hash=snippet_hash(item.text),
+                    type=edge_type,
+                )
+            )
+
+
 def _csharp_graph(
     facts: dict[str, cs_extract.CsFacts | None],
     owners: dict[str, str | None],
+    projects: cs_resolve.Projects,
     snapshot: str,
     nodes: dict[str, Node],
     edges: list[Edge],
@@ -150,12 +188,14 @@ def _csharp_graph(
     """File nodes and `using` edges (specs/007-csharp-analysis data-model.md § `using` edge)."""
     scopes = cs_resolve.build_scopes(facts, owners)
     resolver = cs_resolve.Resolver(scopes)
-    frameworks = cs_resolve.namespaces_for([cs_resolve.NETCORE])
+    contexts: dict[str | None, cs_resolve.Context] = {}
     for path, file_facts in sorted(facts.items()):
         project = owners.get(path)
         node = FileNode(path, "csharp", file_facts.definitions if file_facts else (), None, f"project:{project}" if project else None)
         nodes[node.id] = node
-        ctx = cs_resolve.Context(visible=((project or "", False),), frameworks=frameworks)
+        if project not in contexts:
+            contexts[project] = projects.context(project)
+        ctx = contexts[project]
         for record in file_facts.usings if file_facts else ():
             for target in resolver.resolve(path, record, ctx):
                 extra = _node_for(target.node_id)
@@ -209,7 +249,10 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     configs = load_configs(files, read)
     invalid_configs = frozenset(configs.invalid)
 
-    csproj_folders = cs_resolve.csproj_folders(p for p in walked.files if p.lower().endswith(".csproj"))
+    csproj_paths = sorted(p for p in walked.files if p.lower().endswith(".csproj"))
+    csproj_folders = cs_resolve.csproj_folders(csproj_paths)
+    csproj_facts = {p: csproj.read(contents[p]) for p in csproj_paths if p in contents}
+    broken_csproj = frozenset(p for p, f in csproj_facts.items() if f.has_error)
     cs_owners: dict[str, str | None] = {}
 
     coverage: list[CoverageFile] = []
@@ -243,7 +286,7 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
                 flags.append("parse_error")
         elif path not in contents:
             flags.append("unreadable")
-        if path in invalid_configs:
+        if path in invalid_configs or path in broken_csproj:
             flags.append("parse_error")
         coverage.append(CoverageFile(path, language, status, tuple(sorted(flags))))
 
@@ -252,7 +295,9 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _python_graph(py_facts, snapshot, nodes, edges)
     resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, read))
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
-    _csharp_graph(cs_facts, cs_owners, snapshot, nodes, edges)
+    projects = cs_resolve.Projects(csproj_facts)
+    _project_graph(projects, snapshot, nodes, edges)
+    _csharp_graph(cs_facts, cs_owners, projects, snapshot, nodes, edges)
 
     doc = GraphDocument(
         snapshot=snapshot,
@@ -263,4 +308,5 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
         files=tuple(coverage),
         skipped=tuple(walked.skipped),
     )
-    return Analysis(doc, configs.invalid, MappingProxyType(contents))
+    warnings = tuple(sorted(set(configs.invalid) | broken_csproj))
+    return Analysis(doc, warnings, MappingProxyType(contents))

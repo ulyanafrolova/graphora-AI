@@ -224,6 +224,11 @@
       ]
     },
     {
+      "id": "project:App/App.csproj",
+      "kind": "project",
+      "path": "App/App.csproj"
+    },
+    {
       "id": "unresolved:dotnet:Missing.Namespace",
       "kind": "unresolved",
       "ecosystem": "dotnet"

@@ -86,3 +86,37 @@ def test_csharp_folder_end_to_end(tmp_path, validator):
     assert coverage["App/App.csproj"] == ("csharp", "not_code")
     assert coverage["App/Program.cs"] == ("csharp", "analyzed")
     assert set(out["extractors"]) >= {"csharp-adapter", "csharp-resolver", "dotnet-namespaces"}
+
+
+def test_csharp_projects_end_to_end(tmp_path, validator):
+    """007 US2: project nodes, reference edges, visibility and a broken project file."""
+    import json
+
+    def write(path, text):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(text)
+
+    write("Web/Web.csproj", '<Project Sdk="Microsoft.NET.Sdk.Web">\n  <ItemGroup>\n    <ProjectReference Include="..\\Core\\Core.csproj" />\n    <PackageReference Include="Serilog" />\n  </ItemGroup>\n</Project>\n')
+    write("Core/Core.csproj", '<Project Sdk="Microsoft.NET.Sdk"></Project>\n')
+    write("Bad/Bad.csproj", "<Project><ItemGroup>\n")
+    write("Web/Home.cs", "using Core;\nusing Serilog.Events;\nusing Microsoft.AspNetCore.Mvc;\nclass Home {}\n")
+    write("Core/Order.cs", "using Web;\nnamespace Core;\nclass Order {}\n")
+    write("Bad/X.cs", "class X {}\n")
+    analysis = analyze(tmp_path, 100, 1024 * 1024, Deadline(30))
+    out = json.loads(dumps(analysis.doc))
+    validator.validate(out)
+    assert analysis.warnings == ("Bad/Bad.csproj",)
+    assert {n["id"] for n in out["nodes"] if n["kind"] == "project"} == {"project:Bad/Bad.csproj", "project:Core/Core.csproj", "project:Web/Web.csproj"}
+    edges = sorted((e["source"], e["line"], e["target"], e["type"], e["confidence"], e.get("reason")) for e in out["edges"])
+    assert edges == [
+        ("file:Core/Order.cs", 1, "unresolved:dotnet:Web", "imports", "unresolved", "not_found"),
+        ("file:Web/Home.cs", 1, "file:Core/Order.cs", "imports", "resolved", None),
+        ("file:Web/Home.cs", 2, "ext:nuget:Serilog", "imports", "heuristic", "package_prefix"),
+        ("file:Web/Home.cs", 3, "ext:dotnet:Microsoft.AspNetCore.Mvc", "imports", "resolved", None),
+        ("project:Web/Web.csproj", 3, "project:Core/Core.csproj", "project_reference", "resolved", None),
+        ("project:Web/Web.csproj", 4, "ext:nuget:Serilog", "package_reference", "resolved", None),
+    ]
+    coverage = {f["path"]: f["flags"] for f in out["coverage"]["files"]}
+    assert coverage["Bad/Bad.csproj"] == ["parse_error"]
+    files = {n["path"]: n["project"] for n in out["nodes"] if n["kind"] == "file"}
+    assert files == {"Bad/X.cs": "project:Bad/Bad.csproj", "Core/Order.cs": "project:Core/Core.csproj", "Web/Home.cs": "project:Web/Web.csproj"}
