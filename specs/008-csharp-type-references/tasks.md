@@ -164,7 +164,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
 - [X] T014 [P] Extend `backend/tests/integration/test_safety_cs.py`: a `Directory.Build.props` with a `DOCTYPE` and
   one with `<Import Project="..\..\outside\x.props" />` and a `$(…)` `<Using>`; no process started, no path outside the
   root opened, both `parse_error`/ignored as specified.
-- [ ] T015 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: generated files also declare
+- [X] T015 [P] Extend the C# test in `backend/tests/integration/test_performance.py`: generated files also declare
   fields and `new` expressions of types from their own and the referenced project, plus a `Directory.Build.props` with
   `ImplicitUsings`; update the expected edge count by hand; still under 30 s (SC-005).
 - [ ] T016 Docs: `README.md` (status row and schema diagram: `type_reference`, `unresolved_type_names`, v5),
