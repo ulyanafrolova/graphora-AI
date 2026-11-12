@@ -85,7 +85,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
   parameter, field or property name; `CsFacts.declared_names` not exported. Tests in
   `backend/tests/unit/test_cs_extract.py`: every position in R1, generics, `global::`, attributes, type parameters,
   `var`, `x.y.Z()` vs `Static.Call()`, `#if` branches, a syntax error.
-- [ ] T005 [P] [US1] Implement type lookup in `backend/src/graphora/resolve/csharp.py`
+- [X] T005 [P] [US1] Implement type lookup in `backend/src/graphora/resolve/csharp.py`
   (`RESOLVER_VERSION = "0.2.0"`, research R2/R3, data-model.md § Resolution of a type reference): load
   `dotnet_types.txt`; `Resolver.resolve_type(path, ref, ctx, usings) -> TypeResult` walking the namespace levels
   innermost → global with the three steps of the table, aliases (`using X = …` at the matching level), the

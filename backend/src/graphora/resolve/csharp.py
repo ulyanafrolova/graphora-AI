@@ -12,17 +12,19 @@ from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path, PurePosixPath
 
-from graphora.adapters.csharp.extract import CsFacts, UsingRecord
+from graphora.adapters.csharp.extract import CsFacts, TypeRef, UsingRecord
 from graphora.adapters.msbuild.csproj import Item, ProjectFacts
 
-RESOLVER_VERSION = "0.1.0"
+RESOLVER_VERSION = "0.2.0"  # 0.2.0: type references (specs/008-csharp-type-references)
 NAMESPACES_VERSION = "10.0.0"
+TYPES_VERSION = "10.0.0"
 NETCORE = "Microsoft.NETCore.App"
 ASPNETCORE = "Microsoft.AspNetCore.App"
 WINDOWSDESKTOP = "Microsoft.WindowsDesktop.App"
 _WEB_SDKS = frozenset({"Microsoft.NET.Sdk.Web", "Microsoft.NET.Sdk.Razor", "Microsoft.NET.Sdk.BlazorWebAssembly"})
 _MSBUILD_SYNTAX = ("$(", "@(", "*", "?")
 _DATA = Path(__file__).with_name("data") / "dotnet_namespaces.txt"
+_TYPES = Path(__file__).with_name("data") / "dotnet_types.txt"
 
 
 @cache
@@ -34,6 +36,28 @@ def framework_namespaces() -> Mapping[str, frozenset[str]]:
             framework, namespace = line.split(" ", 1)
             out.setdefault(framework, set()).add(namespace)
     return {k: frozenset(v) for k, v in sorted(out.items())}
+
+
+@cache
+def framework_types() -> Mapping[str, Mapping[str, frozenset[str]]]:
+    """Shared framework → namespace → public top-level type names, from the shipped list (008 research R3)."""
+    out: dict[str, dict[str, set[str]]] = {}
+    for line in _TYPES.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            framework, namespace, name = line.split(" ", 2)
+            out.setdefault(framework, {}).setdefault(namespace, set()).add(name)
+    return {f: {n: frozenset(t) for n, t in sorted(ns.items())} for f, ns in sorted(out.items())}
+
+
+@cache
+def types_for(frameworks: tuple[str, ...]) -> Mapping[str, frozenset[str]]:
+    """Base-library namespace → type names for a set of frameworks (merged)."""
+    table = framework_types()
+    merged: dict[str, set[str]] = {}
+    for f in sorted(set(frameworks)):
+        for namespace, names in table.get(f, {}).items():
+            merged.setdefault(namespace, set()).update(names)
+    return {n: frozenset(t) for n, t in sorted(merged.items())}
 
 
 def namespaces_for(frameworks: Iterable[str]) -> frozenset[str]:
@@ -129,6 +153,7 @@ class Context:
     visible: tuple[tuple[str, bool], ...]
     frameworks: frozenset[str]  # base-library namespaces of the file's project
     packages: Mapping[str, str] = field(default_factory=dict)  # lower-case package id → node spelling
+    library: Mapping[str, frozenset[str]] = field(default_factory=dict)  # base-library namespace → type names
 
 
 _PRIORITY = ("partial_type", "namespace_spread", "package_prefix", "msbuild_condition")
@@ -278,7 +303,7 @@ class Projects:
     def context(self, project: str | None) -> Context:
         """What a file owned by `project` (None: project-less or ambiguous) can see."""
         if project is None or project not in self.facts:
-            return Context(visible=(("", False),), frameworks=namespaces_for([NETCORE]))
+            return Context(visible=(("", False),), frameworks=namespaces_for([NETCORE]), library=types_for((NETCORE,)))
         firm = self._reach(project, True)
         every = self._reach(project, False)
         visible = ((project, False),) + tuple((p, p not in firm) for p in sorted(every - {project}))
@@ -292,4 +317,167 @@ class Projects:
         packages = {
             t.symbol.lower(): t.node_id.removeprefix("ext:nuget:") for t in self.packages[project] if t.node_id.startswith("ext:nuget:")
         }
-        return Context(visible=visible, frameworks=namespaces_for(frameworks), packages=dict(sorted(packages.items())))
+        return Context(
+            visible=visible,
+            frameworks=namespaces_for(frameworks),
+            packages=dict(sorted(packages.items())),
+            library=types_for(tuple(frameworks)),
+        )
+
+
+# --- type references (specs/008-csharp-type-references data-model.md § Resolution of a type reference) -----------
+
+
+@dataclass(frozen=True)
+class GlobalUsing:
+    """A using that applies to every file of a project: `global using`, implicit, `<Using>` item (008 R4, R5)."""
+
+    origin: str  # directive id `path:line:column`, or `implicit:<group>`, `item:<path>:<line>`
+    namespace: str | None = None  # imported namespace
+    alias: str | None = None  # alias name, with `namespace` holding its target
+    conditional: bool = False
+
+
+@dataclass(frozen=True)
+class TypeResult:
+    targets: tuple[Target, ...]  # file targets, or one `unresolved:dotnet:` target for an ambiguous name
+    via: tuple[str, ...]  # ids of the directives the name was resolved through (for the `using` fallback)
+    found: bool  # matched a repository or base-library type (or was ambiguous)
+
+
+_NOT_FOUND = TypeResult((), (), False)
+
+
+def directive_id(path: str, record: UsingRecord) -> str:
+    return f"{path}:{record.line}:{record.column}"
+
+
+def _levels(namespace: str) -> list[str]:
+    """`A.B` → [`A.B`, `A`, ``]."""
+    parts = namespace.split(".") if namespace else []
+    return [".".join(parts[:i]) for i in range(len(parts), 0, -1)] + [""]
+
+
+def _split(full: str) -> tuple[str, str]:
+    namespace, _, name = full.rpartition(".")
+    return namespace, name
+
+
+class FileUsings:
+    """The usings one file sees, grouped by namespace level (008 data-model.md § Resolution)."""
+
+    def __init__(self, path: str, usings: Iterable[UsingRecord], project: Iterable[GlobalUsing] = ()) -> None:
+        self.imports: dict[str, list[tuple[str, str, bool]]] = {}  # level → (namespace, directive id, conditional)
+        self.aliases: dict[str, dict[str, list[tuple[str, str, bool]]]] = {}  # level → alias → (target, id, conditional)
+        for record in usings:
+            if record.target is None or record.form == "using_static":
+                continue
+            level = "" if record.global_using else record.namespace
+            entry = (record.target, directive_id(path, record), False)
+            if record.form == "using_alias" and record.alias:
+                self.aliases.setdefault(level, {}).setdefault(record.alias, []).append(entry)
+            else:
+                self.imports.setdefault(level, []).append(entry)
+        for g in project:
+            if g.namespace is None:
+                continue
+            if g.alias:
+                self.aliases.setdefault("", {}).setdefault(g.alias, []).append((g.namespace, g.origin, g.conditional))
+            else:
+                self.imports.setdefault("", []).append((g.namespace, g.origin, g.conditional))
+
+
+def _with_reason(target: Target, extra: str | None) -> Target:
+    reason = _reason(target.reason, extra)
+    return Target(target.node_id, target.symbol, "heuristic" if reason else target.confidence, reason)
+
+
+class TypeResolver:
+    """Resolves type references over the slice-1 index (same scopes and visibility as `using` resolution)."""
+
+    def __init__(self, resolver: Resolver) -> None:
+        self.r = resolver
+
+    def _repo(self, full: str, ctx: Context) -> dict[str, bool]:
+        return self.r._files("types", full, ctx)
+
+    @staticmethod
+    def _library(full: str, ctx: Context) -> bool:
+        namespace, name = _split(full)
+        return name in ctx.library.get(namespace, frozenset())
+
+    def _edges(self, path: str, full: str, files: dict[str, bool], conditional: bool) -> tuple[Target, ...]:
+        spread = "partial_type" if len(files) > 1 else None
+        out = []
+        for f, only_conditional in sorted(files.items()):
+            if f == path:
+                continue
+            reason = _reason(spread, "msbuild_condition" if (only_conditional or conditional) else None)
+            out.append(Target(f"file:{f}", full, "heuristic" if reason else "resolved", reason))
+        return tuple(out)
+
+    def _found(self, path: str, full: str, ctx: Context, via: tuple[str, ...], conditional: bool) -> TypeResult | None:
+        files = self._repo(full, ctx)
+        if files:
+            return TypeResult(self._edges(path, full, files, conditional), via, True)
+        if self._library(full, ctx):
+            return TypeResult((), via, True)
+        return None
+
+    def resolve(self, path: str, ref: TypeRef, ctx: Context, usings: FileUsings) -> TypeResult:
+        names = [ref.name + "Attribute", ref.name] if ref.kind == "attribute" else [ref.name]
+        for name in names:
+            result = self._resolve_name(path, name, ref, ctx, usings)
+            if result.found:
+                return result
+        return _NOT_FOUND
+
+    def _resolve_name(self, path: str, name: str, ref: TypeRef, ctx: Context, usings: FileUsings) -> TypeResult:
+        if ref.rooted:
+            return self._found(path, name, ctx, (), False) or _NOT_FOUND
+        levels = _levels(ref.namespace)
+        if "." in name:
+            return self._qualified(path, name, levels, ctx, usings)
+        for level in levels:
+            # 1. a type declared directly in this namespace
+            found = self._found(path, f"{level}.{name}" if level else name, ctx, (), False)
+            if found is not None:
+                return found
+            # 2. an alias declared at this level
+            for target, origin, conditional in usings.aliases.get(level, {}).get(name, ()):
+                found = self._found(path, target, ctx, (origin,), conditional)
+                if found is not None:
+                    return found
+            # 3. namespaces imported at this level: one distinct type wins, several are ambiguous
+            matches: dict[str, list[tuple[str, bool]]] = {}
+            for namespace, origin, conditional in usings.imports.get(level, ()):
+                full = f"{namespace}.{name}"
+                if self._repo(full, ctx) or self._library(full, ctx):
+                    matches.setdefault(full, []).append((origin, conditional))
+            if len(matches) == 1:
+                ((full, sources),) = matches.items()
+                conditional = all(c for _, c in sources)
+                via = tuple(sorted({o for o, _ in sources}))
+                return self._found(path, full, ctx, via, conditional) or _NOT_FOUND
+            if len(matches) > 1:
+                ambiguous = Target(f"unresolved:dotnet:{name}", name, "unresolved", "ambiguous")
+                return TypeResult((ambiguous,), (), True)
+        return _NOT_FOUND
+
+    def _qualified(self, path: str, name: str, levels: list[str], ctx: Context, usings: FileUsings) -> TypeResult:
+        first, _, rest = name.partition(".")
+        for level in levels:
+            for target, origin, conditional in usings.aliases.get(level, {}).get(first, ()):
+                found = self._found(path, f"{target}.{rest}", ctx, (origin,), conditional)
+                if found is not None:
+                    return found
+        for level in levels:
+            found = self._found(path, f"{level}.{name}" if level else name, ctx, (), False)
+            if found is not None:
+                return found
+        for level in levels:
+            for namespace, origin, conditional in usings.imports.get(level, ()):
+                found = self._found(path, f"{namespace}.{name}", ctx, (origin,), conditional)
+                if found is not None:
+                    return found
+        return _NOT_FOUND
