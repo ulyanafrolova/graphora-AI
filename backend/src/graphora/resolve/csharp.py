@@ -6,16 +6,22 @@ Never guesses: several possible targets give several `heuristic` edges with a re
 
 from __future__ import annotations
 
+import posixpath
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path, PurePosixPath
 
 from graphora.adapters.csharp.extract import CsFacts, UsingRecord
+from graphora.adapters.msbuild.csproj import Item, ProjectFacts
 
 RESOLVER_VERSION = "0.1.0"
 NAMESPACES_VERSION = "10.0.0"
 NETCORE = "Microsoft.NETCore.App"
+ASPNETCORE = "Microsoft.AspNetCore.App"
+WINDOWSDESKTOP = "Microsoft.WindowsDesktop.App"
+_WEB_SDKS = frozenset({"Microsoft.NET.Sdk.Web", "Microsoft.NET.Sdk.Razor", "Microsoft.NET.Sdk.BlazorWebAssembly"})
+_MSBUILD_SYNTAX = ("$(", "@(", "*", "?")
 _DATA = Path(__file__).with_name("data") / "dotnet_namespaces.txt"
 
 
@@ -207,3 +213,83 @@ class Resolver:
         if matches:
             return [Target(f"unresolved:dotnet:{written}", written, "unresolved", "ambiguous")]
         return [Target(f"unresolved:dotnet:{written}", written, "unresolved", "not_found")]
+
+
+# --- projects (data-model.md § ProjectReference, § PackageReference; research R4) ---------------------------------
+
+
+def _condition(conditional: bool) -> tuple[str, str | None]:
+    return ("heuristic", "msbuild_condition") if conditional else ("resolved", None)
+
+
+def resolve_project_reference(project: str, item: Item, projects: frozenset[str]) -> Target:
+    include = item.include
+    if any(token in include for token in _MSBUILD_SYNTAX):
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "msbuild_property")
+    relative = include.replace("\\", "/")
+    if relative.startswith("/") or (len(relative) > 1 and relative[1] == ":"):
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "not_found")
+    joined = posixpath.normpath(posixpath.join(posixpath.dirname(project), relative))
+    if joined == ".." or joined.startswith("../"):
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "not_found")
+    if joined in projects:
+        confidence, reason = _condition(item.conditional)
+        return Target(f"project:{joined}", include, confidence, reason)
+    return Target(f"unresolved:dotnet:{joined}", include, "unresolved", "not_found")
+
+
+def resolve_package_reference(item: Item, spellings: Mapping[str, str]) -> Target:
+    include = item.include
+    if "$(" in include or "@(" in include:
+        return Target(f"unresolved:dotnet:{include}", include, "unresolved", "msbuild_property")
+    confidence, reason = _condition(item.conditional)
+    return Target(f"ext:nuget:{spellings[include.lower()]}", include, confidence, reason)
+
+
+class Projects:
+    """Project references, visibility, frameworks and packages of every walked `.csproj` (sorted throughout)."""
+
+    def __init__(self, facts: Mapping[str, ProjectFacts]) -> None:
+        self.facts = dict(sorted(facts.items()))
+        self.paths = frozenset(self.facts)
+        self.spellings: dict[str, str] = {}
+        for p in self.facts:
+            for item in self.facts[p].items:
+                if item.kind == "PackageReference" and "$(" not in item.include and "@(" not in item.include:
+                    self.spellings.setdefault(item.include.lower(), item.include)
+        self.references: dict[str, list[Target]] = {}
+        self.packages: dict[str, list[Target]] = {}
+        for p, f in self.facts.items():
+            self.references[p] = [resolve_project_reference(p, i, self.paths) for i in f.items if i.kind == "ProjectReference"]
+            self.packages[p] = [resolve_package_reference(i, self.spellings) for i in f.items if i.kind == "PackageReference"]
+
+    def _reach(self, start: str, unconditional_only: bool) -> set[str]:
+        seen, todo = {start}, [start]
+        while todo:
+            for t in self.references.get(todo.pop(), ()):
+                if not t.node_id.startswith("project:") or (unconditional_only and t.confidence != "resolved"):
+                    continue
+                target = t.node_id.removeprefix("project:")
+                if target not in seen:
+                    seen.add(target)
+                    todo.append(target)
+        return seen
+
+    def context(self, project: str | None) -> Context:
+        """What a file owned by `project` (None: project-less or ambiguous) can see."""
+        if project is None or project not in self.facts:
+            return Context(visible=(("", False),), frameworks=namespaces_for([NETCORE]))
+        firm = self._reach(project, True)
+        every = self._reach(project, False)
+        visible = ((project, False),) + tuple((p, p not in firm) for p in sorted(every - {project}))
+        f = self.facts[project]
+        frameworks = [NETCORE]
+        framework_refs = {i.include for i in f.items if i.kind == "FrameworkReference"}
+        if f.sdk in _WEB_SDKS or ASPNETCORE in framework_refs:
+            frameworks.append(ASPNETCORE)
+        if f.use_wpf or f.use_windows_forms or WINDOWSDESKTOP in framework_refs:
+            frameworks.append(WINDOWSDESKTOP)
+        packages = {
+            t.symbol.lower(): t.node_id.removeprefix("ext:nuget:") for t in self.packages[project] if t.node_id.startswith("ext:nuget:")
+        }
+        return Context(visible=visible, frameworks=namespaces_for(frameworks), packages=dict(sorted(packages.items())))

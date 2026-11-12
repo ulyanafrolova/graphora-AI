@@ -3,9 +3,11 @@
 import pytest
 
 from graphora.adapters.csharp.extract import extract
+from graphora.adapters.msbuild.csproj import read as read_csproj
 from graphora.resolve.csharp import (
     NETCORE,
     Context,
+    Projects,
     Resolver,
     Target,
     build_scopes,
@@ -187,3 +189,143 @@ def test_reason_priority():
     assert _reason(None, "msbuild_condition") == "msbuild_condition"
     assert _reason("package_prefix", "partial_type") == "partial_type"
     assert _reason(None, None) is None
+
+
+# --- projects (T010: data-model.md § ProjectReference, § PackageReference, research R4) --------------------------
+
+
+def _csproj(*items: str, sdk="Microsoft.NET.Sdk", extra="") -> bytes:
+    body = "\n".join(f"    {i}" for i in items)
+    return f'<Project Sdk="{sdk}">\n  {extra}\n  <ItemGroup>\n{body}\n  </ItemGroup>\n</Project>\n'.encode()
+
+
+@pytest.fixture(scope="module")
+def projects():
+    return Projects(
+        {
+            "src/Web/Web.csproj": read_csproj(
+                _csproj(
+                    '<ProjectReference Include="..\\Core\\Core.csproj" />',
+                    '<ProjectReference Include="../Missing/Missing.csproj" />',
+                    '<ProjectReference Include="$(Root)\\X.csproj" />',
+                    '<ProjectReference Include="..\\..\\..\\outside\\O.csproj" />',
+                    '<ProjectReference Include="..\\Opt\\Opt.csproj" Condition="\'$(A)\' == \'1\'" />',
+                    '<PackageReference Include="serilog" Version="3" />',
+                    '<PackageReference Include="Foo" />',
+                    '<PackageReference Include="Foo.Bar" />',
+                    '<PackageReference Include="$(Pkg)" />',
+                    sdk="Microsoft.NET.Sdk.Web",
+                )
+            ),
+            "src/Core/Core.csproj": read_csproj(_csproj('<ProjectReference Include="..\\Base\\Base.csproj" />', '<PackageReference Include="Serilog" />')),
+            "src/Base/Base.csproj": read_csproj(_csproj()),
+            "src/Opt/Opt.csproj": read_csproj(_csproj()),
+            "src/Desk/Desk.csproj": read_csproj(_csproj(extra="<PropertyGroup><UseWindowsForms>true</UseWindowsForms></PropertyGroup>")),
+            "src/Lone/Lone.csproj": read_csproj(_csproj()),
+        }
+    )
+
+
+def test_project_references(projects):
+    assert [(t.node_id, t.confidence, t.reason) for t in projects.references["src/Web/Web.csproj"]] == [
+        ("project:src/Core/Core.csproj", "resolved", None),
+        ("unresolved:dotnet:src/Missing/Missing.csproj", "unresolved", "not_found"),
+        ("unresolved:dotnet:$(Root)\\X.csproj", "unresolved", "msbuild_property"),
+        ("unresolved:dotnet:..\\..\\..\\outside\\O.csproj", "unresolved", "not_found"),
+        ("project:src/Opt/Opt.csproj", "heuristic", "msbuild_condition"),
+    ]
+    assert projects.references["src/Web/Web.csproj"][0].symbol == "..\\Core\\Core.csproj"
+
+
+def test_package_references_keep_the_first_spelling(projects):
+    assert [(t.node_id, t.confidence, t.reason) for t in projects.packages["src/Web/Web.csproj"]] == [
+        ("ext:nuget:Serilog", "resolved", None),
+        ("ext:nuget:Foo", "resolved", None),
+        ("ext:nuget:Foo.Bar", "resolved", None),
+        ("unresolved:dotnet:$(Pkg)", "unresolved", "msbuild_property"),
+    ]
+    assert [t.node_id for t in projects.packages["src/Core/Core.csproj"]] == ["ext:nuget:Serilog"]
+    assert projects.packages["src/Web/Web.csproj"][0].symbol == "serilog"  # as written; node spelling from Core
+
+
+def test_visibility_is_transitive_and_marks_conditional_paths(projects):
+    assert projects.context("src/Web/Web.csproj").visible == (
+        ("src/Web/Web.csproj", False),
+        ("src/Base/Base.csproj", False),
+        ("src/Core/Core.csproj", False),
+        ("src/Opt/Opt.csproj", True),
+    )
+    assert projects.context("src/Lone/Lone.csproj").visible == (("src/Lone/Lone.csproj", False),)
+    assert projects.context(None).visible == (("", False),)
+
+
+def test_frameworks_depend_on_the_sdk(projects):
+    assert "Microsoft.AspNetCore.Mvc" in projects.context("src/Web/Web.csproj").frameworks
+    assert "Microsoft.AspNetCore.Mvc" not in projects.context("src/Core/Core.csproj").frameworks
+    assert "System.Windows.Forms" in projects.context("src/Desk/Desk.csproj").frameworks
+    assert "System.Linq" in projects.context(None).frameworks
+
+
+SOURCES = {
+    "src/Web/Home.cs": "namespace Web { class Home {} }",
+    "src/Core/Order.cs": "namespace Core.Domain { class Order {} }",
+    "src/Core/Line.cs": "namespace Core.Domain { class Line {} }",
+    "src/Base/Id.cs": "namespace Base { class Id {} }",
+    "src/Opt/Extra.cs": "namespace Opt { class Extra {} }",
+    "src/Lone/Hidden.cs": "namespace Hidden { class H {} }",
+}
+
+
+@pytest.fixture(scope="module")
+def multi(projects):
+    from graphora.resolve.csharp import csproj_folders
+
+    folders = csproj_folders(projects.paths)
+    owners = {p: owner(p, folders)[0] for p in SOURCES}
+    return Resolver(build_scopes({p: extract(s.encode()) for p, s in SOURCES.items()}, owners))
+
+
+def _web(multi, projects, source):
+    return multi.resolve("src/Web/Home.cs", _record(source), projects.context("src/Web/Web.csproj"))
+
+
+def test_referenced_project_namespace(multi, projects):
+    targets = _web(multi, projects, "using Core.Domain;")
+    assert [(t.node_id, t.reason) for t in targets] == [("file:src/Core/Line.cs", "namespace_spread"), ("file:src/Core/Order.cs", "namespace_spread")]
+
+
+def test_transitive_reference(multi, projects):
+    assert _web(multi, projects, "using Base;") == [Target("file:src/Base/Id.cs", "Base", "resolved", None)]
+
+
+def test_conditional_reference_downgrades(multi, projects):
+    assert _web(multi, projects, "using Opt;") == [Target("file:src/Opt/Extra.cs", "Opt", "heuristic", "msbuild_condition")]
+
+
+def test_unreferenced_project_is_not_referenced(multi, projects):
+    assert _web(multi, projects, "using Hidden;") == [Target("unresolved:dotnet:Hidden", "Hidden", "unresolved", "not_referenced")]
+
+
+def test_reference_is_one_way(multi, projects):
+    targets = multi.resolve("src/Core/Order.cs", _record("using Web;"), projects.context("src/Core/Core.csproj"))
+    assert targets[0].reason == "not_referenced"
+
+
+def test_package_prefix(multi, projects):
+    assert _web(multi, projects, "using Serilog.Events;") == [Target("ext:nuget:Serilog", "Serilog.Events", "heuristic", "package_prefix")]
+    assert _web(multi, projects, "using serilog;")[0].node_id == "ext:nuget:Serilog"
+    assert _web(multi, projects, "using SerilogX;")[0].reason == "not_found"
+
+
+def test_ambiguous_package_prefix(multi, projects):
+    assert _web(multi, projects, "using Foo.Bar.Baz;") == [Target("unresolved:dotnet:Foo.Bar.Baz", "Foo.Bar.Baz", "unresolved", "ambiguous")]
+    assert _web(multi, projects, "using Foo.Other;")[0].node_id == "ext:nuget:Foo"
+
+
+def test_package_through_type_alias(multi, projects):
+    targets = _web(multi, projects, "using J = Serilog.Log;")
+    assert targets == [Target("ext:nuget:Serilog", "Serilog.Log", "heuristic", "package_prefix")]
+
+
+def test_base_library_wins_over_package_prefix(multi, projects):
+    assert _web(multi, projects, "using Microsoft.AspNetCore.Mvc;")[0].node_id == "ext:dotnet:Microsoft.AspNetCore.Mvc"

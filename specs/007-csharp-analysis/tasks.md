@@ -185,7 +185,7 @@ hand-written `expected.json` files.
   - never follows `<Import>`, never reads another file;
   - tests in `backend/tests/unit/test_csproj.py`: each item kind, `;` lists, conditions on item and group,
     `Update`, namespace-qualified old-style project, BOM, DOCTYPE with an entity, truncated XML, positions.
-- [ ] T010 [US2] Extend `backend/src/graphora/resolve/csharp.py` with projects (depends on T006, T009):
+- [X] T010 [US2] Extend `backend/src/graphora/resolve/csharp.py` with projects (depends on T006, T009):
   - `ProjectReference`: `$(`, `@(`, `*`, `?` → `unresolved: msbuild_property`; `\` → `/`, join to the
     `.csproj` folder, normalize; leaving the root or not a walked `.csproj` → `unresolved: not_found` (reference
     = tried path, or `Include` text when outside the root); else `resolved`, or `heuristic: msbuild_condition`
