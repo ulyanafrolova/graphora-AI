@@ -57,7 +57,7 @@ CLI and MCP.
 
 **Independent Test**: `uv run pytest tests/unit/test_project_view.py tests/golden -k csharp-types`.
 
-- [ ] T002 [US1] Create `backend/src/graphora/graph/project_view.py` (research R4): `ProjectView` built lazily from a
+- [X] T002 [US1] Create `backend/src/graphora/graph/project_view.py` (research R4): `ProjectView` built lazily from a
   `GraphIndex` (cached on it): file → project map; project links from non-`unresolved` `imports`/`type_reference`
   edges between files of different projects ("evidence", sorted by `edge_sort_key`); `declared` edges from resolved or
   heuristic `project_reference` edges; package links from `package_reference` (declared) and file edges to
