@@ -123,7 +123,7 @@ one project (or among project-less files).
   - directives and types inside `preproc_if`/`preproc_else` are kept; `has_error` from the tree;
   - tests in `backend/tests/unit/test_cs_extract.py`: each form, nested and file-scoped namespaces, nested types,
     every kind, partial, `#if`, a syntax error keeping readable parts, column on a line with a tab and non-ASCII.
-- [ ] T006 [P] [US1] Implement single-scope resolution in `backend/src/graphora/resolve/csharp.py`
+- [X] T006 [P] [US1] Implement single-scope resolution in `backend/src/graphora/resolve/csharp.py`
   (`RESOLVER_VERSION = "0.1.0"`, `NAMESPACES_VERSION = "10.0.0"`, research R4–R6, data-model.md § Resolution):
   - load `dotnet_namespaces.txt` into `framework → frozenset(namespaces)`;
   - `owner(path, csproj_paths) -> (project | None, ambiguous: bool)`: first folder upwards holding `.csproj`
