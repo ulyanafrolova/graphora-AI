@@ -33,6 +33,7 @@ COMPONENTS = {
     "csharp-resolver": (cs_resolve.RESOLVER_VERSION, ["resolve/csharp.py"], []),
     "dotnet-namespaces": (cs_resolve.NAMESPACES_VERSION, ["resolve/data/dotnet_namespaces.txt"], []),
     "dotnet-types": (cs_resolve.TYPES_VERSION, ["resolve/data/dotnet_types.txt"], []),
+    "dotnet-implicit-usings": (cs_resolve.IMPLICIT_USINGS_VERSION, ["resolve/data/implicit_usings.txt"], []),
 }
 
 

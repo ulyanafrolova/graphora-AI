@@ -13,18 +13,22 @@ from functools import cache
 from pathlib import Path, PurePosixPath
 
 from graphora.adapters.csharp.extract import CsFacts, TypeRef, UsingRecord
-from graphora.adapters.msbuild.csproj import Item, ProjectFacts
+from graphora.adapters.msbuild.csproj import Item, ProjectFacts, UsingItem
 
 RESOLVER_VERSION = "0.2.0"  # 0.2.0: type references (specs/008-csharp-type-references)
 NAMESPACES_VERSION = "10.0.0"
 TYPES_VERSION = "10.0.0"
+IMPLICIT_USINGS_VERSION = "10.0.100"
 NETCORE = "Microsoft.NETCore.App"
 ASPNETCORE = "Microsoft.AspNetCore.App"
 WINDOWSDESKTOP = "Microsoft.WindowsDesktop.App"
 _WEB_SDKS = frozenset({"Microsoft.NET.Sdk.Web", "Microsoft.NET.Sdk.Razor", "Microsoft.NET.Sdk.BlazorWebAssembly"})
 _MSBUILD_SYNTAX = ("$(", "@(", "*", "?")
+_WORKER_SDK = "Microsoft.NET.Sdk.Worker"
 _DATA = Path(__file__).with_name("data") / "dotnet_namespaces.txt"
 _TYPES = Path(__file__).with_name("data") / "dotnet_types.txt"
+_IMPLICIT = Path(__file__).with_name("data") / "implicit_usings.txt"
+PROPS = "Directory.Build.props"
 
 
 @cache
@@ -58,6 +62,17 @@ def types_for(frameworks: tuple[str, ...]) -> Mapping[str, frozenset[str]]:
         for namespace, names in table.get(f, {}).items():
             merged.setdefault(namespace, set()).update(names)
     return {n: frozenset(t) for n, t in sorted(merged.items())}
+
+
+@cache
+def implicit_usings() -> Mapping[str, tuple[str, ...]]:
+    """SDK group (`base`, `web`, `worker`, `winforms`) → implicit global usings, from the shipped list (008 R4)."""
+    out: dict[str, list[str]] = {}
+    for line in _IMPLICIT.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            group, namespace = line.split(" ", 1)
+            out.setdefault(group, []).append(namespace)
+    return {g: tuple(sorted(n)) for g, n in sorted(out.items())}
 
 
 def namespaces_for(frameworks: Iterable[str]) -> frozenset[str]:
@@ -274,12 +289,13 @@ def resolve_package_reference(item: Item, spellings: Mapping[str, str]) -> Targe
 class Projects:
     """Project references, visibility, frameworks and packages of every walked `.csproj` (sorted throughout)."""
 
-    def __init__(self, facts: Mapping[str, ProjectFacts]) -> None:
+    def __init__(self, facts: Mapping[str, ProjectFacts], props: Mapping[str, ProjectFacts] | None = None) -> None:
         self.facts = dict(sorted(facts.items()))
         self.paths = frozenset(self.facts)
+        self.props = dict(sorted((props or {}).items()))  # Directory.Build.props path → facts (008 R5)
         self.spellings: dict[str, str] = {}
-        for p in self.facts:
-            for item in self.facts[p].items:
+        for p in [*self.facts, *self.props]:
+            for item in (self.facts.get(p) or self.props[p]).items:
                 if item.kind == "PackageReference" and "$(" not in item.include and "@(" not in item.include:
                     self.spellings.setdefault(item.include.lower(), item.include)
         self.references: dict[str, list[Target]] = {}
@@ -314,8 +330,12 @@ class Projects:
             frameworks.append(ASPNETCORE)
         if f.use_wpf or f.use_windows_forms or WINDOWSDESKTOP in framework_refs:
             frameworks.append(WINDOWSDESKTOP)
+        props = self.props_for(project)
+        from_props = [resolve_package_reference(i, self.spellings) for i in (self.props[props].items if props else ()) if i.kind == "PackageReference"]
         packages = {
-            t.symbol.lower(): t.node_id.removeprefix("ext:nuget:") for t in self.packages[project] if t.node_id.startswith("ext:nuget:")
+            t.symbol.lower(): t.node_id.removeprefix("ext:nuget:")
+            for t in [*from_props, *self.packages[project]]
+            if t.node_id.startswith("ext:nuget:")
         }
         return Context(
             visible=visible,
@@ -324,6 +344,53 @@ class Projects:
             library=types_for(tuple(frameworks)),
         )
 
+
+    def props_for(self, project: str) -> str | None:
+        """The nearest `Directory.Build.props` in the project's folder or a parent folder (inside the root)."""
+        folder = PurePosixPath(project).parent
+        while True:
+            key = "" if str(folder) == "." else str(folder)
+            candidate = f"{key}/{PROPS}" if key else PROPS
+            if candidate in self.props:
+                return candidate
+            if key == "":
+                return None
+            folder = folder.parent
+
+
+    def global_usings(self, project: str | None, directives: Iterable[GlobalUsing] = ()) -> tuple[GlobalUsing, ...]:
+        """Effective global usings of one project, in the documented order; project-less: only `directives`."""
+        out: list[GlobalUsing] = []
+        if project is not None and project in self.facts:
+            facts = self.facts[project]
+            props_path = self.props_for(project)
+            layers: list[tuple[str, ProjectFacts]] = ([(props_path, self.props[props_path])] if props_path else []) + [(project, facts)]
+            implicit = None
+            for _, layer in layers:
+                if layer.implicit_usings is not None:
+                    implicit = layer.implicit_usings
+            if implicit is not None and "$(" not in implicit[0] and implicit[0] in ("enable", "true"):
+                groups = ["base"]
+                if facts.sdk in _WEB_SDKS:
+                    groups.append("web")
+                if facts.sdk == _WORKER_SDK:
+                    groups.append("worker")
+                if facts.use_windows_forms:
+                    groups.append("winforms")
+                table = implicit_usings()
+                for group in groups:
+                    out += [GlobalUsing(f"implicit:{group}", ns, None, implicit[1]) for ns in table.get(group, ())]
+            removed: list[UsingItem] = []
+            for path, layer in layers:
+                for item in layer.usings:
+                    if item.remove is not None:
+                        removed.append(item)
+                    elif item.include and "$(" not in item.include and not item.static:
+                        out.append(GlobalUsing(f"item:{path}:{item.line}", item.include, item.alias, item.conditional))
+            for item in removed:
+                out = [g for g in out if g.alias is not None or g.namespace != item.remove]
+        out += list(directives)
+        return tuple(out)
 
 # --- type references (specs/008-csharp-type-references data-model.md § Resolution of a type reference) -----------
 
@@ -369,9 +436,12 @@ class FileUsings:
     def __init__(self, path: str, usings: Iterable[UsingRecord], project: Iterable[GlobalUsing] = ()) -> None:
         self.imports: dict[str, list[tuple[str, str, bool]]] = {}  # level → (namespace, directive id, conditional)
         self.aliases: dict[str, dict[str, list[tuple[str, str, bool]]]] = {}  # level → alias → (target, id, conditional)
+        project = tuple(project)
         for record in usings:
             if record.target is None or record.form == "using_static":
                 continue
+            if record.global_using and project:
+                continue  # already part of the project's global usings
             level = "" if record.global_using else record.namespace
             entry = (record.target, directive_id(path, record), False)
             if record.form == "using_alias" and record.alias:
@@ -481,3 +551,15 @@ class TypeResolver:
                 if found is not None:
                     return found
         return _NOT_FOUND
+
+
+# --- project-wide usings (008 data-model.md § Project usings) ----------------------------------------------------
+
+def global_directives(path: str, usings: Iterable[UsingRecord]) -> list[GlobalUsing]:
+    """A file's `global using` directives as project-wide usings (static ones are not used for type lookup)."""
+    out = []
+    for record in usings:
+        if record.global_using and record.target is not None and record.form != "using_static":
+            alias = record.alias if record.form == "using_alias" else None
+            out.append(GlobalUsing(directive_id(path, record), record.target, alias, False))
+    return out

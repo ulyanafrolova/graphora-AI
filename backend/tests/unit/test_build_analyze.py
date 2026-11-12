@@ -159,3 +159,36 @@ def test_csharp_type_references_end_to_end(tmp_path, validator):
     coverage = {f["path"]: f.get("unresolved_type_names") for f in out["coverage"]["files"]}
     assert coverage["App/Program.cs"] == 1  # ILogger
     assert coverage["App/App.csproj"] is None
+
+
+def test_csharp_project_usings_end_to_end(tmp_path, validator):
+    """008 US2: implicit usings, Directory.Build.props, <Using> items and global usings across files."""
+    import json
+
+    def write(path, text):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text(text)
+
+    write(
+        "Directory.Build.props",
+        '<Project>\n  <PropertyGroup><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>\n'
+        '  <ItemGroup Condition="\'$(X)\' == \'\'"><Using Include="Lib.Debug" /></ItemGroup>\n</Project>\n',
+    )
+    write("Lib/Lib.csproj", '<Project Sdk="Microsoft.NET.Sdk"><ItemGroup><Using Include="Lib.Models" /></ItemGroup></Project>\n')
+    write("Lib/Models/User.cs", "namespace Lib.Models;\npublic class User { }\n")
+    write("Lib/Services/Mailer.cs", "namespace Lib.Services;\npublic class Mailer { }\n")
+    write("Lib/Debug/Probe.cs", "namespace Lib.Debug;\npublic class Probe { }\n")
+    write("Lib/GlobalUsings.cs", "global using Lib.Services;\n")
+    write("Lib/Use.cs", "namespace Lib.Use;\nclass Use\n{\n    User u;\n    Mailer m;\n    Probe p;\n    List<Task> tasks;\n}\n")
+    out = json.loads(dumps(analyze(tmp_path, 100, 1024 * 1024, Deadline(30)).doc))
+    validator.validate(out)
+    edges = sorted(
+        (e["source"], e["line"], e["type"], e["target"], e["confidence"], e.get("reason")) for e in out["edges"]
+    )
+    assert edges == [
+        ("file:Lib/Use.cs", 4, "type_reference", "file:Lib/Models/User.cs", "resolved", None),
+        ("file:Lib/Use.cs", 5, "type_reference", "file:Lib/Services/Mailer.cs", "resolved", None),
+        ("file:Lib/Use.cs", 6, "type_reference", "file:Lib/Debug/Probe.cs", "heuristic", "msbuild_condition"),
+    ]  # the global using in GlobalUsings.cs was used, so its fallback edge is gone
+    coverage = {f["path"]: f.get("unresolved_type_names") for f in out["coverage"]["files"]}
+    assert coverage["Lib/Use.cs"] == 0  # List and Task come from the implicit usings

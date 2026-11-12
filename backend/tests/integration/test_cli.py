@@ -121,3 +121,16 @@ def test_broken_extends_target_flagged_in_coverage(tmp_path):
     flags = {f["path"]: f["flags"] for f in json.loads(out)["coverage"]["files"]}
     assert flags["tsconfig.base.json"] == ["parse_error"]
     assert flags["tsconfig.json"] == []
+
+
+def test_broken_directory_build_props_warns_and_succeeds(tmp_path):
+    """008 contracts/cli.md: a broken Directory.Build.props is a warning in the slice-1 format."""
+    (tmp_path / "Directory.Build.props").write_text("<Project><PropertyGroup>\n")
+    (tmp_path / "A").mkdir()
+    (tmp_path / "A" / "A.csproj").write_text("<Project />\n")
+    (tmp_path / "A" / "P.cs").write_text("class P {}\n")
+    code, out, err = run_analyze(tmp_path)
+    assert code == 0, err
+    assert "graphora: warning: ignoring Directory.Build.props: not well-formed XML or has a DOCTYPE" in err
+    coverage = {f["path"]: f for f in json.loads(out)["coverage"]["files"]}
+    assert coverage["Directory.Build.props"]["flags"] == ["parse_error"]

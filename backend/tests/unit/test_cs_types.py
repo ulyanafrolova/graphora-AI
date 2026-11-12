@@ -3,16 +3,19 @@
 import pytest
 
 from graphora.adapters.csharp.extract import extract
+from graphora.adapters.msbuild.csproj import read as read_csproj
 from graphora.resolve.csharp import (
     NETCORE,
     Context,
     FileUsings,
     GlobalUsing,
+    Projects,
     Resolver,
     Target,
     TypeResolver,
     build_scopes,
     directive_id,
+    global_directives,
     namespaces_for,
     types_for,
 )
@@ -154,3 +157,75 @@ def test_project_global_usings_and_conditional_ones(types):
 def test_directive_id():
     record = extract(b"\n  using A;").usings[0]
     assert directive_id("a.cs", record) == "a.cs:2:3"
+
+
+# --- project-wide usings (data-model.md § Project usings, research R4, R5) --------------------------------------
+
+
+def _project(sdk="Microsoft.NET.Sdk", body=""):
+    return read_csproj(f'<Project Sdk="{sdk}">{body}</Project>'.encode())
+
+
+PROPS = read_csproj(
+    b"""<Project>
+  <PropertyGroup><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup><Using Include="App.Shared" /></ItemGroup>
+  <ItemGroup Condition="'$(X)' == ''"><Using Include="App.Debug" /></ItemGroup>
+</Project>"""
+)
+
+
+def _namespaces(usings):
+    return [(g.origin.split(":")[0], g.namespace, g.alias, g.conditional) for g in usings]
+
+
+def test_props_apply_to_projects_below_them():
+    projects = Projects(
+        {
+            "src/Web/Web.csproj": _project("Microsoft.NET.Sdk.Web", '<ItemGroup><Using Remove="System.Net.Http" /><Using Include="App.Models.User" Alias="U" /></ItemGroup>'),
+            "src/Worker/Worker.csproj": _project("Microsoft.NET.Sdk.Worker"),
+            "other/Lib/Lib.csproj": _project(),
+        },
+        {"src/Directory.Build.props": PROPS},
+    )
+    assert projects.props_for("src/Web/Web.csproj") == "src/Directory.Build.props"
+    assert projects.props_for("other/Lib/Lib.csproj") is None
+    web = projects.global_usings("src/Web/Web.csproj")
+    names = [g.namespace for g in web if g.alias is None]
+    assert "System.Net.Http" not in names
+    assert {"System", "Microsoft.AspNetCore.Builder", "App.Shared", "App.Debug"} <= set(names)
+    assert ("item", "App.Models.User", "U", False) in _namespaces(web)
+    assert ("item", "App.Debug", None, True) in _namespaces(web)
+    worker = [g.namespace for g in projects.global_usings("src/Worker/Worker.csproj")]
+    assert "Microsoft.Extensions.Hosting" in worker and "Microsoft.AspNetCore.Builder" not in worker
+    assert projects.global_usings("other/Lib/Lib.csproj") == ()
+
+
+def test_project_value_overrides_props_and_msbuild_values_are_ignored():
+    off = _project(body="<PropertyGroup><ImplicitUsings>disable</ImplicitUsings></PropertyGroup>")
+    prop = _project(body="<PropertyGroup><ImplicitUsings>$(Inherit)</ImplicitUsings></PropertyGroup><ItemGroup><Using Include=\"$(Ns)\" /></ItemGroup>")
+    projects = Projects({"a/A.csproj": off, "b/B.csproj": prop}, {"Directory.Build.props": PROPS})
+    assert [g.namespace for g in projects.global_usings("a/A.csproj")] == ["App.Shared", "App.Debug"]
+    assert [g.namespace for g in projects.global_usings("b/B.csproj")] == ["App.Shared", "App.Debug"]
+
+
+def test_conditional_implicit_usings():
+    cond = read_csproj(b"""<Project><PropertyGroup Condition="'$(A)' == ''"><ImplicitUsings>true</ImplicitUsings></PropertyGroup></Project>""")
+    usings = Projects({"A.csproj": cond}).global_usings("A.csproj")
+    assert usings and all(g.conditional for g in usings)
+
+
+def test_global_directives_and_project_less_files():
+    records = extract(b"global using App.Services;\nglobal using static System.Math;\nglobal using M = App.Models;\nusing Local;").usings
+    directives = global_directives("G.cs", records)
+    assert [(g.origin, g.namespace, g.alias) for g in directives] == [
+        ("G.cs:1:1", "App.Services", None),
+        ("G.cs:3:1", "App.Models", "M"),
+    ]
+    assert Projects({}).global_usings(None, directives) == tuple(directives)
+
+
+def test_global_directive_applies_to_another_file(types):
+    project = tuple(global_directives("App/GlobalUsings.cs", extract(b"global using App.Services;").usings))
+    r = _one(types, "class X { Mailer m; }", project=project)
+    assert [t.node_id for t in r.targets] == ["file:App/Services/Mailer.cs"] and r.via == ("App/GlobalUsings.cs:1:1",)

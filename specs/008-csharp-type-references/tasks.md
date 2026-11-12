@@ -130,7 +130,7 @@ Paths are relative to the repository root. Code in `backend/src/graphora/`, test
   `Remove`, conditional, position) and the `ImplicitUsings` property (`value` lower-cased and trimmed, conditional
   when it or its `PropertyGroup` has a `Condition`); values containing `$(` are kept raw for the resolver to ignore.
   Tests in `backend/tests/unit/test_csproj.py`.
-- [ ] T011 [US2] Project usings in `backend/src/graphora/resolve/csharp.py` and `backend/src/graphora/graph/build.py`
+- [X] T011 [US2] Project usings in `backend/src/graphora/resolve/csharp.py` and `backend/src/graphora/graph/build.py`
   (depends on T006, T010; data-model.md § Project usings): nearest `Directory.Build.props` per project inside the
   root, read with the same reader (`parse_error` flag and warning when malformed); SDK group mapping from R4;
   effective global usings in the 4-step order; `global using` directives applied project-wide (project-less files:

@@ -398,7 +398,7 @@ def _analyze(args: argparse.Namespace) -> int:
     for line in report.info:
         _log("info", line)
     for path in report.warnings:
-        if path.lower().endswith(".csproj"):
+        if path.lower().endswith(".csproj") or path.rsplit("/", 1)[-1] == "Directory.Build.props":
             _log("warning", f"ignoring {path}: not well-formed XML or has a DOCTYPE")
         else:
             _log("warning", f"ignoring {path}: not valid JSON-with-comments")

@@ -52,6 +52,7 @@ def current_extractors() -> dict[str, str]:
         "csharp-resolver": cs_resolve.RESOLVER_VERSION,
         "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
         "dotnet-types": cs_resolve.TYPES_VERSION,
+        "dotnet-implicit-usings": cs_resolve.IMPLICIT_USINGS_VERSION,
         "js-adapter": js.VERSION,
         "js-resolver": js_resolve.RESOLVER_VERSION,
         "node-builtins": js_resolve.BUILTINS_VERSION,
@@ -196,8 +197,14 @@ def _csharp_graph(
     resolver = cs_resolve.Resolver(scopes)
     types = cs_resolve.TypeResolver(resolver)
     contexts: dict[str | None, cs_resolve.Context] = {}
+    directives: dict[str | None, list[cs_resolve.GlobalUsing]] = {}
+    for path, file_facts in sorted(facts.items()):
+        if file_facts is not None:
+            directives.setdefault(owners.get(path), []).extend(cs_resolve.global_directives(path, file_facts.usings))
+    project_usings: dict[str | None, tuple[cs_resolve.GlobalUsing, ...]] = {}
     for project in sorted({owners.get(p) for p in facts}, key=lambda p: p or ""):
         contexts[project] = projects.context(project)
+        project_usings[project] = projects.global_usings(project, directives.get(project, ()))
 
     # Pass 1: type references. Which directives were used decides the `using` fallback in pass 2 (008 R7).
     used: set[str] = set()
@@ -208,7 +215,7 @@ def _csharp_graph(
             unresolved_names[path] = 0
             continue
         ctx = contexts[owners.get(path)]
-        usings = cs_resolve.FileUsings(path, file_facts.usings)
+        usings = cs_resolve.FileUsings(path, file_facts.usings, project_usings[owners.get(path)])
         best: dict[str, tuple[int, int, int, cs_resolve.Target, str]] = {}
         missing: set[str] = set()
         for ref in file_facts.type_refs:
@@ -311,7 +318,9 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     csproj_paths = sorted(p for p in walked.files if p.lower().endswith(".csproj"))
     csproj_folders = cs_resolve.csproj_folders(csproj_paths)
     csproj_facts = {p: csproj.read(contents[p]) for p in csproj_paths if p in contents}
-    broken_csproj = frozenset(p for p, f in csproj_facts.items() if f.has_error)
+    props_paths = sorted(p for p in walked.files if p.rsplit("/", 1)[-1] == cs_resolve.PROPS)
+    props_facts = {p: csproj.read(contents[p]) for p in props_paths if p in contents}
+    broken_csproj = frozenset(p for p, f in [*csproj_facts.items(), *props_facts.items()] if f.has_error)
     cs_owners: dict[str, str | None] = {}
 
     coverage: list[CoverageFile] = []
@@ -354,7 +363,7 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _python_graph(py_facts, snapshot, nodes, edges)
     resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, read))
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
-    projects = cs_resolve.Projects(csproj_facts)
+    projects = cs_resolve.Projects(csproj_facts, props_facts)
     _project_graph(projects, snapshot, nodes, edges)
     unresolved_names = _csharp_graph(cs_facts, cs_owners, projects, snapshot, nodes, edges)
     coverage = [replace(c, unresolved_type_names=unresolved_names[c.path]) if c.path in unresolved_names else c for c in coverage]
