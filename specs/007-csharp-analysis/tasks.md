@@ -220,7 +220,7 @@ hand-written `expected.json` files.
   ecosystems; a `using` of a namespace only declared in an unreferenced project (`not_referenced`);
   `using Microsoft.AspNetCore.Mvc;` in Web (`dotnet`, stdlib) and in Core (`not_found`). `queries.json`:
   `dependencies` of `src/Web/Web.csproj`, `dependents` of a Core file.
-- [ ] T013 [US2] Add fixture `fixtures/repos/csharp-edge/` with `repo/`, hand-written `expected.json` and
+- [X] T013 [US2] Add fixture `fixtures/repos/csharp-edge/` with `repo/`, hand-written `expected.json` and
   `queries.json`: two `.csproj` in one folder (`ambiguous_project`, `project: null`), project-less files that see
   each other, a malformed `.csproj` and one with a `DOCTYPE` and an entity (both `parse_error`, still owning their
   files), a `<Import Project="evil.targets" />` that is never read, and a Python file next to the C# code.

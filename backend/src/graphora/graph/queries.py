@@ -50,7 +50,8 @@ class GraphIndex:
         self._runtime_links: nx.DiGraph | None = None
         self._barrels: dict[bool, dict[tuple[str, str], Link]] = {}
 
-        flagged = sum(1 for f in doc.files if f.status == "analyzed" and f.flags)
+        # `ambiguous_project` (007) is a fact about ownership, not an error in the file
+        flagged = sum(1 for f in doc.files if f.status == "analyzed" and {"parse_error", "unreadable"} & set(f.flags))
         self.completeness = Completeness(
             unresolved_imports=sum(len(edges) for edges in self.unresolved.values()),
             not_analyzed_files=sum(1 for f in doc.files if f.status == "detected_only"),
