@@ -109,7 +109,7 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions")
+_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions", "projects")
 _WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors", "definitions")
 _LEVEL_QUESTIONS = ("dependencies", "dependents", "impact", "cycles")
 _OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
@@ -174,8 +174,8 @@ def _query(args: argparse.Namespace) -> int:
         if getattr(args, option) not in (None, False) and question not in allowed:
             _log("error", f"--{option.replace('_', '-')} is only for {' and '.join(allowed)}")
             return EXIT_USAGE
-    if question == "overview" and (args.limit is not None or args.no_type_only):
-        _log("error", "overview takes only --format")
+    if question in ("overview", "projects") and (args.limit is not None or args.no_type_only):
+        _log("error", f"{question} takes only --format")
         return EXIT_USAGE
     if question == "definitions" and args.no_type_only:
         _log("error", "definitions takes only --limit and --format")
@@ -219,6 +219,8 @@ def _query(args: argparse.Namespace) -> int:
         target = (args.target,) if question in _WITH_TARGET else ()
         if question == "overview":
             answer = queries.overview(ix)
+        elif question == "projects":
+            answer = queries.projects(ix)
         elif question == "definitions":
             answer = queries.definitions(ix, args.target, limit=args.limit)
         else:

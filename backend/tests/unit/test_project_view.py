@@ -144,3 +144,29 @@ def test_project_level_errors():
 def test_no_projects_gives_empty_answers():
     ix = index(make_doc([edge("a.py", "b.py")]))
     assert cycles(ix, level="project").groups == ()
+
+
+# --- projects question (research § R6) --------------------------------------------------------------------------
+
+
+def test_projects_summary_and_no_project_entry():
+    from graphora.graph.queries import projects
+
+    member = edge("solution:All.sln", A, 3, type="solution_member")
+    missing = edge("solution:All.sln", "unresolved:dotnet:z/Z.csproj", 5, type="solution_member", reason="not_found")
+    answer = projects(_ix([*EDGES, member, missing]))
+    by_id = {p.project: p for p in answer.projects}
+    assert [p.project for p in answer.projects] == [A, B, C, None]
+    assert (by_id[A].solutions, by_id[A].references, by_id[A].uses, by_id[A].files) == (("solution:All.sln",), (B, C), (B,), 2)
+    assert (by_id[B].uses, by_id[B].used_by) == ((C,), (A, C))
+    assert (by_id[None].path, by_id[None].files) == (None, 1)
+    text = render_text(answer)
+    assert "a/A.csproj  2 files  in All.sln" in text and "(no project)  1 files" in text
+    assert "  uses: b/B.csproj" in text
+
+
+def test_projects_empty_without_csharp():
+    from graphora.graph.queries import projects
+
+    answer = projects(index(make_doc([edge("a.py", "b.py")])))
+    assert (answer.projects, answer.total) == ((), 0)

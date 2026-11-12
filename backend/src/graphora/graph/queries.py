@@ -29,6 +29,7 @@ from graphora.graph.results import (
     Item,
     Link,
     Overview,
+    ProjectSummary,
     Question,
     strongest,
     weakest,
@@ -678,4 +679,45 @@ def _project_cycles(ix: GraphIndex, limit: int | None) -> Answer:
         truncated=truncated,
         groups=tuple(shown),
         completeness=ix.completeness,
+    )
+
+
+def projects(ix: GraphIndex) -> Answer:
+    """Every C# project with its solutions, size, declared references, packages and code-level neighbours, plus an
+    entry for C# files without a project (research § R6)."""
+    view = project_view(ix)
+    solutions: dict[str, set[str]] = defaultdict(set)
+    references: dict[str, set[str]] = defaultdict(set)
+    for e in ix.doc.edges:
+        if e.type == "solution_member" and e.confidence != "unresolved":
+            solutions[e.target].add(e.source)
+        elif e.type == "project_reference" and e.confidence != "unresolved":
+            references[e.source].add(e.target)
+    summaries = []
+    for project in view.projects:
+        packages = sorted(t for (s, t) in view.links if s == project and t.startswith("ext:nuget:"))
+        summaries.append(
+            ProjectSummary(
+                project=project,
+                path=project.removeprefix("project:"),
+                files=len(view.files_of(project)),
+                solutions=tuple(sorted(solutions[project])),
+                references=tuple(sorted(references[project])),
+                packages=tuple(packages),
+                uses=tuple(sorted(view.code_graph.successors(project))),
+                used_by=tuple(sorted(view.code_graph.predecessors(project))),
+            )
+        )
+    loose = len(view.files_of(None))
+    if loose:
+        summaries.append(ProjectSummary(project=None, path=None, files=loose))
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="projects",
+        target=None,
+        options={},
+        total=len(summaries),
+        truncated=False,
+        completeness=ix.completeness,
+        projects=tuple(summaries),
     )

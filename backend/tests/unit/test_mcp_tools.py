@@ -11,7 +11,7 @@ from graphora.mcp import Served, create_server
 from mcp_client import call, calls, canonical, instructions, list_tools, text
 from synthetic import SNAP, edge, make_doc
 
-GRAPH_TOOLS = ["graph_overview", "find_definitions", "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files"]
+GRAPH_TOOLS = ["graph_overview", "find_definitions", "dependencies", "dependents", "impact", "neighbors", "cycles", "projects", "key_files"]
 
 
 def server(*edges, **doc):

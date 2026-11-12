@@ -250,5 +250,61 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "projects",
+    "target": null,
+    "options": {},
+    "expected": {
+      "projects": [
+        {
+          "project": "project:hosts/Web/Web.csproj",
+          "path": "hosts/Web/Web.csproj",
+          "files": 2,
+          "solutions": [],
+          "references": [
+            "project:src/App/App.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/App/App.csproj"
+          ],
+          "used_by": []
+        },
+        {
+          "project": "project:hosts/Worker/Worker.csproj",
+          "path": "hosts/Worker/Worker.csproj",
+          "files": 2,
+          "solutions": [],
+          "references": [
+            "project:src/App/App.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/App/App.csproj"
+          ],
+          "used_by": []
+        },
+        {
+          "project": "project:src/App/App.csproj",
+          "path": "src/App/App.csproj",
+          "files": 15,
+          "solutions": [],
+          "references": [],
+          "packages": [],
+          "uses": [],
+          "used_by": [
+            "project:hosts/Web/Web.csproj",
+            "project:hosts/Worker/Worker.csproj"
+          ]
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

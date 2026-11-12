@@ -230,5 +230,149 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "projects",
+    "target": null,
+    "options": {},
+    "expected": {
+      "projects": [
+        {
+          "project": "project:src/Core/Core.csproj",
+          "path": "src/Core/Core.csproj",
+          "files": 3,
+          "solutions": [
+            "solution:Graphora.sln",
+            "solution:Graphora.slnx"
+          ],
+          "references": [],
+          "packages": [
+            "ext:nuget:Foo",
+            "ext:nuget:Foo.Bar"
+          ],
+          "uses": [],
+          "used_by": [
+            "project:src/Infra/Infra.csproj",
+            "project:src/Web/Web.csproj",
+            "project:tests/Core.Tests/Core.Tests.csproj"
+          ]
+        },
+        {
+          "project": "project:src/Infra/Infra.csproj",
+          "path": "src/Infra/Infra.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln",
+            "solution:Graphora.slnx"
+          ],
+          "references": [
+            "project:src/Core/Core.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/Core/Core.csproj"
+          ],
+          "used_by": [
+            "project:src/Web/Web.csproj"
+          ]
+        },
+        {
+          "project": "project:src/LoopA/LoopA.csproj",
+          "path": "src/LoopA/LoopA.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.slnx"
+          ],
+          "references": [
+            "project:src/LoopB/LoopB.csproj",
+            "project:src/Tools/Tools.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/LoopB/LoopB.csproj"
+          ],
+          "used_by": [
+            "project:src/LoopB/LoopB.csproj"
+          ]
+        },
+        {
+          "project": "project:src/LoopB/LoopB.csproj",
+          "path": "src/LoopB/LoopB.csproj",
+          "files": 1,
+          "solutions": [],
+          "references": [
+            "project:src/LoopA/LoopA.csproj"
+          ],
+          "packages": [],
+          "uses": [
+            "project:src/LoopA/LoopA.csproj"
+          ],
+          "used_by": [
+            "project:src/LoopA/LoopA.csproj"
+          ]
+        },
+        {
+          "project": "project:src/Tools/Tools.csproj",
+          "path": "src/Tools/Tools.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln"
+          ],
+          "references": [],
+          "packages": [],
+          "uses": [],
+          "used_by": [
+            "project:src/Web/Web.csproj"
+          ]
+        },
+        {
+          "project": "project:src/Web/Web.csproj",
+          "path": "src/Web/Web.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln",
+            "solution:Graphora.slnx"
+          ],
+          "references": [
+            "project:src/Infra/Infra.csproj",
+            "project:src/Tools/Tools.csproj"
+          ],
+          "packages": [
+            "ext:nuget:Microsoft.Extensions.Logging",
+            "ext:nuget:Serilog"
+          ],
+          "uses": [
+            "project:src/Core/Core.csproj",
+            "project:src/Infra/Infra.csproj",
+            "project:src/Tools/Tools.csproj"
+          ],
+          "used_by": []
+        },
+        {
+          "project": "project:tests/Core.Tests/Core.Tests.csproj",
+          "path": "tests/Core.Tests/Core.Tests.csproj",
+          "files": 1,
+          "solutions": [
+            "solution:Graphora.sln"
+          ],
+          "references": [
+            "project:src/Core/Core.csproj"
+          ],
+          "packages": [
+            "ext:nuget:xunit"
+          ],
+          "uses": [
+            "project:src/Core/Core.csproj"
+          ],
+          "used_by": []
+        }
+      ],
+      "total": 7,
+      "completeness": {
+        "unresolved_imports": 9,
+        "not_analyzed_files": 1,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

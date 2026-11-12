@@ -124,7 +124,7 @@ CLI and MCP.
 
 **Independent Test**: `uv run pytest tests/unit/test_project_view.py -k projects tests/golden -k projects`.
 
-- [ ] T010 [US3] `projects` question (research R6, data-model.md § Projects answer entry) in
+- [X] T010 [US3] `projects` question (research R6, data-model.md § Projects answer entry) in
   `backend/src/graphora/graph/queries.py`/`project_view.py`/`results.py`, CLI question `projects` and MCP tool
   `projects`; empty list for graphs without projects; hand-written `projects` entries in the `queries.json` of
   `csharp-multiproject`, `csharp-types` and `py-flat` (empty). Unit tests in `test_project_view.py`, MCP test in

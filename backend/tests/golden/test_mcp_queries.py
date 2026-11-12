@@ -17,7 +17,7 @@ CASES = [
 
 
 def _flags(options):
-    flags = ["--limit", str(options["limit"])]
+    flags = ["--limit", str(options["limit"])] if "limit" in options else []
     if not options.get("include_type_only", True):
         flags.append("--no-type-only")
     if options.get("follow_barrels"):
@@ -35,7 +35,7 @@ def _flags(options):
 def test_tool_equals_query(name, entry, tmp_path):
     graph = tmp_path / "g.json"
     graph.write_bytes(analyzed_graph(name))
-    options = {"limit": 500} | entry["options"]
+    options = ({} if entry["question"] == "projects" else {"limit": 500}) | entry["options"]
     target = [] if entry["target"] is None else [entry["target"]]
     args = options | ({} if entry["target"] is None else {"target": entry["target"]})
 

@@ -22,6 +22,7 @@ _QUESTIONS = {
     "cycles": queries.cycles,
     "neighbors": queries.neighbors,
     "key_files": queries.key_files,
+    "projects": queries.projects,
 }
 
 
@@ -75,6 +76,8 @@ def project_answer(answer: dict) -> dict:
         out["unresolved"] = [f"{_path(e['source'])}:{e['line']} {e['reason']}" for e in answer["unresolved"]]
     if "cut" in answer:
         out["cut"] = answer["cut"]
+    if "projects" in answer:
+        out["projects"] = answer["projects"]
     if "completeness" in answer:
         out["completeness"] = answer["completeness"]
     return out

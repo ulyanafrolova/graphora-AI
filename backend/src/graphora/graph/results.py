@@ -12,7 +12,7 @@ from graphora.graph.model import Edge
 from graphora.graph.serialize import _edge_dict
 
 LinkConfidence = Literal["resolved", "heuristic"]
-Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions"]
+Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions", "projects"]
 
 
 def strongest(confidences: Iterable[str]) -> LinkConfidence:
@@ -129,6 +129,33 @@ class DefinitionMatch:
 
 
 @dataclass(frozen=True)
+class ProjectSummary:
+    """One project of the snapshot (specs/009-csharp-solutions-project-views data-model.md § Projects answer entry).
+    `project` is None for the entry that counts C# files without a project."""
+
+    project: str | None
+    path: str | None
+    files: int
+    solutions: tuple[str, ...] = ()
+    references: tuple[str, ...] = ()
+    packages: tuple[str, ...] = ()
+    uses: tuple[str, ...] = ()
+    used_by: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "project": self.project,
+            "path": self.path,
+            "files": self.files,
+            "solutions": list(self.solutions),
+            "references": list(self.references),
+            "packages": list(self.packages),
+            "uses": list(self.uses),
+            "used_by": list(self.used_by),
+        }
+
+
+@dataclass(frozen=True)
 class Answer:
     """`None` marks a field the question does not use; it is left out of the JSON (contracts/answers.md)."""
 
@@ -146,6 +173,7 @@ class Answer:
     cut: bool | None = None
     completeness: Completeness | None = None
     definitions: tuple[DefinitionMatch, ...] | None = None
+    projects: tuple[ProjectSummary, ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -156,7 +184,7 @@ class Answer:
             "total": self.total,
             "truncated": self.truncated,
         }
-        for name in ("items", "incoming", "outgoing", "groups", "definitions"):
+        for name in ("items", "incoming", "outgoing", "groups", "definitions", "projects"):
             value = getattr(self, name)
             if value is not None:
                 out[name] = [x.to_dict() for x in value]
@@ -263,6 +291,20 @@ def _definition_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _project_lines(answer: Answer) -> list[str]:
+    lines = []
+    for p in answer.projects or ():
+        if p.project is None:
+            lines.append(f"(no project)  {p.files} files")
+            continue
+        solutions = ", ".join(_name(s) for s in p.solutions) or "no solution"
+        lines.append(f"{p.path}  {p.files} files  in {solutions}")
+        for label, ids in (("references", p.references), ("packages", p.packages), ("uses", p.uses), ("used by", p.used_by)):
+            if ids:
+                lines.append(f"  {label}: {', '.join(_name(i) for i in ids)}")
+    return lines
+
+
 def _header(answer: Answer) -> list[str]:
     target = f" {_name(answer.target)}" if answer.target else ""
     if answer.question == "definitions":
@@ -271,6 +313,7 @@ def _header(answer: Answer) -> list[str]:
 
 
 _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
+    "projects": _project_lines,
     "dependencies": _item_lines,
     "dependents": _item_lines,
     "impact": _item_lines,

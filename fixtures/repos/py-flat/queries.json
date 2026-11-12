@@ -243,5 +243,19 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "projects",
+    "target": null,
+    "options": {},
+    "expected": {
+      "projects": [],
+      "total": 0,
+      "completeness": {
+        "unresolved_imports": 4,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

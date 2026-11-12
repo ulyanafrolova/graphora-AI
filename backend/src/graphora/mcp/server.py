@@ -69,6 +69,9 @@ DESCRIPTIONS = {
     f"instructions. path is the repository-relative path as in the graph. start (default 1) and end are "
     f"inclusive; without end at most {DEFAULT_LINES} lines are returned, and never more than {MAX_LINES}; cut "
     "tells if the file goes on.",
+    "projects": "Every C# project of the snapshot with its solutions, number of files, declared project references, "
+    "packages, and the projects its code uses and is used by; a last entry counts C# files without a project. "
+    "Use a project path from it as target with level=\"project\". Empty for repositories without C# projects.",
     "key_files": "The files most depended on, ranked by transitive and then direct dependents. "
     + _TYPE_ONLY + "limit (default 10, at most 500) caps the files.",
 }
@@ -172,6 +175,10 @@ def create_server(served: Served) -> MCPServer:
     @server.tool(description=DESCRIPTIONS["cycles"], annotations=READ_ONLY)
     def cycles(include_type_only: bool = True, limit: int = DEFAULT_LIMIT, level: Level = "file") -> CallToolResult:
         return ask(queries.cycles, include_type_only=include_type_only, limit=limit, level=level)
+
+    @server.tool(description=DESCRIPTIONS["projects"], annotations=READ_ONLY)
+    def projects() -> CallToolResult:
+        return _result(queries.projects(ix))
 
     @server.tool(description=DESCRIPTIONS["key_files"], annotations=READ_ONLY)
     def key_files(include_type_only: bool = True, limit: int = 10) -> CallToolResult:
