@@ -120,7 +120,7 @@ Detecting a language is easy, and Tree-sitter grammars exist for most languages.
 
 Support levels:
 
-- Level 1, full analysis: Python, TypeScript/JavaScript (MVP).
+- Level 1, full analysis: Python, TypeScript/JavaScript (MVP), C# (namespace symbol index, `.csproj` project references, NuGet externals; see issue #19).
 - Level 2, imports only: Go and Java if time allows, about 1–2 weeks each.
 - Level 3, detected only: everything else, shown on the map and marked as not analyzed.
 
