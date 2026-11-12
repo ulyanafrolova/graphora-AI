@@ -50,8 +50,9 @@ Check:
 - files in `Web` that `using Core.Domain;` list the declaring files, marked "(likely)" when there are several;
 - `src/Web/bin` and `src/Web/obj` appear under `coverage.skipped` with `excluded_dir`, while `tools/bin/` files
   are in `coverage.files`;
-- `stderr` shows `ignoring … : not well-formed XML or has a DOCTYPE` only for the deliberately broken
-  `.csproj` of `csharp-edge`.
+- `uv run graphora analyze ../fixtures/repos/csharp-edge/repo` warns
+  `ignoring <path>: not well-formed XML or has a DOCTYPE` for exactly `Broken/Broken.csproj` and
+  `Evil/Evil.csproj`; `csharp-multiproject` gives no warning.
 
 ## 5. Safety
 

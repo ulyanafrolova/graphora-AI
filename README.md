@@ -52,6 +52,12 @@ Done and merged into `main` (features 001–005, graph schema v3):
 | 004 | Graph queries | dependencies, dependents, impact, neighbors, cycles, key files (`graphora query`) |
 | 005 | Storage and HTTP API | PostgreSQL store per (repository, snapshot), read-only API (`graphora serve`) |
 
+In progress (PR #22, issue #19, graph schema v4):
+
+| # | Feature | What it gives |
+|---|---|---|
+| 007 | C# analysis, slice 1 | `using` → namespace → declaring files, `.csproj` project and package references read as data, `dotnet`/`nuget` externals, `bin`/`obj` skipped next to a `.csproj` |
+
 Next on the roadmap: MCP server, end-to-end pipeline, claim verifier and agents, `/ask` with
 streaming, hotspots, web UI, frontend ↔ backend bridge, benchmark.
 
@@ -65,13 +71,13 @@ flowchart LR
         ingest["ingest/<br/>fetch, safe extract,<br/>walk + skip rules, limits"]
         detect["detect/<br/>language by extension<br/>and marker files"]
         adapters["adapters/<br/>Tree-sitter: imports,<br/>definitions, exports"]
-        resolve["resolve/<br/>Python packages, src layout<br/>TS/JS index, tsconfig, workspaces"]
+        resolve["resolve/<br/>Python packages, src layout<br/>TS/JS index, tsconfig, workspaces<br/>C# namespace index, .csproj"]
         build["graph/build<br/>nodes, edges, provenance,<br/>coverage, sorted output"]
         ingest --> detect --> adapters --> resolve --> build
     end
 
     src --> ingest
-    build --> json[("graph.json<br/>schema v3")]
+    build --> json[("graph.json<br/>schema v4")]
     build --> store[("store/<br/>PostgreSQL")]
 
     json --> queries["graph/queries<br/>NetworkX"]
@@ -101,7 +107,7 @@ graph.
 |---|---|
 | `ingest/` | Source resolution (`source.py`), GitHub archive download (`github.py`, `fetch.py`), safe ZIP extraction (`archive.py`), file walk and skip rules (`walk.py`), snapshot id (`snapshot.py`) |
 | `detect/` | Language and status per file: `analyzed`, `detected_only`, `not_code` |
-| `adapters/` | Tree-sitter extractors for Python and JS/TS: import sites, definitions, exports, line and column |
+| `adapters/` | Tree-sitter extractors for Python, JS/TS and C#: import sites, definitions, exports, line and column; `.csproj` files read as XML data (`msbuild/`) |
 | `resolve/` | Import target resolution; never guesses — an unknown target becomes an `unresolved` node |
 | `graph/` | Model, build, canonical serialization, loading and all queries |
 | `store/` | PostgreSQL store: analyses, deduplicated file blobs |
@@ -111,7 +117,7 @@ graph.
 ## Graph schema
 
 The contract between backend and frontend is [schema/graph.schema.json](schema/graph.schema.json)
-(`schema_version: 3`). One document per snapshot:
+(`schema_version: 4`). One document per snapshot:
 
 ```mermaid
 erDiagram
@@ -127,7 +133,7 @@ erDiagram
     COVERAGE ||--o{ SKIPPED : skipped
 
     DOCUMENT {
-        int schema_version "3"
+        int schema_version "4"
         string snapshot
         map extractors "name -> semver"
     }
@@ -136,18 +142,21 @@ erDiagram
     }
     NODE {
         string id
-        enum kind "file | external | unresolved | asset"
-        string path "file, asset"
-        enum language "python | typescript | javascript"
+        enum kind "file | external | unresolved | asset | project"
+        string path "file, asset, project"
+        enum language "python | typescript | javascript | csharp"
+        string project "C# file: owning project"
         string name "external"
-        enum ecosystem "python | npm"
+        enum ecosystem "python | npm | dotnet | nuget"
         enum category "stdlib | builtin | third_party"
         string reference "unresolved"
     }
     EDGE {
         string id
-        enum type "imports | reexports"
+        enum type "imports | reexports | project_reference | package_reference"
         enum form "static | dynamic | require"
+        enum directive "C#: using | using_static | using_alias"
+        bool global_using
         bool type_only
         string symbol
         string alias
@@ -155,7 +164,7 @@ erDiagram
         int column
         string snapshot
         enum confidence "resolved | heuristic | unresolved"
-        enum reason "not_found | dynamic | ..."
+        enum reason "not_found | dynamic | namespace_spread | ..."
         string extractor "name@version"
         string snippet_hash
     }
@@ -221,8 +230,9 @@ File contents are stored once per hash, so re-analyzing a commit or a similar co
 
 ## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/). Python and TypeScript/JavaScript projects are fully analyzed;
-other languages are detected and listed in the coverage report.
+Requires [uv](https://docs.astral.sh/uv/). Python, TypeScript/JavaScript and C# projects are fully analyzed
+(C# without a .NET SDK: `.csproj` files are read as data); other languages are detected and listed in the
+coverage report.
 
 ```
 cd backend && uv sync

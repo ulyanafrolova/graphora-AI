@@ -261,7 +261,7 @@ fixtures.
 - [X] T016 [P] Extend `backend/tests/integration/test_performance.py` (marked `slow`, SC-005): generate about 1,000
   `.cs` files across 20 projects with project references, namespaces shared by several files and usings; assert
   analysis under 30 seconds and schema-valid output.
-- [ ] T017 Update docs for the slice: `README.md` feature status table and quick start (C# row, `dotnet`/`nuget`
+- [X] T017 Update docs for the slice: `README.md` feature status table and quick start (C# row, `dotnet`/`nuget`
   ecosystems), `docs/product/project-context.md` § 7 (what slice 1 covers), and the C# entry in
   `specs/007-csharp-analysis/checklists/requirements.md` notes; run every scenario of
   `specs/007-csharp-analysis/quickstart.md` (scenario 6 with `make db`) and fix any drift between docs and output.
