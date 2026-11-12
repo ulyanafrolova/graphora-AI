@@ -78,7 +78,7 @@ CLI and MCP.
 - [X] T004 [US1] CLI `--level {file,project}` in `backend/src/graphora/cli/__init__.py` (contracts/cli.md): passed to
   the four questions; usage error (exit 2, existing format) with `--symbol`, `--follow-barrels` or `--no-type-only` at
   project level; `not_a_project` → exit 1 `… is not a project`. Tests in `backend/tests/integration/test_query_cli.py`.
-- [ ] T005 [US1] MCP `level` argument (`"file"` default, `"project"`) on `dependencies`, `dependents`, `impact`,
+- [X] T005 [US1] MCP `level` argument (`"file"` default, `"project"`) on `dependencies`, `dependents`, `impact`,
   `cycles` in `backend/src/graphora/mcp/server.py`, with a sentence in each description; `_flags` in
   `backend/tests/golden/test_mcp_queries.py` passes `--level`; unit test in `backend/tests/unit/test_mcp_tools.py`.
 - [ ] T006 [US1] Hand-write project-level entries in `fixtures/repos/csharp-types/queries.json`: `dependencies` of

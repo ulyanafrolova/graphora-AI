@@ -6,7 +6,7 @@ results (research § R7). Every tool calls the graph query layer or the store; n
 from __future__ import annotations
 
 from importlib.metadata import version
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
@@ -14,6 +14,8 @@ from mcp.types import CallToolResult, TextContent, ToolAnnotations
 from graphora.graph import queries
 from graphora.graph.results import Answer, Overview, render_text
 from graphora.mcp.served import Served
+
+Level = Literal["file", "project"]  # 009: answer for C# projects instead of files
 
 READ_ONLY = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
 
@@ -39,21 +41,25 @@ _CONFIDENCE = (
     "Every link cites file:line; confidence is resolved (written in code) or heuristic (likely). "
     "The completeness note counts imports that could not be resolved."
 )
+_LEVEL = (
+    'level="project" answers for C# projects instead of files (target: a .csproj path or a C# file): each project '
+    "link cites the file imports that make it, and a declared project reference no code uses is marked declared_only. "
+)
 DESCRIPTIONS = {
     "dependencies": "What a file imports, with the import lines; unresolved imports are listed separately. "
-    + _TARGET + _TYPE_ONLY + _LISTS + _CONFIDENCE,
+    + _TARGET + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "dependents": "Which files import this file or package, with the import lines; optionally only one imported "
     "name. " + _TARGET + "symbol keeps only imports of that name. follow_barrels=true also counts files that "
-    "import the name through index.ts re-exports. " + _TYPE_ONLY + _LISTS + _CONFIDENCE,
+    "import the name through index.ts re-exports. " + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "impact": "Every file that depends on this file directly or through other files, nearest first, each with "
     "its chain of imports: what can break if the file changes. " + _TARGET + "max_depth stops the search at that "
     "distance; cut tells if it stopped early. follow_barrels=true sees through index.ts re-exports. "
-    + _TYPE_ONLY + _LISTS + _CONFIDENCE,
+    + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "neighbors": "A file's direct imports and the files that import it, in one answer. "
     + _TARGET + _TYPE_ONLY + "limit caps each of the two lists. " + _CONFIDENCE,
     "cycles": "Groups of files that import each other in a loop, each with one example cycle of import lines. "
     "A group marked type_only loops only through type imports and does not fail at run time. "
-    + _TYPE_ONLY + _LISTS + _CONFIDENCE,
+    + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "find_definitions": "Where a class, struct, record, function, method, interface, type, enum or delegate with "
     "this exact name is defined: file, line, kind, full name and, for TypeScript/JavaScript, the names it is "
     "exported under. C# names are fully qualified (App.Models.User). "
@@ -116,8 +122,10 @@ def create_server(served: Served) -> MCPServer:
         return ask(queries.definitions, name, limit=limit)
 
     @server.tool(description=DESCRIPTIONS["dependencies"], annotations=READ_ONLY)
-    def dependencies(target: str, include_type_only: bool = True, limit: int = DEFAULT_LIMIT) -> CallToolResult:
-        return ask(queries.dependencies, target, include_type_only=include_type_only, limit=limit)
+    def dependencies(
+        target: str, include_type_only: bool = True, limit: int = DEFAULT_LIMIT, level: Level = "file"
+    ) -> CallToolResult:
+        return ask(queries.dependencies, target, include_type_only=include_type_only, limit=limit, level=level)
 
     @server.tool(description=DESCRIPTIONS["dependents"], annotations=READ_ONLY)
     def dependents(
@@ -126,6 +134,7 @@ def create_server(served: Served) -> MCPServer:
         include_type_only: bool = True,
         follow_barrels: bool = False,
         limit: int = DEFAULT_LIMIT,
+        level: Level = "file",
     ) -> CallToolResult:
         return ask(
             queries.dependents,
@@ -134,6 +143,7 @@ def create_server(served: Served) -> MCPServer:
             include_type_only=include_type_only,
             follow_barrels=follow_barrels,
             limit=limit,
+            level=level,
         )
 
     @server.tool(description=DESCRIPTIONS["impact"], annotations=READ_ONLY)
@@ -143,6 +153,7 @@ def create_server(served: Served) -> MCPServer:
         include_type_only: bool = True,
         follow_barrels: bool = False,
         limit: int = DEFAULT_LIMIT,
+        level: Level = "file",
     ) -> CallToolResult:
         return ask(
             queries.impact,
@@ -151,6 +162,7 @@ def create_server(served: Served) -> MCPServer:
             include_type_only=include_type_only,
             follow_barrels=follow_barrels,
             limit=limit,
+            level=level,
         )
 
     @server.tool(description=DESCRIPTIONS["neighbors"], annotations=READ_ONLY)
@@ -158,8 +170,8 @@ def create_server(served: Served) -> MCPServer:
         return ask(queries.neighbors, target, include_type_only=include_type_only, limit=limit)
 
     @server.tool(description=DESCRIPTIONS["cycles"], annotations=READ_ONLY)
-    def cycles(include_type_only: bool = True, limit: int = DEFAULT_LIMIT) -> CallToolResult:
-        return ask(queries.cycles, include_type_only=include_type_only, limit=limit)
+    def cycles(include_type_only: bool = True, limit: int = DEFAULT_LIMIT, level: Level = "file") -> CallToolResult:
+        return ask(queries.cycles, include_type_only=include_type_only, limit=limit, level=level)
 
     @server.tool(description=DESCRIPTIONS["key_files"], annotations=READ_ONLY)
     def key_files(include_type_only: bool = True, limit: int = 10) -> CallToolResult:

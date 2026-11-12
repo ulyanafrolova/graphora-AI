@@ -26,6 +26,8 @@ def _flags(options):
         flags += ["--max-depth", str(options["max_depth"])]
     if options.get("symbol") is not None:
         flags += ["--symbol", options["symbol"]]
+    if options.get("level", "file") != "file":
+        flags += ["--level", options["level"]]
     return flags
 
 
