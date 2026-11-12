@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,7 +31,7 @@
 
 ## Notes
 
-- One open question in FR-013 step 1: how a `using` of a namespace declared in several files is represented
-  (per-file edges vs a namespace node).
+- FR-013 step 1 clarified on 2026-11-12: per-file edges, `heuristic` with reason `namespace_spread` when a
+  namespace is declared in several files.
 - Like specs 001–005, the spec names the command, file formats and the pinned grammar, because they are the
   product's user-facing contract (constitution I, VII). No module layout or code structure is specified.
