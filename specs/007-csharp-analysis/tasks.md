@@ -43,7 +43,7 @@ Paths are relative to the repository root. Python code lives in `backend/src/gra
   exact pins; run `uv sync` and commit `backend/uv.lock`. Check in a test that
   `tree_sitter.Language(tree_sitter_c_sharp.language())` loads with `tree-sitter==0.25.2` (ABI 15) in
   `backend/tests/unit/test_cs_extract.py` (new file, one test for now).
-- [ ] T002 [P] Create `backend/scripts/gen_dotnet_namespaces.py` and generate
+- [X] T002 [P] Create `backend/scripts/gen_dotnet_namespaces.py` and generate
   `backend/src/graphora/resolve/data/dotnet_namespaces.txt` (research R6):
   - the script downloads `Microsoft.NETCore.App.Ref`, `Microsoft.AspNetCore.App.Ref` and
     `Microsoft.WindowsDesktop.App.Ref` version `10.0.0` from `https://api.nuget.org/v3-flatcontainer/`, opens each
