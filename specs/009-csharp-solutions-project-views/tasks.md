@@ -66,7 +66,7 @@ CLI and MCP.
   Unit tests in new `backend/tests/unit/test_project_view.py` on synthetic documents: evidence aggregation, edges inside
   one project ignored, project-less files ignored, `ext:dotnet:` ignored, declared-only links, heuristic-only links,
   packages from both sources, determinism.
-- [ ] T003 [US1] Add `level` to `dependencies`, `dependents`, `impact` and `cycles` in
+- [X] T003 [US1] Add `level` to `dependencies`, `dependents`, `impact` and `cycles` in
   `backend/src/graphora/graph/queries.py` (research R5): `level="file"` unchanged; `level="project"` resolves the
   target to a project (`project:` id, `.csproj` path, or a C# file → its project; otherwise `NodeNotFound` status
   `not_a_project`), answers from `ProjectView` (impact and cycles use code links only, declared-only links excluded),

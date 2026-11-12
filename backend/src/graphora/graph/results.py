@@ -33,9 +33,10 @@ class Link:
     confidence: LinkConfidence
     type_only: bool
     via: tuple[Edge, ...] = ()
+    declared: tuple[Edge, ...] = ()  # 009: project level, the declared project or package reference
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "source": self.source,
             "target": self.target,
             "confidence": self.confidence,
@@ -43,6 +44,9 @@ class Link:
             "edges": [_edge_dict(e) for e in self.edges],
             "via": [_edge_dict(e) for e in self.via],
         }
+        if self.declared:
+            out["declared"] = [_edge_dict(e) for e in self.declared]
+        return out
 
 
 @dataclass(frozen=True)
@@ -55,6 +59,7 @@ class Item:
     distance: int | None = None
     transitive_dependents: int | None = None
     direct_dependents: int | None = None
+    declared_only: bool = False  # 009: a declared reference that no code uses
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -70,6 +75,8 @@ class Item:
             out["transitive_dependents"] = self.transitive_dependents
         if self.direct_dependents is not None:
             out["direct_dependents"] = self.direct_dependents
+        if self.declared_only:
+            out["declared_only"] = True
         return out
 
 
@@ -202,13 +209,16 @@ def _chain_text(chain: tuple[Link, ...]) -> str:
     """`a.py:3 → b.py:7 → target.py`; a barrel link adds its re-export lines (`app.ts:1 → index.ts:2 → Card.tsx`)."""
     steps = []
     for link in chain:
-        steps.append(f"{_name(link.source)}:{link.edges[0].line}")
+        first = link.edges[0]  # at project level the edge starts in a file of the source project
+        more = f" (+{len(link.edges) - 1} more)" if link.source.startswith("project:") and len(link.edges) > 1 else ""
+        steps.append(f"{_name(first.source)}:{first.line}{more}")
         steps += [f"{_name(e.source)}:{e.line}" for e in link.via]
     return " → ".join(steps + [_name(chain[-1].target)])
 
 
 def _marks(item: Item) -> str:
-    return (" (likely)" if item.confidence == "heuristic" else "") + (" (type-only)" if item.type_only else "")
+    declared = " (declared, not used by code)" if item.declared_only else ""
+    return (" (likely)" if item.confidence == "heuristic" else "") + (" (type-only)" if item.type_only else "") + declared
 
 
 def _item_lines(answer: Answer) -> list[str]:

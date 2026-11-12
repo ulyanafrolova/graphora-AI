@@ -20,6 +20,7 @@ from graphora.graph.model import (
     SolutionNode,
     UnresolvedNode,
 )
+from graphora.graph.project_view import ProjectLink, ProjectView
 from graphora.graph.results import (
     Answer,
     Completeness,
@@ -71,6 +72,7 @@ class GraphIndex:
         )
         self._runtime_links: nx.DiGraph | None = None
         self._barrels: dict[bool, dict[tuple[str, str], Link]] = {}
+        self._project_view: ProjectView | None = None
 
         # `ambiguous_project` (007) is a fact about ownership, not an error in the file
         flagged = sum(1 for f in doc.files if f.status == "analyzed" and {"parse_error", "unreadable"} & set(f.flags))
@@ -204,9 +206,13 @@ def _answer(ix: GraphIndex, question: Question, target: str | None, options: dic
     )
 
 
-def dependencies(ix: GraphIndex, target: str, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
+def dependencies(
+    ix: GraphIndex, target: str, *, include_type_only: bool = True, limit: int | None = None, level: str = "file"
+) -> Answer:
     """What the node imports or re-exports, one item per target in id order (FR-004)."""
     _check_limit(limit)
+    if _project_level(level, include_type_only=include_type_only):
+        return _project_neighbours(ix, target, "dependencies", limit)
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
     items = [_item(dep, (ix.link(node, dep, include_type_only),)) for dep in sorted(g.successors(node))]
@@ -229,10 +235,13 @@ def dependents(
     include_type_only: bool = True,
     follow_barrels: bool = False,
     limit: int | None = None,
+    level: str = "file",
 ) -> Answer:
     """The files that import or re-export the node, one item per file in id order (FR-005). With
     `follow_barrels`, also the files that import a name the node defines through re-exporting files (FR-010)."""
     _check_limit(limit)
+    if _project_level(level, include_type_only=include_type_only, symbol=symbol, follow_barrels=follow_barrels):
+        return _project_neighbours(ix, target, "dependents", limit)
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
     found = {}
@@ -260,12 +269,15 @@ def impact(
     include_type_only: bool = True,
     follow_barrels: bool = False,
     limit: int | None = None,
+    level: str = "file",
 ) -> Answer:
     """Every file that depends on the node transitively, nearest first, each with one chain to it (FR-006,
     research § R5). Links are walked backwards from the target; only files have dependents, so `ext:` and
     `asset:` nodes are never passed through."""
     _check_limit(limit)
     _check_depth(max_depth)
+    if _project_level(level, include_type_only=include_type_only, follow_barrels=follow_barrels):
+        return _project_impact(ix, target, max_depth, limit)
     node = resolve(ix, target)
     g = _links(ix, include_type_only)
     barrels = _barrel_links(ix, include_type_only) if follow_barrels else {}
@@ -413,9 +425,11 @@ def _shortest_cycle(g: nx.DiGraph, start: str, members: set[str]) -> list[str]:
     raise AssertionError(f"{start} is in a loop but no cycle was found")
 
 
-def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = None) -> Answer:
+def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = None, level: str = "file") -> Answer:
     """Every group of files that depend on each other in a loop, with one example cycle each (FR-008)."""
     _check_limit(limit)
+    if _project_level(level, include_type_only=include_type_only):
+        return _project_cycles(ix, limit)
     links = _links(ix, include_type_only)
     files = links.subgraph(n for n in links.nodes if n.startswith("file:"))
     runtime = _links(ix, include_type_only=False)
@@ -546,5 +560,122 @@ def definitions(ix: GraphIndex, name: str, *, limit: int | None = None) -> Answe
         total=total,
         truncated=truncated,
         definitions=tuple(shown),
+        completeness=ix.completeness,
+    )
+
+
+# --- project level (specs/009-csharp-solutions-project-views research § R5) --------------------------------------
+
+
+def project_view(ix: GraphIndex) -> ProjectView:
+    if ix._project_view is None:
+        ix._project_view = ProjectView(ix.nodes, ix.doc.edges)
+    return ix._project_view
+
+
+def _project_level(level: str, *, include_type_only: bool = True, symbol: str | None = None, follow_barrels: bool = False) -> bool:
+    if level not in ("file", "project"):
+        raise ValueError(f"level must be file or project, got {level!r}")
+    if level == "file":
+        return False
+    if symbol is not None or follow_barrels or not include_type_only:
+        raise ValueError("symbol, follow_barrels and include_type_only=False do not apply at project level")
+    return True
+
+
+def _project_of(ix: GraphIndex, target: str) -> str:
+    """A `project:` id from a project id, a `.csproj` path, or a C# file (its owning project)."""
+    view = project_view(ix)
+    try:
+        node = resolve(ix, target)
+    except NodeNotFound as exc:
+        if exc.status in ("ambiguous", "invalid_path"):
+            raise
+        node = None
+    if node is not None and node.startswith("project:"):
+        return node
+    if node is not None and view.file_project.get(node):
+        return view.file_project[node]  # type: ignore[return-value]
+    raise NodeNotFound(target, "not_a_project", f"{target} is not a project")
+
+
+def _project_link(link: ProjectLink) -> Link:
+    return Link(
+        source=link.source,
+        target=link.target,
+        edges=link.evidence or link.declared,
+        confidence=link.confidence,
+        type_only=False,
+        declared=link.declared,
+    )
+
+
+def _project_item(node: str, chain: tuple[ProjectLink, ...], distance: int | None = None) -> Item:
+    links = tuple(_project_link(link) for link in chain)
+    return Item(
+        node=node,
+        kind=_kind(node),
+        chain=links,
+        confidence=weakest(link.confidence for link in links),
+        distance=distance,
+        declared_only=len(chain) == 1 and chain[0].declared_only,
+    )
+
+
+def _project_neighbours(ix: GraphIndex, target: str, question: Question, limit: int | None) -> Answer:
+    view = project_view(ix)
+    node = _project_of(ix, target)
+    if question == "dependencies":
+        pairs = [(node, other) for other in sorted(view.graph.successors(node))]
+        items = [_project_item(other, (view.links[(node, other)],)) for _, other in pairs]
+        unresolved = ix.unresolved.get(node, ())
+        return _answer(ix, question, node, {"level": "project", "limit": limit}, items, limit, unresolved=unresolved)
+    items = [_project_item(other, (view.links[(other, node)],)) for other in sorted(view.graph.predecessors(node))]
+    return _answer(ix, question, node, {"level": "project", "limit": limit}, items, limit)
+
+
+def _project_impact(ix: GraphIndex, target: str, max_depth: int | None, limit: int | None) -> Answer:
+    view = project_view(ix)
+    node = _project_of(ix, target)
+    g = view.code_graph
+    distance = {node: 0}
+    level = [node]
+    depth = 0
+    while level and (max_depth is None or depth < max_depth):
+        depth += 1
+        level = sorted({dep for n in level for dep in g.predecessors(n) if dep not in distance})
+        for dep in level:
+            distance[dep] = depth
+    cut = max_depth is not None and any(dep not in distance for n in level for dep in g.predecessors(n))
+    items = []
+    for dep in sorted((n for n in distance if n != node), key=lambda n: (distance[n], n)):
+        chain = []
+        current = dep
+        while current != node:
+            nxt = min(s for s in g.successors(current) if distance.get(s) == distance[current] - 1)
+            chain.append(view.links[(current, nxt)])
+            current = nxt
+        items.append(_project_item(dep, tuple(chain), distance[dep]))
+    options = {"level": "project", "limit": limit, "max_depth": max_depth}
+    return _answer(ix, "impact", node, options, items, limit, cut=cut)
+
+
+def _project_cycles(ix: GraphIndex, limit: int | None) -> Answer:
+    view = project_view(ix)
+    g = view.code_graph
+    groups = []
+    for members in _loops(g):
+        path = _shortest_cycle(g, members[0], set(members))
+        cycle = tuple(_project_link(view.links[(a, b)]) for a, b in zip(path, path[1:] + path[:1], strict=True))
+        groups.append(CycleGroup(files=members, cycle=cycle, type_only=False, confidence=weakest(link.confidence for link in cycle)))
+    shown, total, truncated = _limit(groups, limit)
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="cycles",
+        target=None,
+        options={"level": "project", "limit": limit},
+        total=total,
+        truncated=truncated,
+        groups=tuple(shown),
         completeness=ix.completeness,
     )

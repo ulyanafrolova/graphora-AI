@@ -1,8 +1,11 @@
 """Project-level view (specs/009-csharp-solutions-project-views research § R4)."""
 
+import pytest
+
 from graphora.graph.model import FileNode
 from graphora.graph.project_view import ProjectView
-from graphora.graph.queries import index
+from graphora.graph.queries import NodeNotFound, cycles, dependencies, dependents, impact, index
+from graphora.graph.results import render_text
 from synthetic import edge, make_doc
 
 A, B, C = "project:a/A.csproj", "project:b/B.csproj", "project:c/C.csproj"
@@ -74,3 +77,70 @@ def test_files_of_and_determinism():
     assert list(v1.links) == list(v2.links) == [(A, B), (B, C), (C, A)]
     assert v1.files_of(A) == ("file:a/X.cs", "file:a/Y.cs")
     assert v1.files_of(None) == ("file:loose/L.cs",)
+
+
+# --- project-level questions (research § R5) ---------------------------------------------------------------------
+
+
+def _ix(edges):
+    return index(make_doc(edges, nodes=FILES))
+
+
+EDGES = [
+    edge(A, B, 4, type="project_reference"),
+    edge(A, C, 5, type="project_reference"),
+    edge(A, "unresolved:dotnet:Missing.csproj", 6, type="project_reference", reason="not_found"),
+    edge("a/X.cs", "b/Z.cs", 3, type="type_reference", symbol="B.Z"),
+    edge("a/Y.cs", "b/Z.cs", 8, type="type_reference", symbol="B.Z"),
+    edge("b/Z.cs", "c/W.cs", 2, type="type_reference", symbol="C.W"),
+    edge("c/W.cs", "b/Z.cs", 9, confidence="heuristic", reason="namespace_spread"),
+]
+
+
+def test_project_dependencies_with_evidence_and_declared_only():
+    answer = dependencies(_ix(EDGES), "a/A.csproj", level="project")
+    assert [(i.node, i.declared_only, len(i.chain[0].edges), len(i.chain[0].declared)) for i in answer.items] == [
+        (B, False, 2, 1),
+        (C, True, 1, 1),
+    ]
+    assert [e.target for e in answer.unresolved] == ["unresolved:dotnet:Missing.csproj"]
+    text = render_text(answer)
+    assert "b/B.csproj  a/X.cs:3 (+1 more) → b/B.csproj" in text
+    assert "c/C.csproj  a/A.csproj:5 → c/C.csproj (declared, not used by code)" in text
+
+
+def test_project_dependents_from_a_file_target():
+    answer = dependents(_ix(EDGES), "c/W.cs", level="project")  # a C# file stands for its project
+    assert answer.target == C
+    assert [(i.node, i.confidence, i.declared_only) for i in answer.items] == [(A, "resolved", True), (B, "resolved", False)]
+
+
+def test_project_impact_uses_code_links_only():
+    answer = impact(_ix(EDGES), "c/C.csproj", level="project")
+    assert [(i.node, i.distance) for i in answer.items] == [(B, 1), (A, 2)]  # A reaches C only through B in code
+    assert [link.target for link in answer.items[1].chain] == [B, C]
+
+
+def test_project_cycles():
+    answer = cycles(_ix(EDGES), level="project")
+    (group,) = answer.groups
+    assert group.files == (B, C)
+    assert group.confidence == "heuristic"  # B → C resolved, C → B heuristic: a cycle is only as sure as its weakest link
+    assert [link.confidence for link in group.cycle] == ["resolved", "heuristic"]
+
+
+def test_project_level_errors():
+    ix = _ix(EDGES)
+    with pytest.raises(NodeNotFound) as exc:
+        dependencies(ix, "loose/L.cs", level="project")
+    assert exc.value.status == "not_a_project"
+    for kwargs in ({"symbol": "X"}, {"follow_barrels": True}, {"include_type_only": False}):
+        with pytest.raises(ValueError):
+            dependents(ix, "b/B.csproj", level="project", **kwargs)
+    with pytest.raises(ValueError):
+        cycles(ix, level="module")
+
+
+def test_no_projects_gives_empty_answers():
+    ix = index(make_doc([edge("a.py", "b.py")]))
+    assert cycles(ix, level="project").groups == ()
