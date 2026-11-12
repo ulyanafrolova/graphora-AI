@@ -7,9 +7,19 @@ import json
 from collections import Counter
 from typing import Any
 
-from graphora.graph.model import AssetNode, Definition, Edge, ExternalNode, FileNode, GraphDocument, Node, UnresolvedNode
+from graphora.graph.model import (
+    AssetNode,
+    Definition,
+    Edge,
+    ExternalNode,
+    FileNode,
+    GraphDocument,
+    Node,
+    ProjectNode,
+    UnresolvedNode,
+)
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 def _sha16(text: str) -> str:
@@ -47,7 +57,9 @@ def _node_dict(node: Node) -> dict[str, Any]:
             "language": node.language,
             "definitions": [_definition_dict(d) for d in definitions],
         }
-        if node.language != "python":
+        if node.language == "csharp":
+            out["project"] = node.project
+        elif node.language != "python":
             exports = sorted(node.exports or (), key=lambda x: (x.name, x.line))
             out["exports"] = [{"name": x.name, "local": x.local, "line": x.line} for x in exports]
         return out
@@ -55,6 +67,8 @@ def _node_dict(node: Node) -> dict[str, Any]:
         return {"id": node.id, "kind": "external", "name": node.name, "ecosystem": node.ecosystem, "category": node.category}
     if isinstance(node, UnresolvedNode):
         return {"id": node.id, "kind": "unresolved", "reference": node.reference, "ecosystem": node.ecosystem}
+    if isinstance(node, ProjectNode):
+        return {"id": node.id, "kind": "project", "path": node.path}
     assert isinstance(node, AssetNode)
     return {"id": node.id, "kind": "asset", "path": node.path}
 
@@ -79,6 +93,9 @@ def _edge_dict(edge: Edge) -> dict[str, Any]:
         out["reason"] = edge.reason
     if edge.alias is not None:
         out["alias"] = edge.alias
+    if edge.directive is not None:
+        out["directive"] = edge.directive
+        out["global_using"] = edge.global_using
     return out
 
 

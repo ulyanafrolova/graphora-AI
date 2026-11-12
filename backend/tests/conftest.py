@@ -98,6 +98,10 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
                 item["definitions"] = n["definitions"]
                 if "exports" in n:
                     item["exports"] = n["exports"]
+                if "project" in n:
+                    item["project"] = n["project"]
+            if n["kind"] == "project":
+                item["path"] = n["path"]
             nodes.append(item)
         out["nodes"] = sorted(nodes, key=lambda n: n["id"])
     if "edges" in sections:
@@ -117,6 +121,9 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
                 item["type_only"] = True
             if "alias" in e:
                 item["alias"] = e["alias"]
+            if "directive" in e:
+                item["directive"] = e["directive"]
+                item["global_using"] = e["global_using"]
             edges.append(item)
         out["edges"] = sorted(edges, key=edge_key)
     if "coverage" in sections:

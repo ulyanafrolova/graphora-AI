@@ -55,7 +55,7 @@ def test_not_an_object():
     _invalid(b"[1, 2]", "object")
 
 
-@pytest.mark.parametrize("version", [1, 2, 4])
+@pytest.mark.parametrize("version", [1, 2, 3, 5])
 def test_schema_version(version):
     doc = _doc()
     doc["schema_version"] = version
@@ -118,3 +118,45 @@ def test_unresolved_without_reason():
     edge = next(e for e in doc["edges"] if e["confidence"] == "unresolved")
     del edge["reason"]
     _invalid(_bytes(doc), "reason")
+
+
+# --- v4: C# documents (specs/007-csharp-analysis/data-model.md) -------------------------------------------------
+
+
+def _cs_bytes(**edge_changes) -> bytes:
+    from graphora.graph.model import CoverageFile, Definition, Edge, FileNode, GraphDocument, ProjectNode
+
+    snap = "content:0123456789abcdef"
+    h = "sha256:0000000000000000"
+    edge = Edge("project:A/A.csproj", "project:B/B.csproj", "..\\B\\B.csproj", 3, 5, snap, "resolved", None, "csproj-reader@0.1.0", h, type="project_reference")
+    using = Edge("file:A/P.cs", "file:B/Q.cs", "B", 1, 1, snap, "heuristic", "namespace_spread", "csharp-adapter@0.1.0", h, directive="using", global_using=True)
+    doc = serialize.to_dict(
+        GraphDocument(
+            snap,
+            {"csharp-adapter": "0.1.0"},
+            (
+                FileNode("A/P.cs", "csharp", (Definition("struct", "A.S", 2),), None, "project:A/A.csproj"),
+                FileNode("B/Q.cs", "csharp", (), None, None),
+                ProjectNode("A/A.csproj"),
+                ProjectNode("B/B.csproj"),
+            ),
+            (edge, using),
+            (CoverageFile("A/P.cs", "csharp", "analyzed", ("ambiguous_project",)),),
+            (),
+        )
+    )
+    for e in doc["edges"]:
+        if e["type"] == "project_reference":
+            e.update(edge_changes)
+            _rehash(e)
+    return _bytes(doc)
+
+
+def test_csharp_round_trip():
+    data = serialize.dumps(loads(_cs_bytes()))
+    assert loads(data) == loads(_cs_bytes())
+    assert serialize.dumps(loads(data)) == data
+
+
+def test_project_edge_from_file_rejected():
+    _invalid(_cs_bytes(source="file:A/P.cs"), "not a project node")

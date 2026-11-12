@@ -11,6 +11,8 @@ def edge(source, target, line=1, *, column=1, symbol=None, confidence="resolved"
     dst = target if ":" in target else f"file:{target}"
     if dst.startswith("unresolved:"):
         confidence, reason = "unresolved", reason or "not_found"
+    elif confidence == "heuristic":
+        reason = reason or "namespace_spread"  # v4: a heuristic edge carries a reason
     return Edge(src, dst, symbol, line, column, SNAP, confidence, reason, "python-adapter@0.2.0", "sha256:0000000000000000", **extra)
 
 

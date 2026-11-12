@@ -63,7 +63,7 @@ Paths are relative to the repository root. Python code lives in `backend/src/gra
 **Purpose**: after this phase every existing fixture passes on schema v4 and the queries understand project
 and C# external ids, before any C# code exists.
 
-- [ ] T003 Move the graph format to schema v4 in one change (research R8, R9; data-model.md):
+- [X] T003 Move the graph format to schema v4 in one change (research R8, R9; data-model.md):
   - copy `specs/007-csharp-analysis/contracts/graph.schema.json` to `schema/graph.schema.json`;
   - `backend/src/graphora/graph/model.py`: `Ecosystem` adds `"dotnet"`, `"nuget"`; `DefinitionKind` adds
     `"struct"`, `"record"`, `"delegate"`; `EdgeType` adds `"project_reference"`, `"package_reference"`; `Reason`
@@ -80,8 +80,8 @@ and C# external ids, before any C# code exists.
   - `backend/src/graphora/graph/load.py`: `_LANGUAGES` adds `"csharp"`; reads project nodes, `project`,
     `directive`, `global_using`; `_check_edges` requires a file-node source for `imports`/`reexports` and a
     project-node source for `project_reference`/`package_reference`;
-  - set `"schema_version": 4` in every `fixtures/repos/*/expected.json` (by hand; no other change) and in any
-    test document that states 3;
+  - set `schema_version` 4 in any test that states 3 (`fixtures/repos/*/expected.json` hold the projected
+    shape without a version, so they need no change);
   - tests: v4 accept/reject samples in `backend/tests/contract/test_schema.py` (the 21 samples listed in
     plan.md § Constitution Check, plus `test_old_schema_version_rejected` for 3), model rules in
     `backend/tests/unit/test_serialize.py`, loader cases in `backend/tests/unit/test_load.py`; projection in
