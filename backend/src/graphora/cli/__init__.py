@@ -96,7 +96,7 @@ def _parser() -> argparse.ArgumentParser:
     query.add_argument("--no-type-only", action="store_true", help="leave out type-only links")
     query.add_argument("--symbol", help="dependents: only edges of this imported name")
     query.add_argument("--max-depth", type=int, help="impact: stop at this distance")
-    query.add_argument("--follow-barrels", action="store_true", help="dependents and impact: see through re-exports")
+    query.add_argument("--follow-barrels", action="store_true", help="dependents and impact: see through re-exports (index.ts, Python __init__.py)")
     query.add_argument(
         "--level",
         choices=("file", "project"),

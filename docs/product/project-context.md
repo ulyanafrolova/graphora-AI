@@ -195,7 +195,7 @@ Eleven or more features do not fit into 10–14 weeks for three people. Present 
 ## 11. Technical risks and pitfalls
 
 - Import resolution is the hardest part of the project. Budget the most time for it.
-- TS barrel files (index.ts with export *) collapse the graph into index files unless re-exports are followed.
+- Barrel files (TS `index.ts` with `export *`, Python `__init__.py` re-imports) collapse the graph into index files unless re-exports are followed (004, 017: `--follow-barrels`).
 - Determinism has to be enforced: Python set iteration order can change between runs, so sort nodes and edges.
 - Line numbers alone are fragile evidence; store a snippet hash as well.
 - Small models make tool-calling mistakes (broken JSON, unknown tools, loops). Validate arguments, retry and enforce a step budget.

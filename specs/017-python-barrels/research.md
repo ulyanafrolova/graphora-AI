@@ -61,3 +61,13 @@ computes. Unresolved edges are dropped before tracing.
 - Schema 6 → 7; `python-adapter` 0.3.0 → 0.4.0. Graph files of version 6 are rejected by the loader with the
   existing message; stored analyses are made again because the extractor versions differ.
 - `tests/golden/v1/*.json` are frozen v1 answers: the v1 projection drops `alias` like the other later fields.
+
+## Implementation notes
+
+- SC-001 on this repository's backend (2026-11-13): `dependents src/graphora/mcp/server.py --symbol create_server`
+  gives 1 file without barrel following and 8 with it: `mcp/__init__.py` plus 7 importers through
+  `graphora.mcp` (`cli/__init__.py` and 6 test files; `test_api_jobs.py` came with 010).
+- SC-005: on 5,000 modules in 50 re-exporting packages, `dependents` with barrels takes about 0.13 s and
+  `impact` about 0.10 s (`tests/integration/test_query_performance.py`).
+- The submodule case (`from pkg import server`) needs no tracing: the resolver already points it at
+  `pkg/server.py` (fixture `run.py`).

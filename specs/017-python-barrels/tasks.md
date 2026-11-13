@@ -133,14 +133,14 @@ fixtures/repos/py-barrels/repo/
 
 ## Phase 6: Polish
 
-- [ ] T022 [P] Help texts: CLI `--follow-barrels` in `backend/src/graphora/cli/__init__.py` and the
+- [x] T022 [P] Help texts: CLI `--follow-barrels` in `backend/src/graphora/cli/__init__.py` and the
   `dependents` / `impact` descriptions in `backend/src/graphora/mcp/server.py` (contracts/queries.md).
-- [ ] T023 [P] MCP golden check: the new `queries.json` cases pass through MCP (`tests/golden/test_mcp_queries.py`
+- [x] T023 [P] MCP golden check: the new `queries.json` cases pass through MCP (`tests/golden/test_mcp_queries.py`
   picks them up; confirm).
-- [ ] T024 [P] Performance: add a Python package re-export layer to the generated repo in
+- [x] T024 [P] Performance: add a Python package re-export layer to the generated repo in
   `backend/tests/integration/test_query_performance.py` (or confirm it already exercises barrels) and keep the
   limits (SC-005).
-- [ ] T025 Docs: `grep -rn "barrel" docs README.md`; where barrel following is described as TS/JS-only, add
+- [x] T025 Docs: `grep -rn "barrel" docs README.md`; where barrel following is described as TS/JS-only, add
   Python package imports. `specs/004-graph-queries` is not edited.
 - [ ] T026 Run quickstart.md steps 2–5 and record the SC-001 result (7 files) in research.md § Implementation
   notes; `make check` with PostgreSQL. **Commit** "polish python barrel following"; push; mark PR #26 ready.
