@@ -31,11 +31,11 @@ Changing a module you do not own: open the pull request and request the owner's 
 | sync | Agree: source fetching returns a folder plus a known snapshot id; `build()` accepts it | |
 | 1 | 002 repo ingest: GitHub URL and ZIP | 003 TS/JS analysis (schema v2) |
 | 2 | 004 graph queries (NetworkX) | 005 storage and HTTP API |
-| 3 | 006 MCP server | 007 end-to-end pipeline |
+| 3 | 006 MCP server | 007–009 C# analysis (slices 1–3), then 010 end-to-end pipeline |
 | sync | Agree: `Claim`, `Verdict`, agent state | |
-| 4 | 008 claim verifier and agent tools | 009 agents |
-| 5 | 011 hotspots | 010 `/ask` with streaming |
-| 6–7 | Frontend together, 013 benchmark | Frontend together, 012 HTTP bridge |
+| 4 | 011 claim verifier and agent tools | 012 agents |
+| 5 | 014 hotspots | 013 `/ask` with streaming |
+| 6–7 | Frontend together, 016 benchmark | Frontend together, 015 HTTP bridge |
 
 ## Feature cycle
 
