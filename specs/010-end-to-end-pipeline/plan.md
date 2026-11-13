@@ -98,7 +98,10 @@ backend/
     ├── unit/test_jobs.py                  # queue, workers, dedup, stages, stop, status bytes (stub pipeline)
     ├── unit/test_job_input.py             # link, ref, name, limits checks
     ├── unit/test_fetch_workdir.py         # temp folder created inside workdir and removed
-    ├── integration/test_api_jobs.py       # db: US1–US4 over TestClient + fake_github
+    ├── integration/test_api_jobs.py           # db: US1 over TestClient + fake_github
+    ├── integration/test_api_jobs_reuse.py     # db: US2 reuse and dedup
+    ├── integration/test_api_jobs_zip.py       # db: US3 uploads
+    ├── integration/test_api_jobs_failures.py  # db: US4 failure kinds, FR-023
     ├── integration/test_jobs_cleanup.py   # work-dir lock, leftovers removed at start, no files after jobs
     ├── integration/test_store_cli.py      # existing: still passes unchanged (FR-022)
     └── golden/test_pipeline_equivalence.py  # db: every fixture via GitHub fake and ZIP == analyze --store, ×3

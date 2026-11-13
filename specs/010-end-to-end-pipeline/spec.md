@@ -64,8 +64,8 @@ count archive downloads in the GitHub stand-in.
 1. **Given** a stored, reusable analysis of `github.com/o/r` at commit `S`, **When** the user submits
    `github.com/o/r` at a ref pointing to `S`, **Then** the job reaches `done` with "reused", and no archive
    is downloaded.
-2. **Given** a job for `github.com/o/r` at ref `main` that is not finished, **When** the same link and ref
-   are submitted again, **Then** the answer is the same job id, and only one download and one analysis
+2. **Given** a job for `github.com/o/r` at ref `main` that is not finished, **When** the same link, ref and
+   limits are submitted again, **Then** the answer is the same job id, and only one download and one analysis
    happen.
 3. **Given** a stored analysis made with older extractor versions, **When** the same commit is submitted,
    **Then** the job downloads, analyzes and replaces it, and the status says "replaced".
@@ -189,8 +189,9 @@ can be stopped; check the status, the store and the temporary folder after each.
 - **FR-010**: At most a configured number of jobs (default 1) MUST run at the same time; others wait in
   submission order. At most a configured number of jobs (default 20) MAY wait; beyond that, new
   submissions MUST be rejected with a distinct "too many jobs" answer.
-- **FR-011**: Submitting a GitHub link and ref identical to those of a job that is not finished MUST return
-  that job instead of creating a new one.
+- **FR-011**: Submitting a GitHub link, ref and limits identical to those of a job that is not finished MUST
+  return that job instead of creating a new one. The same link and ref with different limits is a new job,
+  because it may end differently.
 - **FR-012**: Finished jobs MUST stay readable until the service stops. Job state is not required to
   survive a restart.
 

@@ -162,8 +162,8 @@ stage; `done` names the stored repository and snapshot, readable through the 005
     `unknown key: <k>`; a `github` value that does not start with a URL scheme → `bad_request`
     `not a GitHub repository link: <value>` without calling `parse_source` (FR-003, R9); otherwise
     `parse_source(github, ref)` and map `BadInput` to `bad_request`, rewriting `--ref` to `ref` in the
-    message; reject a non-GitHub result. Limits: keys among the six names, integers ≥ 1 (`max_seconds` a
-    number > 0), each ≤ the server value, else `bad_request` naming the key. Return `202` +
+    message; reject a non-GitHub result. Limits: keys among the six names, integers ≥ 1 (`max_seconds` may be
+    a non-integer number, also ≥ 1), each ≤ the server value, else `bad_request` naming the key. Return `202` +
     `status.to_json()`.
   - `GET /jobs/{job_id}`: no query parameters; unknown or malformed id → `not_found` `job not found: <id>`.
 - [ ] T014 [US1] Update `backend/src/graphora/api/__init__.py`: `create_app(store, runner=None)`; include
@@ -193,7 +193,7 @@ stage; `done` names the stored repository and snapshot, readable through the 005
   `(owner, repo, ref, limits)` while the first job is unfinished return the same id; a different `ref` or
   different limits create a new job; after the first job ends, the same submission creates a new job
   (research R10).
-- [ ] T018 [P] [US2] Add section US2 to `backend/tests/integration/test_api_jobs.py` (`db`):
+- [ ] T018 [P] [US2] Write `backend/tests/integration/test_api_jobs_reuse.py` (`db`, `job_app`, `fake_gh`):
   - after a `done` job, the same link again ends `done` with `action == "reused"` and
     `fake_gh.urls("codeload.github.com")` has exactly one request in total (acceptance 1, SC-003: the second
     job finishes in under 2 s);
@@ -229,7 +229,7 @@ receiving; same job flow.
   256-byte name, a name whose repository part is longer than 300 characters; accepted `app.zip`,
   `my.repo.zip` (repository `my.repo`), `noext` (repository `noext`); limits above the server value, below 1,
   non-integer, unknown key → rejected with the key in the message.
-- [ ] T021 [P] [US3] Add section US3 to `backend/tests/integration/test_api_jobs.py` (`db`):
+- [ ] T021 [P] [US3] Write `backend/tests/integration/test_api_jobs_zip.py` (`db`, `job_app`):
   - `fixture_zip("py-flat")` uploaded as `app.zip` ends `done` with `repository == "app"` and the same
     `content:` snapshot and graph bytes as `graphora analyze app.zip --store` (acceptance 1);
   - `?max_archive_bytes=100` with a larger body → `413 limit` with
@@ -271,19 +271,24 @@ after a crash; bounded queue; clean stop.
 
 ### Tests for User Story 4
 
-- [ ] T024 [P] [US4] Add section US4 to `backend/tests/integration/test_api_jobs.py` (`db`):
+- [ ] T024 [P] [US4] Write `backend/tests/integration/test_api_jobs_failures.py` (`db`, `job_app`, `fake_gh`):
   - `{"github": "/etc"}`, `{"github": "https://gitlab.com/o/r"}`, an invalid ref, `/tree/x` plus `ref` →
     `400` with the CLI's reason (`ref` instead of `--ref`), no job (acceptance 1);
   - `fake_gh` answering `404` for the commit lookup → `failed`, kind `remote`, message names the repository
     or ref (acceptance 2);
   - `limits: {"max_files": 1}` on a 2-file tarball → `failed`, kind `limit`,
     `file limit exceeded: at least 2 files > max_files 1` (acceptance 3);
-  - store unavailable: give the runner an unreachable `database_url` → `failed`, kind `store`, message
-    `store unavailable`, and the message contains no part of the URL (acceptance 4);
+  - store unavailable from the start: give the runner an unreachable `database_url` → `failed`, kind
+    `store`, message `store unavailable`, and the message contains no part of the URL (acceptance 4);
+  - store lost during the job: patch `Store.put` to raise `StoreUnavailable("gone")` → `stages_seen`
+    includes `storing`, then `failed` with kind `store`, and no analysis for that pair (acceptance 4);
   - `Store.put` patched to raise `InvalidAnalysis("x")` → kind `invalid`; a stub raising `RuntimeError` →
     kind `internal`, message `internal error`;
   - after every case: no analysis for that pair in the store, `work_dir` holds only `.lock` (acceptance 5,
-    SC-005).
+    SC-005);
+  - nothing else changes stored data (FR-023): `DELETE` and `PUT` on `/api/v1/jobs/{id}`, `/api/v1/graph`
+    and `/api/v1/repositories`, and `GET`/`PUT`/`DELETE` on `/api/v1/jobs` and `/api/v1/jobs/zip`, answer
+    `405 method_not_allowed` `method not allowed`, and the store is unchanged afterwards.
 - [ ] T025 [P] [US4] Write `backend/tests/integration/test_jobs_cleanup.py`:
   - a second `JobRunner` on the same `work_dir` fails `start()` with `WorkDirInUse`; a different `work_dir`
     works;
