@@ -25,7 +25,7 @@
   ],
   "edges": [
     {"source": "file:src/app/api/routes.py", "line": 1, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "Engine", "confidence": "resolved", "reason": null},
-    {"source": "file:src/app/api/routes.py", "line": 2, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "Engine", "confidence": "resolved", "reason": null},
+    {"source": "file:src/app/api/routes.py", "line": 2, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "Engine", "alias": "E2", "confidence": "resolved", "reason": null},
 
     {"source": "file:tests/test_core.py", "line": 1, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": null, "confidence": "resolved", "reason": null},
     {"source": "file:tests/test_core.py", "line": 2, "type": "imports", "form": "static", "target": "file:src/app/core.py", "symbol": "core", "confidence": "resolved", "reason": null},

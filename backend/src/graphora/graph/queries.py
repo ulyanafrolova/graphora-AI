@@ -325,11 +325,43 @@ def _defines(node: FileNode, name: str) -> bool:
     return any(name in (d.exported_as or ()) for d in node.definitions) or any(x.name == name for x in node.exports or ())
 
 
+def _py_defines(node: FileNode, name: str) -> bool:
+    return any(d.name == name and d.kind in ("class", "function") for d in node.definitions)
+
+
+def _py_binds(imports: dict[str, list[Edge]], node: FileNode, name: str) -> bool:
+    return _py_defines(node, name) or any((e.alias or e.symbol) == name for e in imports.get(node.id, ()))
+
+
+def _trace_py(
+    ix: GraphIndex, imports: dict[str, list[Edge]], file_id: str, name: str, seen: frozenset[str]
+) -> tuple[str, tuple[Edge, ...]] | None:
+    """Where `name`, importable from Python file `file_id`, comes from, and the import edges that lead there
+    (specs/017-python-barrels research § R3). A definition stops the walk; an import binding the name is followed,
+    and a target that neither defines nor imports it is where the name comes from."""
+    node = ix.nodes.get(file_id)
+    if not isinstance(node, FileNode) or node.language != "python":
+        return None
+    if _py_defines(node, name):
+        return file_id, ()
+    seen = seen | {file_id}
+    for e in imports.get(file_id, ()):
+        if (e.alias or e.symbol) != name or e.target in seen:
+            continue
+        target = ix.nodes.get(e.target)
+        if e.symbol is None or not isinstance(target, FileNode) or not _py_binds(imports, target, e.symbol):
+            return e.target, (e,)
+        found = _trace_py(ix, imports, e.target, e.symbol, seen)
+        if found is not None:
+            return found[0], (e,) + found[1]
+    return None
+
+
 def _trace(
     ix: GraphIndex, reexports: dict[str, list[Edge]], file_id: str, name: str, seen: frozenset[str]
 ) -> tuple[str, tuple[Edge, ...]] | None:
-    """Where `name`, as exported by `file_id`, is defined, and the re-export edges that lead there (research § R8).
-    Only TS/JS files are followed (Python files carry no export records); a file already on the path stops it."""
+    """Where `name`, as exported by TS/JS file `file_id`, is defined, and the re-export edges that lead there
+    (research § R8). A file already on the path stops it; Python files go through `_trace_py`."""
     node = ix.nodes.get(file_id)
     if not isinstance(node, FileNode) or node.exports is None:
         return None
@@ -360,15 +392,22 @@ def _barrel_links(ix: GraphIndex, include_type_only: bool, symbol: str | None = 
         return ix._barrels[include_type_only]
     kept = [e for e in sorted(ix.doc.edges, key=edge_sort_key) if e.confidence != "unresolved" and (include_type_only or not e.type_only)]
     reexports: dict[str, list[Edge]] = defaultdict(list)
+    py_imports: dict[str, list[Edge]] = defaultdict(list)
     for e in kept:
         if e.type == "reexports" and e.target.startswith("file:"):
             reexports[e.source].append(e)
+        elif e.type == "imports" and e.form == "static" and e.symbol != "*" and e.target.startswith("file:") and e.extractor.startswith("python-adapter@"):
+            py_imports[e.source].append(e)
 
     found: dict[tuple[str, str], tuple[list[Edge], tuple[Edge, ...]]] = {}
     for e in kept:
         if e.type != "imports" or e.symbol in (None, "*") or (symbol is not None and e.symbol != symbol):
             continue
-        traced = _trace(ix, reexports, e.target, e.symbol, frozenset())
+        target = ix.nodes.get(e.target)
+        if isinstance(target, FileNode) and target.language == "python":
+            traced = _trace_py(ix, py_imports, e.target, e.symbol, frozenset())
+        else:
+            traced = _trace(ix, reexports, e.target, e.symbol, frozenset())
         if traced is None or traced[0] in (e.target, e.source):
             continue
         pair = (e.source, traced[0])

@@ -82,9 +82,106 @@ def test_reexport_loop_stops():
     assert sorted(follow(doc, "b.ts")) == ["a.ts"]
 
 
-def test_python_edges_are_never_followed():
-    doc = make_doc([edge("app.py", "pkg/__init__.py", symbol="f"), edge("pkg/__init__.py", "pkg/f.py", symbol="f")])
-    assert sorted(follow(doc, "pkg/f.py")) == ["pkg/__init__.py"]
+def py(path, defines=()):
+    return FileNode(path, "python", tuple(Definition("function", name, 1) for name in defines))
+
+
+def _package():
+    """app.py imports names from pkg/__init__.py, which imports them from its modules (specs/017 research § R3)."""
+    return make_doc(
+        [
+            edge("app.py", "pkg/__init__.py", 1, symbol="AuthService"),
+            edge("app.py", "pkg/__init__.py", 2, symbol="tool"),
+            edge("app.py", "pkg/__init__.py", 3, symbol="LIMIT"),
+            edge("app.py", "pkg/__init__.py", 4, symbol="version"),
+            edge("app.py", "pkg/__init__.py", 5, symbol="nothing"),
+            edge("pkg/__init__.py", "pkg/auth/__init__.py", 1, symbol="AuthService"),
+            edge("pkg/__init__.py", "pkg/tools.py", 2, symbol="*"),
+            edge("pkg/__init__.py", "pkg/config.py", 3, symbol="LIMIT"),
+            edge("pkg/__init__.py", "unresolved:python:pkg.missing", 4, symbol="nothing"),
+            edge("pkg/__init__.py", "pkg/version.py", 5, symbol="version"),
+            edge("pkg/auth/__init__.py", "pkg/auth/service.py", 1, symbol="AuthService"),
+        ],
+        nodes=[py("pkg/__init__.py", ["version"]), py("pkg/auth/service.py", ["AuthService"]), py("pkg/tools.py", ["tool"]), py("pkg/version.py", ["version"])],
+    )
+
+
+def test_python_chain_through_two_packages():
+    items = follow(_package(), "pkg/auth/service.py")
+    assert sorted(items) == ["app.py", "pkg/__init__.py", "pkg/auth/__init__.py"]
+    assert steps(items["app.py"]) == ["app.py:1", "pkg/__init__.py:1", "pkg/auth/__init__.py:1"]
+    assert steps(items["pkg/__init__.py"]) == ["pkg/__init__.py:1", "pkg/auth/__init__.py:1"]
+    assert items["app.py"].confidence == "resolved"
+
+
+def test_python_barrels_off_unchanged():
+    answer = dependents(index(_package()), "pkg/auth/service.py")
+    assert [i.node for i in answer.items] == ["file:pkg/auth/__init__.py"]
+
+
+def test_python_star_import_is_not_followed():
+    assert "app.py" not in follow(_package(), "pkg/tools.py")
+
+
+def test_python_constant_stops_at_the_imported_file():
+    assert steps(follow(_package(), "pkg/config.py")["app.py"]) == ["app.py:3", "pkg/__init__.py:3"]
+
+
+def test_python_definition_in_the_package_wins():
+    assert "app.py" not in follow(_package(), "pkg/version.py")
+
+
+def test_python_unresolved_import_is_not_followed():
+    assert sorted(follow(_package(), "pkg/__init__.py")) == ["app.py"]
+
+
+def test_python_symbol_filter():
+    assert sorted(follow(_package(), "pkg/auth/service.py", symbol="AuthService")) == ["app.py", "pkg/__init__.py", "pkg/auth/__init__.py"]
+    assert sorted(follow(_package(), "pkg/auth/service.py", symbol="LIMIT")) == []
+
+
+def test_python_renamed_import():
+    doc = make_doc(
+        [
+            edge("cli.py", "pkg/__init__.py", 1, symbol="make_server"),
+            edge("old.py", "pkg/__init__.py", 1, symbol="create_server"),
+            edge("pkg/__init__.py", "pkg/server.py", 2, symbol="create_server", alias="make_server"),
+        ],
+        nodes=[py("pkg/server.py", ["create_server"])],
+    )
+    items = follow(doc, "pkg/server.py")
+    assert sorted(items) == ["cli.py", "pkg/__init__.py"]
+    assert steps(items["cli.py"]) == ["cli.py:1", "pkg/__init__.py:2"]
+
+
+def test_python_name_imported_twice_under_two_names():
+    doc = make_doc(
+        [
+            edge("a.py", "pkg/__init__.py", 1, symbol="f"),
+            edge("b.py", "pkg/__init__.py", 1, symbol="g"),
+            edge("pkg/__init__.py", "pkg/x.py", 1, symbol="f"),
+            edge("pkg/__init__.py", "pkg/x.py", 1, symbol="f", alias="g"),
+        ],
+        nodes=[py("pkg/x.py", ["f"])],
+    )
+    assert sorted(follow(doc, "pkg/x.py")) == ["a.py", "b.py", "pkg/__init__.py"]
+
+
+def test_python_reimport_through_an_ordinary_module():
+    doc = make_doc([edge("c.py", "a.py", 1, symbol="helper"), edge("a.py", "b.py", 1, symbol="helper")], nodes=[py("b.py", ["helper"])])
+    assert steps(follow(doc, "b.py")["c.py"]) == ["c.py:1", "a.py:1"]
+
+
+def test_python_module_imported_as_a_name():
+    doc = make_doc([edge("app.py", "pkg/__init__.py", 1, symbol="z"), edge("pkg/__init__.py", "x/y.py", 1, alias="z")])
+    assert steps(follow(doc, "x/y.py")["app.py"]) == ["app.py:1", "pkg/__init__.py:1"]
+
+
+def test_python_loop_of_packages_stops():
+    doc = make_doc(
+        [edge("app.py", "a/__init__.py", 1, symbol="X"), edge("a/__init__.py", "b/__init__.py", 1, symbol="X"), edge("b/__init__.py", "a/__init__.py", 1, symbol="X")]
+    )
+    assert sorted(follow(doc, "b/__init__.py")) == ["a/__init__.py"]
 
 
 def test_symbol_filter_applies_at_the_import_edge():

@@ -79,7 +79,7 @@ def test_python_fixtures_match_v1(name):
         item = {k: v for k, v in n.items() if k not in ("ecosystem", "language")}
         nodes.append(dict(item, id=_to_v1_id(n["id"])))
     edges = [
-        {k: (_to_v1_id(v) if k == "target" else v) for k, v in e.items() if k not in ("type", "form")}
+        {k: (_to_v1_id(v) if k == "target" else v) for k, v in e.items() if k not in ("type", "form", "alias")}
         for e in actual["edges"]
         if e["source"].endswith((".py", ".pyi"))
     ]

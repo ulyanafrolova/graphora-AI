@@ -77,8 +77,8 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_6():
-    assert to_dict(_doc())["schema_version"] == 6
+def test_schema_version_7():
+    assert to_dict(_doc())["schema_version"] == 7
 
 
 def test_sort_orders():
@@ -247,3 +247,13 @@ def test_type_reference_rules_and_count():
     doc = GraphDocument(SNAP, {}, (), (), (CoverageFile("a.cs", "csharp", "analyzed", (), 3), CoverageFile("b.py", "python", "analyzed")), ())
     files = to_dict(doc)["coverage"]["files"]
     assert files[0]["unresolved_type_names"] == 3 and "unresolved_type_names" not in files[1]
+
+
+def test_alias_on_python_imports_only():
+    h = "sha256:0000000000000000"
+    e = Edge("file:a.py", "file:b.py", "f", 1, 1, SNAP, "resolved", None, "python-adapter@0.4.0", h, alias="g")
+    assert to_dict(GraphDocument(SNAP, {}, (), (e,), (), ()))["edges"][0]["alias"] == "g"
+    with pytest.raises(ValueError):
+        Edge("file:a.ts", "file:b.ts", "f", 1, 1, SNAP, "resolved", None, "js-adapter@0.2.0", h, alias="g")
+    with pytest.raises(ValueError):
+        Edge("file:a.py", "file:b.py", "f", 1, 1, SNAP, "resolved", None, "python-adapter@0.4.0", h, alias="f")

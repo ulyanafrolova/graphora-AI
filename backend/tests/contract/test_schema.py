@@ -89,9 +89,15 @@ def test_edge_without_required_field_rejected(doc, validator, field):
     assert not validator.is_valid(bad)
 
 
-def test_alias_on_imports_rejected(doc, validator):
-    bad = copy.deepcopy(doc)
-    bad["edges"][0]["alias"] = "x"
+def test_alias_on_python_imports_accepted(doc, validator):
+    good = copy.deepcopy(doc)
+    good["edges"][0]["alias"] = "x"
+    validator.validate(good)
+
+
+def test_alias_on_ts_imports_rejected(ts_doc, validator):
+    bad = copy.deepcopy(ts_doc)
+    _edge(bad, "imports")["alias"] = "x"
     assert not validator.is_valid(bad)
 
 
@@ -167,7 +173,7 @@ def test_unresolved_without_ecosystem_rejected(ts_doc, validator):
     assert not validator.is_valid(bad)
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6])
 def test_old_schema_version_rejected(doc, validator, version):
     bad = copy.deepcopy(doc)
     bad["schema_version"] = version

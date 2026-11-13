@@ -50,10 +50,10 @@ DESCRIPTIONS = {
     + _TARGET + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "dependents": "Which files import this file or package, with the import lines; optionally only one imported "
     "name. " + _TARGET + "symbol keeps only imports of that name. follow_barrels=true also counts files that "
-    "import the name through index.ts re-exports. " + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
+    "import the name through index.ts re-exports or Python package imports (__init__.py). " + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "impact": "Every file that depends on this file directly or through other files, nearest first, each with "
     "its chain of imports: what can break if the file changes. " + _TARGET + "max_depth stops the search at that "
-    "distance; cut tells if it stopped early. follow_barrels=true sees through index.ts re-exports. "
+    "distance; cut tells if it stopped early. follow_barrels=true sees through index.ts re-exports and Python package imports. "
     + _TYPE_ONLY + _LEVEL + _LISTS + _CONFIDENCE,
     "neighbors": "A file's direct imports and the files that import it, in one answer. "
     + _TARGET + _TYPE_ONLY + "limit caps each of the two lists. " + _CONFIDENCE,

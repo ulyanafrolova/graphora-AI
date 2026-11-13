@@ -151,8 +151,11 @@ class Edge:
             raise ValueError("directive and global_using are set together")
         if self.directive is not None and self.type != "imports":
             raise ValueError("directive is allowed only on 'imports' edges")
-        if self.alias is not None and self.type != "reexports" and self.directive != "using_alias":
-            raise ValueError("alias is allowed only on 'reexports' and 'using_alias' edges")
+        python_import = self.type == "imports" and self.extractor.startswith("python-adapter@")
+        if self.alias is not None and self.type != "reexports" and self.directive != "using_alias" and not python_import:
+            raise ValueError("alias is allowed only on 'reexports', 'using_alias' and Python 'imports' edges")
+        if python_import and self.alias is not None and self.alias == self.symbol:
+            raise ValueError("a Python import alias differs from its symbol")
         if self.directive == "using_alias" and self.alias is None:
             raise ValueError("a 'using_alias' edge needs an alias")
         if self.type == "type_reference" and (self.directive is not None or self.alias is not None):
