@@ -163,5 +163,65 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "dependents",
+    "target": "pkg/server.py",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:app.py",
+          "chain": [
+            "app.py:2",
+            "pkg/__init__.py:2"
+          ]
+        },
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:2"
+          ]
+        },
+        {
+          "node": "file:run.py",
+          "chain": [
+            "run.py:1"
+          ]
+        }
+      ],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "pkg/server.py",
+    "options": {
+      "follow_barrels": true,
+      "symbol": "create_server"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:2"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

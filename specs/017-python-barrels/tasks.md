@@ -118,12 +118,12 @@ fixtures/repos/py-barrels/repo/
 
 **Goal**: US2. **Independent test**: `queries.json` cases for `pkg/server.py`.
 
-- [ ] T017 [US2] Add to `fixtures/repos/py-barrels/queries.json`: dependents of `pkg/server.py` with
+- [x] T017 [US2] Add to `fixtures/repos/py-barrels/queries.json`: dependents of `pkg/server.py` with
   `follow_barrels` lists `app.py` (via `pkg/__init__.py:2`) and `pkg/__init__.py`, not `old.py`; with
   `symbol: "create_server"` lists only `pkg/__init__.py`.
-- [ ] T018 [US2] Unit test in `backend/tests/unit/test_queries.py`: `from .x import f, f as g` (two edges), an
+- [x] T018 [US2] Unit test in `backend/tests/unit/test_queries.py`: `from .x import f, f as g` (two edges), an
   importer of `g` and an importer of `f` both attach to `x.py`.
-- [ ] T019 [US2] Run tests. **Commit** "cover renamed python imports"; push.
+- [x] T019 [US2] Run tests. **Commit** "cover renamed python imports"; push.
 
 ## Phase 5: User Story 3 — impact (P2)
 
