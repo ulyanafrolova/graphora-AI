@@ -1,0 +1,167 @@
+[
+  {
+    "question": "dependents",
+    "target": "pkg/auth/service.py",
+    "options": {},
+    "expected": {
+      "items": [
+        {
+          "node": "file:pkg/auth/__init__.py",
+          "chain": [
+            "pkg/auth/__init__.py:1"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "pkg/auth/service.py",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:app.py",
+          "chain": [
+            "app.py:1",
+            "pkg/__init__.py:1",
+            "pkg/auth/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:cli.py",
+          "chain": [
+            "cli.py:1",
+            "pkg/auth/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:1",
+            "pkg/auth/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:pkg/auth/__init__.py",
+          "chain": [
+            "pkg/auth/__init__.py:1"
+          ]
+        }
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "pkg/auth/service.py",
+    "options": {
+      "follow_barrels": true,
+      "symbol": "AuthService"
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:app.py",
+          "chain": [
+            "app.py:1",
+            "pkg/__init__.py:1",
+            "pkg/auth/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:cli.py",
+          "chain": [
+            "cli.py:1",
+            "pkg/auth/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:1",
+            "pkg/auth/__init__.py:1"
+          ]
+        },
+        {
+          "node": "file:pkg/auth/__init__.py",
+          "chain": [
+            "pkg/auth/__init__.py:1"
+          ]
+        }
+      ],
+      "total": 4,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "pkg/config.py",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:app.py",
+          "chain": [
+            "app.py:4",
+            "pkg/__init__.py:4"
+          ]
+        },
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:4"
+          ]
+        }
+      ],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  },
+  {
+    "question": "dependents",
+    "target": "pkg/tools.py",
+    "options": {
+      "follow_barrels": true
+    },
+    "expected": {
+      "items": [
+        {
+          "node": "file:pkg/__init__.py",
+          "chain": [
+            "pkg/__init__.py:3"
+          ]
+        }
+      ],
+      "total": 1,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
+  }
+]

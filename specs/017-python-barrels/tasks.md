@@ -33,10 +33,10 @@ fixtures/repos/py-barrels/repo/
 │                   3 from pkg import tool
 │                   4 from pkg import LIMIT
 │                   5 from pkg import version
-│                   6 from pkg import server
 ├── old.py          1 from pkg import create_server
 │                   2 from pkg import nothing
 ├── cli.py          1 from pkg.auth import AuthService
+├── run.py          1 from pkg import server
 └── pkg/
     ├── __init__.py 1 from .auth import AuthService
     │               2 from .server import create_server as make_server
@@ -100,19 +100,19 @@ fixtures/repos/py-barrels/repo/
 
 **Goal**: FR-005–FR-010. **Independent test**: `queries.json` dependents cases on `py-barrels`.
 
-- [ ] T013 [P] [US1] Unit tests in `backend/tests/unit/test_queries.py` (or the barrel test module) on a small
+- [x] T013 [P] [US1] Unit tests in `backend/tests/unit/test_queries.py` (or the barrel test module) on a small
   in-memory Python graph: one-package re-export, two-package chain, name defined in `__init__.py`, `*` import,
   unresolved import, constant (`LIMIT`) stops at `config.py`, loop of two `__init__.py` stops, symbol filter,
   `follow_barrels` off unchanged, a re-import through an ordinary module (`a.py` imports `helper` from `b.py`,
   `c.py` imports it from `a.py`), and `import x.y as z` re-imported as `z` stops at `x/y.py`.
-- [ ] T014 [US1] Python branch of `_trace` in `backend/src/graphora/graph/queries.py` (research § R3): index
+- [x] T014 [US1] Python branch of `_trace` in `backend/src/graphora/graph/queries.py` (research § R3): index
   Python `imports` edges by source (static, not `unresolved`, `file:` target, symbol not `*`, bound name
   `alias or symbol`); a Python file stops when a top-level `class`/`function` definition has the name, else
   follows the first matching edge in sort order, falling back to the edge's target; `import a.b as c` stops at
   the target. Keep the TS/JS branch as is. Update the `_trace` docstring.
-- [ ] T015 [US1] `fixtures/repos/py-barrels/queries.json` by hand: dependents of `pkg/auth/service.py`,
+- [x] T015 [US1] `fixtures/repos/py-barrels/queries.json` by hand: dependents of `pkg/auth/service.py`,
   `pkg/config.py`, `pkg/tools.py` with and without `follow_barrels`, and with `symbol: "AuthService"`.
-- [ ] T016 [US1] Run the unit and golden query tests. **Commit** "follow python package imports in dependents".
+- [x] T016 [US1] Run the unit and golden query tests. **Commit** "follow python package imports in dependents".
 
 ## Phase 4: User Story 2 — renamed imports (P1)
 

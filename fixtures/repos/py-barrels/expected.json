@@ -18,6 +18,7 @@
     {"id": "file:pkg/tools.py", "kind": "file", "language": "python", "definitions": [
       {"kind": "function", "name": "tool", "line": 1}
     ]},
+    {"id": "file:run.py", "kind": "file", "language": "python", "definitions": []},
     {"id": "unresolved:python:pkg.missing", "kind": "unresolved", "ecosystem": "python"}
   ],
   "edges": [
@@ -26,7 +27,6 @@
     {"source": "file:app.py", "line": 3, "type": "imports", "form": "static", "target": "file:pkg/__init__.py", "symbol": "tool", "confidence": "resolved", "reason": null},
     {"source": "file:app.py", "line": 4, "type": "imports", "form": "static", "target": "file:pkg/__init__.py", "symbol": "LIMIT", "confidence": "resolved", "reason": null},
     {"source": "file:app.py", "line": 5, "type": "imports", "form": "static", "target": "file:pkg/__init__.py", "symbol": "version", "confidence": "resolved", "reason": null},
-    {"source": "file:app.py", "line": 6, "type": "imports", "form": "static", "target": "file:pkg/server.py", "symbol": "server", "confidence": "resolved", "reason": null},
 
     {"source": "file:cli.py", "line": 1, "type": "imports", "form": "static", "target": "file:pkg/auth/__init__.py", "symbol": "AuthService", "confidence": "resolved", "reason": null},
 
@@ -40,7 +40,9 @@
     {"source": "file:pkg/__init__.py", "line": 5, "type": "imports", "form": "static", "target": "unresolved:python:pkg.missing", "symbol": "nothing", "confidence": "unresolved", "reason": "not_found"},
     {"source": "file:pkg/__init__.py", "line": 6, "type": "imports", "form": "static", "target": "file:pkg/server.py", "symbol": "server", "confidence": "resolved", "reason": null},
 
-    {"source": "file:pkg/auth/__init__.py", "line": 1, "type": "imports", "form": "static", "target": "file:pkg/auth/service.py", "symbol": "AuthService", "confidence": "resolved", "reason": null}
+    {"source": "file:pkg/auth/__init__.py", "line": 1, "type": "imports", "form": "static", "target": "file:pkg/auth/service.py", "symbol": "AuthService", "confidence": "resolved", "reason": null},
+
+    {"source": "file:run.py", "line": 1, "type": "imports", "form": "static", "target": "file:pkg/server.py", "symbol": "server", "confidence": "resolved", "reason": null}
   ],
   "coverage": [
     {"path": "app.py", "language": "python", "status": "analyzed", "flags": []},
@@ -51,7 +53,8 @@
     {"path": "pkg/auth/service.py", "language": "python", "status": "analyzed", "flags": []},
     {"path": "pkg/config.py", "language": "python", "status": "analyzed", "flags": []},
     {"path": "pkg/server.py", "language": "python", "status": "analyzed", "flags": []},
-    {"path": "pkg/tools.py", "language": "python", "status": "analyzed", "flags": []}
+    {"path": "pkg/tools.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "run.py", "language": "python", "status": "analyzed", "flags": []}
   ],
   "skipped": []
 }
