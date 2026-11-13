@@ -109,7 +109,7 @@ stage; `done` names the stored repository and snapshot, readable through the 005
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Write `backend/tests/unit/test_jobs.py` with an injected stub `pipeline` (no database;
+- [X] T010 [P] [US1] Write `backend/tests/unit/test_jobs.py` with an injected stub `pipeline` (no database;
   pass `database_url="postgresql://unused"` and a stub that never opens a store):
   - `submit_github` returns a status with `stage == "queued"` and a 32-hex-character `id`; ids of 100 jobs
     are distinct;
@@ -120,7 +120,7 @@ stage; `done` names the stored repository and snapshot, readable through the 005
   - `status(id).to_json()` is byte-identical across calls for the same state, has sorted keys, no
     whitespace, and no time-like values (FR-009, research R6);
   - `status("nope")` and `status(<unknown 32 hex>)` are `None`.
-- [ ] T011 [P] [US1] Add to `backend/tests/conftest.py` a fixture `job_app(store, database_url, tmp_path)`
+- [X] T011 [P] [US1] Add to `backend/tests/conftest.py` a fixture `job_app(store, database_url, tmp_path)`
   that builds `JobRunner(database_url, PipelineLimits(<CLI defaults>), workers=1, queue_size=20,
   work_dir=tmp_path / "jobs")`, calls `start()`, yields `(TestClient(create_app(store, runner)), runner)`,
   and calls `runner.stop()` afterwards; keyword overrides for `workers`, `queue_size`, limits and
@@ -140,7 +140,7 @@ stage; `done` names the stored repository and snapshot, readable through the 005
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement `backend/src/graphora/pipeline/jobs.py` (data-model.md, research R1, R3, R6, R7,
+- [X] T012 [US1] Implement `backend/src/graphora/pipeline/jobs.py` (data-model.md, research R1, R3, R6, R7,
   R11): `Job`, `JobStatus` with `to_json() -> bytes` (005 `json_bytes` rules: `sort_keys=True`,
   `separators=(",", ":")`, `ensure_ascii=False`), `QueueFull`, `Interrupted`, `JobDeadline(Deadline)` whose
   `check()` also raises `Interrupted` when the runner's stop event is set, and `JobRunner` with `start`,
@@ -155,7 +155,7 @@ stage; `done` names the stored repository and snapshot, readable through the 005
   - all state changes under one `threading.Lock`; `status()` serializes a copy taken under it.
   `start()` creates `work_dir` (default `Path(tempfile.gettempdir()) / "graphora-jobs"`); the lock and
   cleanup of leftovers come in US4 (T027).
-- [ ] T013 [US1] Create `backend/src/graphora/api/jobs.py` with `router(runner) -> APIRouter` (prefix
+- [X] T013 [US1] Create `backend/src/graphora/api/jobs.py` with `router(runner) -> APIRouter` (prefix
   `/api/v1`):
   - `POST /jobs`: parse the JSON body by hand (not via a Pydantic model, so messages stay ours); allowed
     keys `github` (required string), `ref` (string), `limits` (object); unknown key → `bad_request`
@@ -166,15 +166,15 @@ stage; `done` names the stored repository and snapshot, readable through the 005
     a non-integer number, also ≥ 1), each ≤ the server value, else `bad_request` naming the key. Return `202` +
     `status.to_json()`.
   - `GET /jobs/{job_id}`: no query parameters; unknown or malformed id → `not_found` `job not found: <id>`.
-- [ ] T014 [US1] Update `backend/src/graphora/api/__init__.py`: `create_app(store, runner=None)`; include
+- [X] T014 [US1] Update `backend/src/graphora/api/__init__.py`: `create_app(store, runner=None)`; include
   `api.jobs.router(runner)` only when `runner` is given. Update `backend/src/graphora/api/errors.py`: the
   `405` message becomes `method not allowed`; add handlers so `QueueFull` → `429 too_many_jobs`
   `too many jobs waiting: <queue_size>`.
-- [ ] T015 [US1] Update `graphora serve` in `backend/src/graphora/cli/__init__.py` per contracts/cli.md:
+- [X] T015 [US1] Update `graphora serve` in `backend/src/graphora/cli/__init__.py` per contracts/cli.md:
   options `--workers` (1), `--queue` (20), `--work-dir`, and the six `--max-*` limits with the `analyze`
   defaults; values below 1 → exit 2. Build `JobRunner(url, limits, …)`, `start()` before
   `uvicorn.run(create_app(store, runner), …)`, `stop()` in `finally`. `--host` stays `127.0.0.1` by default.
-- [ ] T016 [US1] Run `uv run pytest tests/unit/test_jobs.py tests/integration/test_api_jobs.py
+- [X] T016 [US1] Run `uv run pytest tests/unit/test_jobs.py tests/integration/test_api_jobs.py
   tests/integration/test_api.py`: all pass.
 
 **Checkpoint**: MVP — a GitHub link becomes a stored, queryable graph through HTTP.
@@ -189,11 +189,11 @@ stage; `done` names the stored repository and snapshot, readable through the 005
 
 ### Tests for User Story 2
 
-- [ ] T017 [P] [US2] Add to `backend/tests/unit/test_jobs.py`: two `submit_github` calls with the same
+- [X] T017 [P] [US2] Add to `backend/tests/unit/test_jobs.py`: two `submit_github` calls with the same
   `(owner, repo, ref, limits)` while the first job is unfinished return the same id; a different `ref` or
   different limits create a new job; after the first job ends, the same submission creates a new job
   (research R10).
-- [ ] T018 [P] [US2] Write `backend/tests/integration/test_api_jobs_reuse.py` (`db`, `job_app`, `fake_gh`):
+- [X] T018 [P] [US2] Write `backend/tests/integration/test_api_jobs_reuse.py` (`db`, `job_app`, `fake_gh`):
   - after a `done` job, the same link again ends `done` with `action == "reused"` and
     `fake_gh.urls("codeload.github.com")` has exactly one request in total (acceptance 1, SC-003: the second
     job finishes in under 2 s);
@@ -206,7 +206,7 @@ stage; `done` names the stored repository and snapshot, readable through the 005
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Add the dedup index to `JobRunner` in `backend/src/graphora/pipeline/jobs.py`: key
+- [X] T019 [US2] Add the dedup index to `JobRunner` in `backend/src/graphora/pipeline/jobs.py`: key
   `("github", owner, repo, ref or "", limits)`; look it up and insert under the runner lock in
   `submit_github`; remove the entry when the job reaches `done` or `failed`. Reuse and replace already come
   from `run_pipeline` (T008); make sure a GitHub reuse moves `resolving → done` with `action "reused"`.

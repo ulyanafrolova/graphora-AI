@@ -78,6 +78,15 @@ def _parser() -> argparse.ArgumentParser:
     serve.add_argument("--database", help="PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--workers", type=int, default=1, help="jobs running at the same time")
+    serve.add_argument("--queue", type=int, default=20, help="jobs that may wait")
+    serve.add_argument("--work-dir", help="folder for uploads and extracted snapshots (default: <temp>/graphora-jobs)")
+    serve.add_argument("--max-files", type=int, default=5000)
+    serve.add_argument("--max-bytes", type=int, default=50 * 1024 * 1024)
+    serve.add_argument("--max-seconds", type=float, default=300)
+    serve.add_argument("--max-archive-bytes", type=int, default=IngestLimits.max_archive_bytes)
+    serve.add_argument("--max-extract-bytes", type=int, default=IngestLimits.max_extract_bytes)
+    serve.add_argument("--max-entries", type=int, default=IngestLimits.max_entries)
     query = commands.add_parser("query", help="answer one question about a graph document")
     query.add_argument("graph", help="a graph JSON written by `graphora analyze`, or - for standard input")
     query.add_argument("question", choices=_QUESTIONS)
@@ -286,8 +295,13 @@ def _mcp(args: argparse.Namespace) -> int:
 
 
 def _serve(args: argparse.Namespace) -> int:
+    from graphora.pipeline import LIMIT_KEYS, PipelineLimits
     from graphora.store import Store, StoreUnavailable
 
+    for name in ("workers", "queue", *LIMIT_KEYS):
+        if getattr(args, name) < 1:
+            _log("error", f"--{name.replace('_', '-')} must be at least 1")
+            return EXIT_USAGE
     url = _database_url(args.database)
     try:
         if url is None:
@@ -300,8 +314,16 @@ def _serve(args: argparse.Namespace) -> int:
         import uvicorn
 
         from graphora.api import create_app
+        from graphora.pipeline.jobs import JobRunner
 
-        uvicorn.run(create_app(store), host=args.host, port=args.port)
+        limits = PipelineLimits(**{key: getattr(args, key) for key in LIMIT_KEYS})
+        work_dir = Path(args.work_dir) if args.work_dir else None
+        runner = JobRunner(url, limits, workers=args.workers, queue_size=args.queue, work_dir=work_dir)
+        runner.start()
+        try:
+            uvicorn.run(create_app(store, runner), host=args.host, port=args.port)
+        finally:
+            runner.stop()
     finally:
         store.close()
     return EXIT_OK
