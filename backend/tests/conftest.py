@@ -184,3 +184,38 @@ def analyze_dir(root: Path):
     from graphora.ingest.walk import Deadline
 
     return analyze(root, *DEFAULT_LIMITS, Deadline(300))
+
+
+# --- 010 end-to-end pipeline (specs/010-end-to-end-pipeline tasks T002) ------------------------------------
+
+
+@pytest.fixture
+def fake_gh(monkeypatch):
+    """A FakeGitHub installed as `graphora.ingest.github._open`; the test registers the URLs it serves."""
+    from fake_github import FakeGitHub
+    from graphora.ingest import github
+
+    fake = FakeGitHub()
+    monkeypatch.setattr(github, "_open", fake)
+    return fake
+
+
+@pytest.fixture
+def job_app(request, store, database_url, tmp_path):
+    """(TestClient, JobRunner) over the test store. Override runner arguments with indirect parametrization:
+    `@pytest.mark.parametrize("job_app", [{"workers": 2}], indirect=True)`; limit keys go to `PipelineLimits`."""
+    from fastapi.testclient import TestClient
+
+    from graphora.api import create_app
+    from graphora.pipeline import LIMIT_KEYS, PipelineLimits
+    from graphora.pipeline.jobs import JobRunner
+
+    options = dict(getattr(request, "param", {}))
+    limits = PipelineLimits(**{k: options.pop(k) for k in LIMIT_KEYS if k in options})
+    options.setdefault("database_url", database_url)
+    runner = JobRunner(options.pop("database_url"), limits, work_dir=tmp_path / "jobs", **options)
+    runner.start()
+    try:
+        yield TestClient(create_app(store, runner)), runner
+    finally:
+        runner.stop()

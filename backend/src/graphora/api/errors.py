@@ -11,6 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from graphora.pipeline.jobs import QueueFull, Stopping
 from graphora.store import StoreUnavailable
 
 log = logging.getLogger("graphora.api")
@@ -58,8 +59,17 @@ async def _http_error(request: Request, exc: Exception) -> Response:
     if exc.status_code == 404:
         return _error("not_found", 404, "no such endpoint")
     if exc.status_code == 405:
-        return _error("method_not_allowed", 405, "only GET is allowed")
+        return _error("method_not_allowed", 405, "method not allowed")
     return _error("bad_request", 400, "invalid request")
+
+
+async def _queue_full(request: Request, exc: Exception) -> Response:
+    assert isinstance(exc, QueueFull)
+    return _error("too_many_jobs", 429, str(exc))
+
+
+async def _stopping(request: Request, exc: Exception) -> Response:
+    return _error("stopping", 503, "the service is stopping")
 
 
 async def _store_unavailable(request: Request, exc: Exception) -> Response:
@@ -76,5 +86,7 @@ def install(app: FastAPI) -> None:
     app.add_exception_handler(ApiError, _api_error)
     app.add_exception_handler(RequestValidationError, _validation_error)
     app.add_exception_handler(StarletteHTTPException, _http_error)
+    app.add_exception_handler(QueueFull, _queue_full)
+    app.add_exception_handler(Stopping, _stopping)
     app.add_exception_handler(StoreUnavailable, _store_unavailable)
     app.add_exception_handler(Exception, _internal)

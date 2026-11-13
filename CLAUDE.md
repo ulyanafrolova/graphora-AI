@@ -62,8 +62,17 @@ export GRAPHORA_TEST_DATABASE_URL=postgresql://graphora:graphora@127.0.0.1:5432/
 export GRAPHORA_DATABASE_URL=postgresql://graphora:graphora@127.0.0.1:5432/graphora
 uv run pytest -m "not db"                           # run without a database
 uv run graphora analyze <source> --store            # also save in the store, or reuse a stored analysis
-uv run graphora serve                               # read-only HTTP API on 127.0.0.1:8000
+uv run graphora serve                               # HTTP API on 127.0.0.1:8000, analysis jobs (from 010)
 make db-down                                        # stop PostgreSQL
+```
+
+Analysis over HTTP (feature 010): `serve` runs jobs in the background (`--workers 1 --queue 20 --work-dir`,
+plus the `analyze` limits). Start one and poll it; a `done` job names the stored repository and snapshot:
+
+```
+curl -X POST localhost:8000/api/v1/jobs -H 'Content-Type: application/json' -d '{"github":"https://github.com/<owner>/<repo>"}'
+curl -X POST 'localhost:8000/api/v1/jobs/zip?name=app.zip' --data-binary @app.zip
+curl localhost:8000/api/v1/jobs/<id>
 ```
 
 Golden fixtures: `fixtures/repos/<name>/repo/` is analyzed, `fixtures/repos/<name>/expected.json` is

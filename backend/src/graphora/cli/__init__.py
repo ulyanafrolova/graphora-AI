@@ -19,19 +19,12 @@ from graphora.ingest.errors import BadInput, InvalidArchive, RemoteError, Unsafe
 from graphora.ingest.fetch import IngestLimits, fetch_snapshot, with_skipped
 from graphora.ingest.source import GitHubSource, LocalSource, Source, ZipSource, parse_source
 from graphora.ingest.walk import Deadline, LimitExceeded
+from graphora.pipeline.messages import limit_message
 
 EXIT_OK, EXIT_USAGE, EXIT_LIMIT = 0, 2, 3
 EXIT_ARCHIVE, EXIT_REMOTE, EXIT_STORE, EXIT_INTERRUPTED = 4, 5, 6, 130
 EXIT_GRAPH, EXIT_NOT_FOUND = 7, 8
 
-_LIMIT_MESSAGES = {
-    "files": "file limit exceeded: at least {observed} files > --max-files {value}",
-    "bytes": "size limit exceeded: at least {observed} bytes > --max-bytes {value}",
-    "seconds": "time limit exceeded: {observed}s > --max-seconds {value}",
-    "archive_bytes": "archive size limit exceeded: at least {observed} bytes > --max-archive-bytes {value}",
-    "extract_bytes": "extracted size limit exceeded: at least {observed} bytes > --max-extract-bytes {value}",
-    "entries": "entry limit exceeded: at least {observed} entries > --max-entries {value}",
-}
 
 
 def _log(level: str, message: str) -> None:
@@ -85,6 +78,15 @@ def _parser() -> argparse.ArgumentParser:
     serve.add_argument("--database", help="PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--workers", type=int, default=1, help="jobs running at the same time")
+    serve.add_argument("--queue", type=int, default=20, help="jobs that may wait")
+    serve.add_argument("--work-dir", help="folder for uploads and extracted snapshots (default: <temp>/graphora-jobs)")
+    serve.add_argument("--max-files", type=int, default=5000)
+    serve.add_argument("--max-bytes", type=int, default=50 * 1024 * 1024)
+    serve.add_argument("--max-seconds", type=float, default=300)
+    serve.add_argument("--max-archive-bytes", type=int, default=IngestLimits.max_archive_bytes)
+    serve.add_argument("--max-extract-bytes", type=int, default=IngestLimits.max_extract_bytes)
+    serve.add_argument("--max-entries", type=int, default=IngestLimits.max_entries)
     query = commands.add_parser("query", help="answer one question about a graph document")
     query.add_argument("graph", help="a graph JSON written by `graphora analyze`, or - for standard input")
     query.add_argument("question", choices=_QUESTIONS)
@@ -293,8 +295,13 @@ def _mcp(args: argparse.Namespace) -> int:
 
 
 def _serve(args: argparse.Namespace) -> int:
+    from graphora.pipeline import LIMIT_KEYS, PipelineLimits
     from graphora.store import Store, StoreUnavailable
 
+    for name in ("workers", "queue", *LIMIT_KEYS):
+        if getattr(args, name) < 1:
+            _log("error", f"--{name.replace('_', '-')} must be at least 1")
+            return EXIT_USAGE
     url = _database_url(args.database)
     try:
         if url is None:
@@ -307,8 +314,23 @@ def _serve(args: argparse.Namespace) -> int:
         import uvicorn
 
         from graphora.api import create_app
+        from graphora.pipeline.jobs import JobRunner, WorkDirInUse
 
-        uvicorn.run(create_app(store), host=args.host, port=args.port)
+        limits = PipelineLimits(**{key: getattr(args, key) for key in LIMIT_KEYS})
+        work_dir = Path(args.work_dir) if args.work_dir else None
+        runner = JobRunner(url, limits, workers=args.workers, queue_size=args.queue, work_dir=work_dir)
+        try:
+            runner.start()
+        except WorkDirInUse:
+            _log("error", "work folder in use by another graphora serve: use --work-dir")
+            return EXIT_USAGE
+        except OSError as exc:
+            _log("error", f"cannot create work folder: {exc.strerror or exc}")
+            return EXIT_USAGE
+        try:
+            uvicorn.run(create_app(store, runner), host=args.host, port=args.port)
+        finally:
+            runner.stop()
     finally:
         store.close()
     return EXIT_OK
@@ -317,9 +339,11 @@ def _serve(args: argparse.Namespace) -> int:
 def _analyze_and_store(
     args: argparse.Namespace, source: Source, limits: IngestLimits, deadline: Deadline
 ) -> tuple[bytes, _Report]:
-    """The `--store` path (005 contracts/cli.md, research § R6). Nothing is printed here."""
-    from graphora.graph.build import analyze
-    from graphora.ingest import github
+    """The `--store` path (005 contracts/cli.md, research § R6). Nothing is printed here.
+
+    The flow itself is `graphora.pipeline.run_pipeline`, shared with `graphora serve` (010 research § R2).
+    """
+    from graphora.pipeline import PipelineLimits, run_pipeline
     from graphora.store import InvalidAnalysis, Store, StoreUnavailable
 
     url = _database_url(args.database)
@@ -330,25 +354,14 @@ def _analyze_and_store(
     except StoreUnavailable as exc:
         raise _StoreFailed(EXIT_STORE, f"store unavailable: {exc.reason}") from None
     try:
-        sha = None
-        if isinstance(source, GitHubSource):
-            sha = github.resolve_sha(source, deadline)
-            repository = f"github.com/{source.owner}/{source.repo}"
-            stored = store.find_reusable(repository, sha)
-            if stored is not None:  # nothing to download: no `fetched` line (contracts/cli.md)
-                info = (f"reused {repository} {sha}",)
-                return stored.graph, _report_from_bytes(info, stored.warnings, stored.graph)
-        with fetch_snapshot(source, limits, deadline, sha=sha) as fetched:
-            result = analyze(fetched.root, args.max_files, args.max_bytes, deadline, snapshot=fetched.snapshot)
-            result = dataclasses.replace(result, doc=with_skipped(result.doc, fetched.skipped))
-            stored_result = store.put(fetched.repository, result)
-        info = ()
-        if isinstance(source, GitHubSource):
-            info = (f"fetched {fetched.repository} at {fetched.snapshot}",)
-        elif isinstance(source, ZipSource):
-            info = (f"extracted {source.path.name}",)
-        saved = stored_result.analysis
-        info += (f"{stored_result.action} {saved.repository} {saved.snapshot}",)
+        pipeline_limits = PipelineLimits(
+            args.max_files, args.max_bytes, args.max_seconds, limits.max_archive_bytes, limits.max_extract_bytes,
+            limits.max_entries,
+        )
+        result = run_pipeline(source, pipeline_limits, store, deadline)
+        saved = result.analysis
+        info = () if result.fetched is None else (result.fetched,)
+        info += (f"{result.action} {saved.repository} {saved.snapshot}",)
         return saved.graph, _report_from_bytes(info, saved.warnings, saved.graph)
     except StoreUnavailable as exc:
         raise _StoreFailed(EXIT_STORE, f"store unavailable: {exc.reason}") from None
@@ -394,7 +407,7 @@ def _analyze(args: argparse.Namespace) -> int:
         _log("error", exc.message)
         return EXIT_USAGE
     except LimitExceeded as exc:
-        _log("error", _LIMIT_MESSAGES[exc.limit].format(observed=exc.observed, value=exc.value))
+        _log("error", limit_message(exc, "cli"))
         return EXIT_LIMIT
     except (UnsafeArchive, InvalidArchive) as exc:
         _log("error", exc.message)
