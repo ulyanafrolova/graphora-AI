@@ -33,6 +33,7 @@ fixtures/repos/py-barrels/repo/
 │                   3 from pkg import tool
 │                   4 from pkg import LIMIT
 │                   5 from pkg import version
+│                   6 from pkg import server
 ├── old.py          1 from pkg import create_server
 │                   2 from pkg import nothing
 ├── cli.py          1 from pkg.auth import AuthService
@@ -42,9 +43,10 @@ fixtures/repos/py-barrels/repo/
     │               3 from .tools import *
     │               4 from .config import LIMIT
     │               5 from .missing import nothing
-    │               6 (empty)
-    │               7 def version():
-    │               8     return "1"
+    │               6 from . import server
+    │               7 (empty)
+    │               8 def version():
+    │               9     return "1"
     ├── auth/__init__.py   1 from .service import AuthService
     ├── auth/service.py    class AuthService (line 1)
     ├── server.py          def create_server() (line 1)
@@ -101,7 +103,8 @@ fixtures/repos/py-barrels/repo/
 - [ ] T013 [P] [US1] Unit tests in `backend/tests/unit/test_queries.py` (or the barrel test module) on a small
   in-memory Python graph: one-package re-export, two-package chain, name defined in `__init__.py`, `*` import,
   unresolved import, constant (`LIMIT`) stops at `config.py`, loop of two `__init__.py` stops, symbol filter,
-  `follow_barrels` off unchanged.
+  `follow_barrels` off unchanged, a re-import through an ordinary module (`a.py` imports `helper` from `b.py`,
+  `c.py` imports it from `a.py`), and `import x.y as z` re-imported as `z` stops at `x/y.py`.
 - [ ] T014 [US1] Python branch of `_trace` in `backend/src/graphora/graph/queries.py` (research § R3): index
   Python `imports` edges by source (static, not `unresolved`, `file:` target, symbol not `*`, bound name
   `alias or symbol`); a Python file stops when a top-level `class`/`function` definition has the name, else
@@ -137,8 +140,8 @@ fixtures/repos/py-barrels/repo/
 - [ ] T024 [P] Performance: add a Python package re-export layer to the generated repo in
   `backend/tests/integration/test_query_performance.py` (or confirm it already exercises barrels) and keep the
   limits (SC-005).
-- [ ] T025 Docs: issue #16 behaviour in `specs/004-graph-queries` is not edited; mention the change in
-  `docs/product/project-context.md` only if it lists barrel following as TS/JS-only.
+- [ ] T025 Docs: `grep -rn "barrel" docs README.md`; where barrel following is described as TS/JS-only, add
+  Python package imports. `specs/004-graph-queries` is not edited.
 - [ ] T026 Run quickstart.md steps 2–5 and record the SC-001 result (7 files) in research.md § Implementation
   notes; `make check` with PostgreSQL. **Commit** "polish python barrel following"; push; mark PR #26 ready.
 
