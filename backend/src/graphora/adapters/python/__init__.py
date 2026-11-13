@@ -1,3 +1,3 @@
 NAME = "python-adapter"
-VERSION = "0.3.0"  # 0.3.0: repeated names in one statement give one edge; linear column scan
+VERSION = "0.4.0"  # 0.4.0: `as` names on import edges (017)
 EXTRACTOR = f"{NAME}@{VERSION}"

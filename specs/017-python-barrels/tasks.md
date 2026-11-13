@@ -56,43 +56,43 @@ fixtures/repos/py-barrels/repo/
 
 ## Phase 1: Setup
 
-- [ ] T001 Create the fixture source files above in `fixtures/repos/py-barrels/repo/` (exact lines as listed;
+- [x] T001 Create the fixture source files above in `fixtures/repos/py-barrels/repo/` (exact lines as listed;
   each function body `return None` or `pass`).
 
 ## Phase 2: Foundational — graph format v7 with `alias` on Python imports
 
 **Goal**: FR-001–FR-004, FR-013. Python import edges carry the `as` name; every consumer accepts v7.
 
-- [ ] T002 [P] Tests in `backend/tests/unit/test_extract.py`: `from .x import f as g` gives name `f` with alias
+- [x] T002 [P] Tests in `backend/tests/unit/test_extract.py`: `from .x import f as g` gives name `f` with alias
   `g`; `from .x import f` and `from .x import f as f` give alias `None`; `import a.b as c` gives alias `c`;
   `import a.b` gives `None`; `from .x import *` gives `None`.
-- [ ] T003 [P] Tests in `backend/tests/unit/test_model.py` (or the existing edge-validation test module):
+- [x] T003 [P] Tests in `backend/tests/unit/test_model.py` (or the existing edge-validation test module):
   `alias` is accepted on an `imports` edge whose extractor starts with `python-adapter@`, rejected on an
   `imports` edge from `js-adapter@…`, and rules for `reexports` / `using_alias` / `type_reference` are unchanged.
-- [ ] T004 Add `aliases: tuple[str | None, ...]` to `ImportRecord` in
+- [x] T004 Add `aliases: tuple[str | None, ...]` to `ImportRecord` in
   `backend/src/graphora/adapters/python/extract.py` (one per name; `None` when there is no `as` or the `as` name
   equals the default); fill it in `_import_statement` and `_from_statement`; bump `VERSION` to `0.4.0` in
   `backend/src/graphora/adapters/python/__init__.py` and add the new fingerprint line to
   `backend/tests/unit/extractor_versions.json`.
-- [ ] T005 Carry the alias to the edge in `_python_graph` in `backend/src/graphora/graph/build.py` (resolver
+- [x] T005 Carry the alias to the edge in `_python_graph` in `backend/src/graphora/graph/build.py` (resolver
   targets are one per name, in `names` order; `import` records have one name).
-- [ ] T006 Allow `alias` on Python `imports` edges in `Edge.__post_init__` in `backend/src/graphora/graph/model.py`
+- [x] T006 Allow `alias` on Python `imports` edges in `Edge.__post_init__` in `backend/src/graphora/graph/model.py`
   ("`alias` present → `type` is `reexports`, or `directive` is `using_alias`, or (`type` is `imports` and
   `extractor` starts with `python-adapter@`)").
-- [ ] T007 Schema v7 in `schema/graph.schema.json` (`schema_version` const 7, description "Schema version 7",
+- [x] T007 Schema v7 in `schema/graph.schema.json` (`schema_version` const 7, description "Schema version 7",
   `alias` rule extended as in contracts/graph-format.md) and `SCHEMA_VERSION = 7` in
   `backend/src/graphora/graph/serialize.py`; update tests that pin version 6
   (`tests/unit/test_overview.py`, `tests/unit/test_serialize.py`, `tests/integration/test_store.py`, others found
   by `grep -rn "schema_version" tests`).
-- [ ] T008 Add schema accept/reject samples for the new `alias` rule next to the existing schema tests.
-- [ ] T009 Drop `alias` in the v1 projection of `test_python_fixtures_match_v1` in
+- [x] T008 Add schema accept/reject samples for the new `alias` rule next to the existing schema tests.
+- [x] T009 Drop `alias` in the v1 projection of `test_python_fixtures_match_v1` in
   `backend/tests/golden/test_fixtures.py`.
-- [ ] T010 Add `"alias"` by hand to the Python edges with `as` in `fixtures/repos/py-src-layout/expected.json`,
+- [x] T010 Add `"alias"` by hand to the Python edges with `as` in `fixtures/repos/py-src-layout/expected.json`,
   `fixtures/repos/py-dynamic/expected.json` and `fixtures/repos/mixed-fullstack/expected.json` (find them with
   `grep -rn " as " fixtures/repos/*/repo --include='*.py'`).
-- [ ] T011 Write `fixtures/repos/py-barrels/expected.json` by hand (nodes, edges with `alias` on
+- [x] T011 Write `fixtures/repos/py-barrels/expected.json` by hand (nodes, edges with `alias` on
   `pkg/__init__.py:2`, unresolved `pkg.missing`, coverage).
-- [ ] T012 Run `uv run pytest -m "not db"`; all pass. **Commit** "record python import aliases (schema v7)"; push.
+- [x] T012 Run `uv run pytest -m "not db"`; all pass. **Commit** "record python import aliases (schema v7)"; push.
 
 **Checkpoint**: graphs carry `alias`; no query change yet; every answer is unchanged.
 

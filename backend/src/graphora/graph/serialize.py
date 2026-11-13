@@ -21,7 +21,7 @@ from graphora.graph.model import (
     UnresolvedNode,
 )
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 
 def _sha16(text: str) -> str:

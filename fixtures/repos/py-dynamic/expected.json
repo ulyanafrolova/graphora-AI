@@ -35,7 +35,7 @@
     {"source": "file:broken.py", "line": 1, "type": "imports", "form": "static", "target": "ext:python:os", "symbol": null, "confidence": "resolved", "reason": null},
 
     {"source": "file:loader.py", "line": 1, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": null, "confidence": "resolved", "reason": null},
-    {"source": "file:loader.py", "line": 2, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:loader.py", "line": 2, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": null, "alias": "il", "confidence": "resolved", "reason": null},
     {"source": "file:loader.py", "line": 3, "type": "imports", "form": "static", "target": "ext:python:importlib", "symbol": "import_module", "confidence": "resolved", "reason": null},
     {"source": "file:loader.py", "line": 7, "type": "imports", "form": "dynamic", "target": "unresolved:python:importlib.import_module(name)", "symbol": null, "confidence": "unresolved", "reason": "dynamic"},
     {"source": "file:loader.py", "line": 8, "type": "imports", "form": "dynamic", "target": "file:plugins/alpha.py", "symbol": null, "confidence": "resolved", "reason": null},
@@ -47,7 +47,7 @@
 
     {"source": "file:typing_stuff.py", "line": 1, "type": "imports", "form": "static", "target": "ext:python:typing", "symbol": "TYPE_CHECKING", "confidence": "resolved", "reason": null},
     {"source": "file:typing_stuff.py", "line": 4, "type": "imports", "form": "static", "target": "file:plugins/alpha.py", "symbol": "Thing", "confidence": "resolved", "reason": null},
-    {"source": "file:typing_stuff.py", "line": 7, "type": "imports", "form": "static", "target": "ext:python:ujson", "symbol": null, "confidence": "resolved", "reason": null},
+    {"source": "file:typing_stuff.py", "line": 7, "type": "imports", "form": "static", "target": "ext:python:ujson", "symbol": null, "alias": "json", "confidence": "resolved", "reason": null},
     {"source": "file:typing_stuff.py", "line": 9, "type": "imports", "form": "static", "target": "ext:python:json", "symbol": null, "confidence": "resolved", "reason": null},
     {"source": "file:typing_stuff.py", "line": 13, "type": "imports", "form": "static", "target": "ext:python:csv", "symbol": null, "confidence": "resolved", "reason": null}
   ],

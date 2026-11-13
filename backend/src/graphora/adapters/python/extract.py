@@ -30,6 +30,7 @@ class ImportRecord:
     column: int
     module_text: str = ""
     bindings: tuple[tuple[str, str], ...] = ()
+    aliases: tuple[str | None, ...] = ()  # per name: the `as` name when it differs, else None
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,11 @@ def _local_name(node: Node, default: str) -> str:
     return _text(alias) if alias is not None else default
 
 
+def _alias(node: Node, name: str) -> str | None:
+    alias = node.child_by_field_name("alias") if node.type == "aliased_import" else None
+    return _text(alias) if alias is not None and _text(alias) != name else None
+
+
 def _import_statement(position: Positions, node: Node) -> list[ImportRecord]:
     line, column = position(node)
     text = _text(node)
@@ -60,7 +66,7 @@ def _import_statement(position: Positions, node: Node) -> list[ImportRecord]:
     for name_node in node.children_by_field_name("name"):
         module = _dotted(name_node)
         binding = ((module, _local_name(name_node, module.split(".")[0])),)
-        records.append(ImportRecord("import", module, 0, (None,), True, text, line, column, module, binding))
+        records.append(ImportRecord("import", module, 0, (None,), True, text, line, column, module, binding, (_alias(name_node, module),)))
     return records
 
 
@@ -81,11 +87,13 @@ def _from_statement(position: Positions, node: Node) -> ImportRecord:
     if any(c.type == "wildcard_import" for c in node.children):
         names: tuple[str | None, ...] = ("*",)
         bindings: tuple[tuple[str, str], ...] = ()
+        aliases: tuple[str | None, ...] = (None,)
     else:
         name_nodes = node.children_by_field_name("name")
         names = tuple(_dotted(n) for n in name_nodes)
         bindings = tuple((_dotted(n), _local_name(n, _dotted(n))) for n in name_nodes)
-    return ImportRecord("from", module, level, names, True, _text(node), line, column, module_text, bindings)
+        aliases = tuple(_alias(n, _dotted(n)) for n in name_nodes)
+    return ImportRecord("from", module, level, names, True, _text(node), line, column, module_text, bindings, aliases)
 
 
 def _string_literal(node: Node) -> str | None:
@@ -136,7 +144,7 @@ def _dynamic_call(position: Positions, node: Node, importlib_names: set[str], im
     literal = value is not None and not value.startswith(".") and not relative_context
     line, column = position(node)
     text = _text(node)
-    return ImportRecord("dynamic", value if literal else None, 0, (None,), literal, text, line, column, text)
+    return ImportRecord("dynamic", value if literal else None, 0, (None,), literal, text, line, column, text, (), (None,))
 
 
 def _definitions(root: Node) -> list[Definition]:

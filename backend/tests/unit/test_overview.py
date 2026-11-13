@@ -19,7 +19,7 @@ def test_counts_on_a_synthetic_graph():
     o = overview(index(doc))
     assert o.to_dict() == {
         "snapshot": SNAP,
-        "schema_version": 6,
+        "schema_version": 7,
         "extractors": {"python-adapter": "0.2.0"},
         "languages": {"go": 1, "python": 2},
         "files": {"analyzed": 2, "detected_only": 1, "not_code": 1, "skipped": 1},

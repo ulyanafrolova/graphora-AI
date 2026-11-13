@@ -64,7 +64,7 @@ def test_store_then_reuse(store):
     assert first.action == "stored"
     stored = store.get_analysis("py-flat", analysis.doc.snapshot)
     assert stored.graph == dumps(analysis.doc)
-    assert stored.schema_version == 6
+    assert stored.schema_version == 7
     assert stored.extractors == current_extractors()
     assert stored.warnings == tuple(sorted(analysis.warnings))
     assert first.analysis == stored

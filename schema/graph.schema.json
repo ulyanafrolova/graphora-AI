@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://graphora.dev/schema/graph.schema.json",
   "title": "Graphora graph document",
-  "description": "Schema version 6. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
+  "description": "Schema version 7. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,7 +15,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 6
+      "const": 7
     },
     "snapshot": {
       "$ref": "#/$defs/snapshot"
@@ -810,6 +810,16 @@
                 "properties": {
                   "directive": {
                     "const": "using_alias"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "imports"
+                  },
+                  "extractor": {
+                    "pattern": "^python-adapter@"
                   }
                 }
               }

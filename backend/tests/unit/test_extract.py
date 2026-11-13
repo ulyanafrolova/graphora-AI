@@ -107,3 +107,19 @@ def test_syntax_error_keeps_earlier_imports():
     facts = extract(b"import os\n\ndef broken(:\n    pass\n")
     assert facts.has_error
     assert [r.module for r in facts.imports] == ["os"]
+
+
+def test_aliases():
+    src = (
+        "from .x import f as g, h, k as k\n"
+        "import a.b as c, d\n"
+        "from y import *\n"
+        "import e.f\n"
+    )
+    assert [(r.names, r.aliases) for r in extract(src.encode()).imports] == [
+        (("f", "h", "k"), ("g", None, None)),
+        ((None,), ("c",)),
+        ((None,), (None,)),
+        (("*",), (None,)),
+        ((None,), (None,)),
+    ]

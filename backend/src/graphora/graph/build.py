@@ -70,7 +70,7 @@ def _python_graph(facts: dict[str, py_extract.FileFacts | None], snapshot: str, 
         node = FileNode(path, "python", file_facts.definitions if file_facts else ())
         nodes[node.id] = node
         for record in file_facts.imports if file_facts else ():
-            for target in py_resolve.resolve(path, record, index):
+            for target, alias in zip(py_resolve.resolve(path, record, index), record.aliases, strict=True):
                 kind, _, rest = target.node_id.partition(":")
                 rest = rest.removeprefix("python:")
                 if kind == "ext":
@@ -90,6 +90,7 @@ def _python_graph(facts: dict[str, py_extract.FileFacts | None], snapshot: str, 
                         extractor=python.EXTRACTOR,
                         snippet_hash=snippet_hash(record.text),
                         form="dynamic" if record.kind == "dynamic" else "static",
+                        alias=alias,
                     )
                 )
 
