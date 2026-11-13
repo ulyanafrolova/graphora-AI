@@ -127,9 +127,9 @@ fixtures/repos/py-barrels/repo/
 
 ## Phase 5: User Story 3 — impact (P2)
 
-- [ ] T020 [US3] Add impact cases to `fixtures/repos/py-barrels/queries.json`: `pkg/auth/service.py` with
+- [x] T020 [US3] Add impact cases to `fixtures/repos/py-barrels/queries.json`: `pkg/auth/service.py` with
   `follow_barrels` (`app.py` and `cli.py` at distance 1 with the barrel link), and without (as today).
-- [ ] T021 [US3] Run tests. **Commit** "check python barrels in impact".
+- [x] T021 [US3] Run tests. **Commit** "check python barrels in impact".
 
 ## Phase 6: Polish
 
