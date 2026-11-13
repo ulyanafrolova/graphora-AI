@@ -37,7 +37,7 @@ fixed time: they poll with `wait_for_job` (T001) or wait on `threading.Event`s.
 **Purpose**: Shared test helpers. No new dependency (plan: Technical Context). The `job_app` fixture
 needs `JobRunner`, so it is written with the US1 tests (T011).
 
-- [ ] T001 [P] Add `backend/tests/jobs_helpers.py`:
+- [X] T001 [P] Add `backend/tests/jobs_helpers.py`:
   - `wait_for_job(client, job_id, timeout=30.0) -> dict`: polls `GET /api/v1/jobs/{job_id}` every 0.02 s
     until `stage` is `done` or `failed`, returns the parsed body; fails the test with the last body on
     timeout;
@@ -46,7 +46,7 @@ needs `JobRunner`, so it is written with the US1 tests (T011).
   - `fixture_tarball(name, sha) -> bytes`: `archives.tar_of_dir(FIXTURES / name / "repo",
     prefix=f"o-{name}-{sha[:7]}", pax_comment=sha)`, the tarball shape GitHub serves;
   - `fixture_zip(name) -> bytes`: `archives.zip_of_dir(FIXTURES / name / "repo")`.
-- [ ] T002 [P] Add to `backend/tests/conftest.py` a fixture `fake_gh(monkeypatch)` that installs
+- [X] T002 [P] Add to `backend/tests/conftest.py` a fixture `fake_gh(monkeypatch)` that installs
   `fake_github.FakeGitHub()` as `graphora.ingest.github._open` and returns it (same as `fake` in
   `tests/integration/test_store_cli.py`, which stays unchanged).
 
@@ -57,30 +57,30 @@ needs `JobRunner`, so it is written with the US1 tests (T011).
 **Purpose**: One analyze-and-store function for the CLI and the service (research R2, R8, R11).
 After this phase `graphora analyze --store` runs through `run_pipeline` with byte-identical output.
 
-- [ ] T003 [P] Write `backend/tests/unit/test_fetch_workdir.py`: `fetch_snapshot(ZipSource(zip), limits,
+- [X] T003 [P] Write `backend/tests/unit/test_fetch_workdir.py`: `fetch_snapshot(ZipSource(zip), limits,
   deadline, workdir=d)` yields a root inside `d`, and `d` is empty again after the `with` block, on success
   and when the block raises; same for a GitHub source with `fake_gh`; `workdir=None` still uses the system
   temp folder.
-- [ ] T004 Add the optional parameter `workdir: Path | None = None` to `fetch_snapshot` in
+- [X] T004 Add the optional parameter `workdir: Path | None = None` to `fetch_snapshot` in
   `backend/src/graphora/ingest/fetch.py` and pass it as `dir=workdir` to both
   `tempfile.TemporaryDirectory(prefix="graphora-")` calls. Update the docstring. No other change (Anna's
   module, research R8).
-- [ ] T005 [P] Create `backend/src/graphora/pipeline/messages.py`: move `_LIMIT_MESSAGES` from
+- [X] T005 [P] Create `backend/src/graphora/pipeline/messages.py`: move `_LIMIT_MESSAGES` from
   `backend/src/graphora/cli/__init__.py` and expose `limit_message(exc: LimitExceeded, style: Literal["cli",
   "api"]) -> str`. `cli` keeps the exact current text (`--max-files`, `--max-bytes`, `--max-seconds`,
   `--max-archive-bytes`, `--max-extract-bytes`, `--max-entries`); `api` uses `max_files`, `max_bytes`,
   `max_seconds`, `max_archive_bytes`, `max_extract_bytes`, `max_entries`. Make the CLI call
   `limit_message(exc, "cli")`.
-- [ ] T006 [P] Write `backend/tests/unit/test_pipeline_messages.py`: for each of the six limits, the `cli`
+- [X] T006 [P] Write `backend/tests/unit/test_pipeline_messages.py`: for each of the six limits, the `cli`
   text equals the pre-010 string and the `api` text uses the key name, e.g.
   `file limit exceeded: at least 5001 files > max_files 5000`.
-- [ ] T007 Write `backend/tests/integration/test_pipeline_run.py` (`db`): `run_pipeline` on py-flat
+- [X] T007 Write `backend/tests/integration/test_pipeline_run.py` (`db`): `run_pipeline` on py-flat
   (`LocalSource`), a ZIP and a GitHub source via `fake_gh` returns the same `StoredAnalysis.graph` bytes as
   `graphora analyze --store` for the same input; `on_stage` receives `resolving, fetching, analyzing,
   storing` for GitHub, `fetching, analyzing, storing` for ZIP and local, and only `resolving` on a GitHub
   reuse; `PipelineResult.action` is `stored`, then `reused` on a second run; `fetched` is `None` on a GitHub
   reuse.
-- [ ] T008 Create `backend/src/graphora/pipeline/run.py` and `backend/src/graphora/pipeline/__init__.py`
+- [X] T008 Create `backend/src/graphora/pipeline/run.py` and `backend/src/graphora/pipeline/__init__.py`
   per contracts/pipeline-api.md: `PipelineLimits` (frozen dataclass of the six limits; `max_seconds: float`),
   `PipelineResult(analysis, action, fetched)`, `Stage = Literal["resolving", "fetching", "analyzing",
   "storing"]`, and `run_pipeline(source, limits, store, deadline, on_stage=…, workdir=None)`. Move the body of
@@ -90,7 +90,7 @@ After this phase `graphora analyze --store` runs through `run_pipeline` with byt
   `with_skipped` → `on_stage("storing")`, `store.put`. The `fetched` text is the CLI info line
   (`fetched <repo> at <sha>` / `extracted <name>`), or `None` for a local folder. Raise exceptions
   unchanged.
-- [ ] T009 Make `cli._analyze_and_store` in `backend/src/graphora/cli/__init__.py` open the store, call
+- [X] T009 Make `cli._analyze_and_store` in `backend/src/graphora/cli/__init__.py` open the store, call
   `run_pipeline` with a no-op `on_stage`, and build its info lines and `_Report` from `PipelineResult`
   exactly as before. Run `uv run pytest tests/integration/test_store_cli.py tests/integration/test_ingest_cli.py`:
   all pass unchanged (FR-022).

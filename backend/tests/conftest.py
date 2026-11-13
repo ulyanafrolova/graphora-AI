@@ -184,3 +184,17 @@ def analyze_dir(root: Path):
     from graphora.ingest.walk import Deadline
 
     return analyze(root, *DEFAULT_LIMITS, Deadline(300))
+
+
+# --- 010 end-to-end pipeline (specs/010-end-to-end-pipeline tasks T002) ------------------------------------
+
+
+@pytest.fixture
+def fake_gh(monkeypatch):
+    """A FakeGitHub installed as `graphora.ingest.github._open`; the test registers the URLs it serves."""
+    from fake_github import FakeGitHub
+    from graphora.ingest import github
+
+    fake = FakeGitHub()
+    monkeypatch.setattr(github, "_open", fake)
+    return fake

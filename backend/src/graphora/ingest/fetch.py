@@ -44,13 +44,16 @@ _SHA = re.compile(r"[0-9a-f]{40}")
 
 @contextmanager
 def fetch_snapshot(
-    source: Source, limits: IngestLimits, deadline: Deadline, sha: str | None = None
+    source: Source, limits: IngestLimits, deadline: Deadline, sha: str | None = None, workdir: Path | None = None
 ) -> Iterator[FetchedSnapshot]:
     """Valid inside the `with` block; a temp folder is removed when the block exits.
 
     `sha`, only for a GitHub source: a commit SHA the caller already resolved (e.g. to check a store first,
     specs/005-storage-http-api research § R6). It replaces the ref lookup, so no `api.github.com` request is
     made. `sha=None` keeps the 002 behaviour.
+
+    `workdir`: the folder the temp folder is created in (specs/010-end-to-end-pipeline research § R8), so a
+    service can remove leftovers of its own jobs without touching other runs. `None` uses the system temp.
     """
     if sha is not None:
         if not isinstance(source, GitHubSource):
@@ -63,7 +66,7 @@ def fetch_snapshot(
     elif isinstance(source, GitHubSource):
         if sha is None:
             sha = github.resolve_sha(source, deadline)
-        with tempfile.TemporaryDirectory(prefix="graphora-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="graphora-", dir=workdir) as tmp:
             with closing(github.open_tarball(source, sha, limits, deadline)) as stream:
                 root, skipped = extract_tar_gz(stream, Path(tmp), limits, deadline, expected_sha=sha)
             if not os.path.lexists(root / ".git"):
@@ -71,7 +74,7 @@ def fetch_snapshot(
             yield FetchedSnapshot(root, f"github.com/{source.owner}/{source.repo}", sha, skipped)
     elif isinstance(source, ZipSource):
         name = source.path.name
-        with tempfile.TemporaryDirectory(prefix="graphora-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="graphora-", dir=workdir) as tmp:
             root, skipped = extract_zip(source.path, Path(tmp), limits, deadline)
             yield FetchedSnapshot(root, name.rsplit(".", 1)[0] if "." in name else name, None, skipped)
     else:
