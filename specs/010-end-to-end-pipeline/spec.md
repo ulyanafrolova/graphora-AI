@@ -179,9 +179,10 @@ can be stopped; check the status, the store and the temporary folder after each.
   `stored`, `replaced` or `reused`, and the counts of analyzed files, edges and unresolved edges of the
   stored graph.
 - **FR-008**: A `failed` job MUST report an error kind — `remote`, `limit`, `archive`, `store`, `invalid`
-  (the analysis failed the schema check before storing) or `interrupted` — and a message giving the same
-  reason as the CLI for the same failure; a limit message names the limit and its value. Messages MUST NOT
-  include server file paths or internal traces.
+  (the analysis failed the schema check before storing), `interrupted` (the service is stopping) or
+  `internal` (an unexpected error, with a fixed message) — and a message giving the same reason as the CLI
+  for the same failure; a limit message names the limit and its value. Messages MUST NOT include server file
+  paths or internal traces.
 - **FR-009**: The service MUST let the client read a job's status by its id. Job ids MUST NOT be guessable
   from other job ids. For a given job state the status body MUST be byte-identical on every request and
   MUST NOT contain timestamps.
