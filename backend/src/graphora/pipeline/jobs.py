@@ -9,8 +9,10 @@ own folder inside the runner's work folder.
 from __future__ import annotations
 
 import collections
+import fcntl
 import json
 import logging
+import os
 import secrets
 import shutil
 import tempfile
@@ -20,8 +22,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from graphora.ingest.errors import InvalidArchive, RemoteError, UnsafeArchive
-from graphora.ingest.source import GitHubSource, Source
+from graphora.ingest.errors import BadInput, InvalidArchive, RemoteError, UnsafeArchive
+from graphora.ingest.source import GitHubSource, Source, ZipSource
 from graphora.ingest.walk import Deadline, LimitExceeded
 from graphora.pipeline.messages import limit_message
 from graphora.pipeline.run import PipelineLimits, PipelineResult, run_pipeline
@@ -129,8 +131,8 @@ def _error(exc: BaseException) -> dict[str, str]:
     """Exception → failure kind and message (research § R11). Messages never carry server paths or URLs."""
     from graphora.store import InvalidAnalysis, StoreUnavailable
 
-    if isinstance(exc, RemoteError):
-        return {"kind": "remote", "message": exc.message}
+    if isinstance(exc, (RemoteError, BadInput)):  # input was checked before the job: BadInput here is GitHub's
+        return {"kind": "remote", "message": exc.message}  # answer (repository, ref not found, empty)
     if isinstance(exc, LimitExceeded):
         return {"kind": "limit", "message": limit_message(exc, "api")}
     if isinstance(exc, (UnsafeArchive, InvalidArchive)):
@@ -177,25 +179,52 @@ class JobRunner:
         self._jobs: dict[str, _Job] = {}
         self._queue: collections.deque[str] = collections.deque()
         self._active: dict[tuple[Any, ...], str] = {}
+        self._reserved: set[str] = set()  # ids of uploads being received
         self._stop = threading.Event()
         self._threads: list[threading.Thread] = []
+        self._lock_fd: int | None = None
 
     # --- lifecycle -------------------------------------------------------------------------------------------
 
     def start(self) -> None:
+        """Lock the work folder, remove leftovers of a killed service, start the workers (research § R8)."""
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        fd = os.open(self.work_dir / ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            os.close(fd)
+            raise WorkDirInUse(str(self.work_dir)) from None
+        self._lock_fd = fd
+        with os.scandir(self.work_dir) as entries:
+            for entry in sorted(entries, key=lambda e: e.name):
+                if entry.name == ".lock":
+                    continue
+                if entry.is_dir(follow_symlinks=False):
+                    shutil.rmtree(entry.path, ignore_errors=True)
+                else:
+                    os.unlink(entry.path)
         for n in range(self.workers):
             thread = threading.Thread(target=self._work, name=f"graphora-job-{n}", daemon=True)
             thread.start()
             self._threads.append(thread)
 
     def stop(self) -> None:
+        """Refuse new jobs, fail waiting ones, let running ones stop at their next deadline check (research § R7)."""
         with self._wake:
             self._stop.set()
+            interrupted = {"kind": "interrupted", "message": "the service is stopping"}
+            while self._queue:
+                job = self._jobs[self._queue.popleft()]
+                self._finish_locked(job, None, interrupted)
+                shutil.rmtree(self.work_dir / job.id, ignore_errors=True)  # a queued upload
             self._wake.notify_all()
         for thread in self._threads:
             thread.join()
         self._threads.clear()
+        if self._lock_fd is not None:
+            os.close(self._lock_fd)  # releases the flock
+            self._lock_fd = None
 
     # --- submitting and reading ------------------------------------------------------------------------------
 
@@ -208,6 +237,42 @@ class JobRunner:
                 return self._jobs[existing].status()
             return self._enqueue(_Job(self._new_id(), source, body, limits, key))
 
+    def can_accept(self) -> None:
+        """Raise `Stopping` or `QueueFull` now, before an upload is read."""
+        with self._lock:
+            if self._stop.is_set():
+                raise Stopping()
+            if len(self._queue) >= self.queue_size:
+                raise QueueFull(self.queue_size)
+
+    def new_upload(self, name: str) -> Path:
+        """A path `<work_dir>/<new id>/upload/<name>` to stream an upload into; the id becomes the job's id."""
+        with self._lock:
+            if self._stop.is_set():
+                raise Stopping()
+            job_id = self._new_id()
+            self._reserved.add(job_id)
+        folder = self.work_dir / job_id / "upload"
+        folder.mkdir(parents=True)
+        return folder / name
+
+    def discard_upload(self, upload: Path) -> None:
+        job_dir = upload.parent.parent
+        shutil.rmtree(job_dir, ignore_errors=True)
+        with self._lock:
+            self._reserved.discard(job_dir.name)
+
+    def submit_zip(self, upload: Path, limits: PipelineLimits) -> JobStatus:
+        """Queue a job for an upload from `new_upload`; the repository is named after the uploaded name."""
+        job_id, name = upload.parent.parent.name, upload.name
+        body = {"kind": "zip", "name": name, "repository": name.rsplit(".", 1)[0] if "." in name else name}
+        with self._wake:
+            if job_id not in self._reserved:
+                raise ValueError(f"not an upload of this runner: {upload}")
+            status = self._enqueue(_Job(job_id, ZipSource(upload), body, limits, None))
+            self._reserved.discard(job_id)
+            return status
+
     def status(self, job_id: str) -> JobStatus | None:
         with self._lock:
             job = self._jobs.get(job_id)
@@ -216,7 +281,7 @@ class JobRunner:
     def _new_id(self) -> str:
         while True:
             job_id = secrets.token_hex(16)
-            if job_id not in self._jobs:
+            if job_id not in self._jobs and job_id not in self._reserved:
                 return job_id
 
     def _enqueue(self, job: _Job) -> JobStatus:
@@ -251,10 +316,13 @@ class JobRunner:
 
     def _finish(self, job: _Job, result: dict[str, Any] | None, error: dict[str, str] | None) -> None:
         with self._lock:
-            job.result, job.error = result, error
-            job.stage = "done" if error is None else "failed"
-            if job.key is not None and self._active.get(job.key) == job.id:
-                del self._active[job.key]
+            self._finish_locked(job, result, error)
+
+    def _finish_locked(self, job: _Job, result: dict[str, Any] | None, error: dict[str, str] | None) -> None:
+        job.result, job.error = result, error
+        job.stage = "done" if error is None else "failed"
+        if job.key is not None and self._active.get(job.key) == job.id:
+            del self._active[job.key]
 
     def _run(self, job: _Job) -> None:
         deadline = JobDeadline(job.limits.max_seconds, self._stop)  # FR-016: queue time does not count

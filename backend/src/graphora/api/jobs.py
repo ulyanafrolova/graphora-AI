@@ -13,15 +13,22 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
-from graphora.api.errors import bad_request, not_found
+from graphora.api.errors import ApiError, bad_request, not_found
 from graphora.api.routes import _params
 from graphora.ingest.errors import BadInput
 from graphora.ingest.source import GitHubSource, parse_source
+from graphora.ingest.walk import LimitExceeded
+from graphora.pipeline.messages import limit_message
 from graphora.pipeline import LIMIT_KEYS, PipelineLimits
 from graphora.pipeline.jobs import JobRunner, JobStatus
 
 _SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
 _BODY_KEYS = ("github", "ref", "limits")
+_INTEGER = re.compile(r"[0-9]{1,15}")
+_NUMBER = re.compile(r"[0-9]{1,15}(\.[0-9]{1,6})?")
+_ZIP_SIGNATURES = (b"PK\x03\x04", b"PK\x05\x06")  # as `parse_source` (002)
+MAX_NAME_BYTES = 255
+MAX_REPOSITORY_LENGTH = 300  # 005 FR-002
 
 
 def _accepted(status: JobStatus) -> Response:
@@ -45,6 +52,39 @@ def parse_limits(given: dict[str, Any], server: PipelineLimits) -> PipelineLimit
             raise bad_request(f"unknown limit: {key}")
         values[key] = _limit_value(key, given[key], values[key])
     return PipelineLimits(**values)
+
+
+def query_limits(params: dict[str, str], server: PipelineLimits) -> PipelineLimits:
+    """Limits given as query parameters of an upload."""
+    given: dict[str, Any] = {}
+    for key in sorted(k for k in params if k in LIMIT_KEYS):
+        text = params[key]
+        pattern = _NUMBER if key == "max_seconds" else _INTEGER
+        if not pattern.fullmatch(text):
+            raise bad_request(f"invalid limit {key}: must be {'a number' if key == 'max_seconds' else 'an integer'}")
+        given[key] = float(text) if "." in text else int(text)
+    return parse_limits(given, server)
+
+
+def check_zip_name(name: str) -> str:
+    """The uploaded file name, checked so it can only name a file inside the job's folder (research § R9).
+    Returns the repository name (005 FR-002: the name without its last extension)."""
+    if (
+        not name
+        or name in (".", "..")
+        or any(c in name for c in "/\\\x00")
+        or len(name.encode("utf-8", "surrogatepass")) > MAX_NAME_BYTES
+    ):
+        raise bad_request(f"invalid archive name: {name!r}")
+    repository = name.rsplit(".", 1)[0] if "." in name else name
+    if not 1 <= len(repository) <= MAX_REPOSITORY_LENGTH:
+        raise bad_request(f"invalid archive name: {name!r} (the repository name must have 1 to 300 characters)")
+    return repository
+
+
+def _too_large(observed: int, limit: int) -> ApiError:
+    message = limit_message(LimitExceeded("archive_bytes", limit, observed), "api")
+    return ApiError("limit", 413, message)
 
 
 def parse_github(body: dict[str, Any]) -> GitHubSource:
@@ -84,6 +124,34 @@ def router(runner: JobRunner) -> APIRouter:
         source = parse_github(body)
         limits = parse_limits(limits_given, runner.limits)
         return _accepted(runner.submit_github(source, limits))
+
+    @api.post("/jobs/zip")
+    async def start_zip(request: Request) -> Response:
+        params = _params(request, ("name",), LIMIT_KEYS)
+        name = params["name"]
+        check_zip_name(name)
+        limits = query_limits(params, runner.limits)
+        runner.can_accept()  # before reading the body
+        limit = limits.max_archive_bytes
+        declared = request.headers.get("content-length")
+        if declared is not None and declared.isdigit() and int(declared) > limit:
+            raise _too_large(int(declared), limit)  # FR-017: nothing is read
+        upload = runner.new_upload(name)
+        try:
+            received = 0
+            with open(upload, "wb") as out:
+                async for chunk in request.stream():
+                    received += len(chunk)
+                    if received > limit:
+                        raise _too_large(received, limit)
+                    out.write(chunk)
+            with open(upload, "rb") as fh:
+                if fh.read(4) not in _ZIP_SIGNATURES:
+                    raise bad_request(f"not a ZIP archive: {name}")
+            return _accepted(runner.submit_zip(upload, limits))
+        except BaseException:
+            runner.discard_upload(upload)
+            raise
 
     @api.get("/jobs/{job_id}")
     def job(job_id: str, request: Request) -> Response:

@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import json
+import threading
 import time
 
 import pytest
 
 from archives import tar_of_dir, zip_of_dir
 from conftest import FIXTURES
+from graphora.ingest.source import GitHubSource
+from graphora.pipeline import PipelineResult
+from graphora.store import StoredAnalysis
 
 FINAL = ("done", "failed")
 
@@ -46,3 +50,38 @@ def fixture_tarball(name: str, sha: str) -> bytes:
 
 def fixture_zip(name: str) -> bytes:
     return zip_of_dir(FIXTURES / name / "repo")
+
+
+# --- a stub pipeline for JobRunner tests without a database --------------------------------------------------
+
+GRAPH = json.dumps(
+    {
+        "snapshot": "0" * 40,
+        "coverage": {"files": [{"status": "analyzed"}, {"status": "analyzed"}, {"status": "not_code"}]},
+        "edges": [{"confidence": "resolved"}, {"confidence": "unresolved"}],
+    }
+).encode()
+STORED = StoredAnalysis("github.com/o/r", "0" * 40, 1, {}, ("b.json", "a.json"), GRAPH)
+SRC = GitHubSource("o", "r", "main")
+
+
+class Stub:
+    """A pipeline that reports the given stages, then waits for `release` (if set) and returns."""
+
+    def __init__(self, stages=("resolving", "fetching", "analyzing", "storing"), block=False, error=None):
+        self.stages = stages
+        self.release = threading.Event()
+        if not block:
+            self.release.set()
+        self.started = []
+        self.error = error
+
+    def __call__(self, source, limits, store, deadline, on_stage, workdir=None):
+        self.started.append(source)
+        for stage in self.stages:
+            on_stage(stage)
+        while not self.release.wait(0.01):
+            deadline.check()
+        if self.error is not None:
+            raise self.error
+        return PipelineResult(STORED, "stored", None)

@@ -224,12 +224,12 @@ receiving; same job flow.
 
 ### Tests for User Story 3
 
-- [ ] T020 [P] [US3] Write `backend/tests/unit/test_job_input.py` for the name and limit checks (functions
+- [X] T020 [P] [US3] Write `backend/tests/unit/test_job_input.py` for the name and limit checks (functions
   from T023): rejected names `""`, `"."`, `".."`, `"../x.zip"`, `"a/b.zip"`, `"a\\b.zip"`, `"x\x00.zip"`, a
   256-byte name, a name whose repository part is longer than 300 characters; accepted `app.zip`,
   `my.repo.zip` (repository `my.repo`), `noext` (repository `noext`); limits above the server value, below 1,
   non-integer, unknown key → rejected with the key in the message.
-- [ ] T021 [P] [US3] Write `backend/tests/integration/test_api_jobs_zip.py` (`db`, `job_app`):
+- [X] T021 [P] [US3] Write `backend/tests/integration/test_api_jobs_zip.py` (`db`, `job_app`):
   - `fixture_zip("py-flat")` uploaded as `app.zip` ends `done` with `repository == "app"` and the same
     `content:` snapshot and graph bytes as `graphora analyze app.zip --store` (acceptance 1);
   - `?max_archive_bytes=100` with a larger body → `413 limit` with
@@ -243,13 +243,13 @@ receiving; same job flow.
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Add `can_accept() -> bool`, `new_upload(name) -> Path` and `submit_zip(upload, limits)` to
+- [X] T022 [US3] Add `can_accept() -> bool`, `new_upload(name) -> Path` and `submit_zip(upload, limits)` to
   `JobRunner` in `backend/src/graphora/pipeline/jobs.py`: `new_upload` creates `<work_dir>/<new id>/upload/`
   and returns `<that folder>/<name>`, so `fetch_snapshot` names the repository after the uploaded name with
   no change to `ingest/`; `submit_zip` reuses that id and runs `run_pipeline(ZipSource(upload), …,
   workdir=<work_dir>/<id>/)`; an upload folder never passed to `submit_zip` is removed by the API handler
   (and by `start()` cleanup after a crash).
-- [ ] T023 [US3] Add `POST /jobs/zip` to `backend/src/graphora/api/jobs.py` as an `async def` handler
+- [X] T023 [US3] Add `POST /jobs/zip` to `backend/src/graphora/api/jobs.py` as an `async def` handler
   (research R4, R9): validate `name` (non-empty, at most 255 bytes, no `/`, `\` or NUL, not `.` or `..`,
   repository part 1–300 characters) and limits from query parameters; `429` if the queue is full; reject a
   `Content-Length` above `max_archive_bytes` with `413`; stream `request.stream()` into `new_upload()`,
@@ -271,7 +271,7 @@ after a crash; bounded queue; clean stop.
 
 ### Tests for User Story 4
 
-- [ ] T024 [P] [US4] Write `backend/tests/integration/test_api_jobs_failures.py` (`db`, `job_app`, `fake_gh`):
+- [X] T024 [P] [US4] Write `backend/tests/integration/test_api_jobs_failures.py` (`db`, `job_app`, `fake_gh`):
   - `{"github": "/etc"}`, `{"github": "https://gitlab.com/o/r"}`, an invalid ref, `/tree/x` plus `ref` →
     `400` with the CLI's reason (`ref` instead of `--ref`), no job (acceptance 1);
   - `fake_gh` answering `404` for the commit lookup → `failed`, kind `remote`, message names the repository
@@ -289,7 +289,7 @@ after a crash; bounded queue; clean stop.
   - nothing else changes stored data (FR-023): `DELETE` and `PUT` on `/api/v1/jobs/{id}`, `/api/v1/graph`
     and `/api/v1/repositories`, and `GET`/`PUT`/`DELETE` on `/api/v1/jobs` and `/api/v1/jobs/zip`, answer
     `405 method_not_allowed` `method not allowed`, and the store is unchanged afterwards.
-- [ ] T025 [P] [US4] Write `backend/tests/integration/test_jobs_cleanup.py`:
+- [X] T025 [P] [US4] Write `backend/tests/integration/test_jobs_cleanup.py`:
   - a second `JobRunner` on the same `work_dir` fails `start()` with `WorkDirInUse`; a different `work_dir`
     works;
   - leftovers (a folder and a file) in `work_dir` from a "killed" runner are removed by `start()`; `.lock`
@@ -298,23 +298,23 @@ after a crash; bounded queue; clean stop.
     and queued jobs `failed/interrupted`; no thread is left alive; the job folders are gone;
   - with `queue_size=2` and a blocked worker, the third waiting submission gets `QueueFull`, and over HTTP
     `429 too_many_jobs`.
-- [ ] T026 [P] [US4] Add to `backend/tests/integration/test_store_cli.py` one test (allowed edit: new test
-  only) that `graphora serve --workers 0` exits 2, and one that a second `serve` on a locked `--work-dir`
+- [X] T026 [P] [US4] Write `backend/tests/integration/test_serve_jobs_cli.py` (a new file, so
+  `test_store_cli.py` stays unchanged): one test that `graphora serve --workers 0` exits 2, and one that a second `serve` on a locked `--work-dir`
   exits 2 with `work folder in use by another graphora serve: use --work-dir` (mock `uvicorn.run`).
 
 ### Implementation for User Story 4
 
-- [ ] T027 [US4] In `JobRunner.start()` (`backend/src/graphora/pipeline/jobs.py`): open
+- [X] T027 [US4] In `JobRunner.start()` (`backend/src/graphora/pipeline/jobs.py`): open
   `<work_dir>/.lock`, take `fcntl.flock(fd, LOCK_EX | LOCK_NB)`; on `BlockingIOError` raise `WorkDirInUse`;
   then remove every entry of `work_dir` except `.lock` (`shutil.rmtree` for folders, never following
   symlinks). Keep the fd open until `stop()` (research R8).
-- [ ] T028 [US4] In `JobRunner.stop()`: stop accepting submissions (a submission after `stop()` raises
+- [X] T028 [US4] In `JobRunner.stop()`: stop accepting submissions (a submission after `stop()` raises
   `Stopping`, which the API answers with `503` kind `stopping`, message `the service is stopping`; add it to
   `backend/src/graphora/api/errors.py`), mark queued jobs `failed/interrupted`, set the stop event, join the
   worker threads, release the work-folder lock.
-- [ ] T029 [US4] Map `WorkDirInUse` in `graphora serve` to exit 2 with the message from contracts/cli.md;
+- [X] T029 [US4] Map `WorkDirInUse` in `graphora serve` to exit 2 with the message from contracts/cli.md;
   map `OSError` creating `--work-dir` to exit 2 `cannot create work folder: <strerror>`.
-- [ ] T030 [US4] Run the US4 tests and the full `uv run pytest -m "not slow"`: all pass.
+- [X] T030 [US4] Run the US4 tests and the full `uv run pytest -m "not slow"`: all pass.
 
 **Checkpoint**: all four stories pass independently.
 

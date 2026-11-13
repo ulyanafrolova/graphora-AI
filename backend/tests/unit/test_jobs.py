@@ -2,48 +2,14 @@
 
 import json
 import re
-import threading
 import time
 
 import pytest
 
 from graphora.ingest.source import GitHubSource
-from graphora.pipeline import PipelineLimits, PipelineResult
+from graphora.pipeline import PipelineLimits
 from graphora.pipeline.jobs import JobRunner
-from graphora.store import StoredAnalysis
-
-GRAPH = json.dumps(
-    {
-        "snapshot": "0" * 40,
-        "coverage": {"files": [{"status": "analyzed"}, {"status": "analyzed"}, {"status": "not_code"}]},
-        "edges": [{"confidence": "resolved"}, {"confidence": "unresolved"}],
-    }
-).encode()
-STORED = StoredAnalysis("github.com/o/r", "0" * 40, 1, {}, ("b.json", "a.json"), GRAPH)
-SRC = GitHubSource("o", "r", "main")
-
-
-class Stub:
-    """A pipeline that reports the given stages, then waits for `release` (if set) and returns."""
-
-    def __init__(self, stages=("resolving", "fetching", "analyzing", "storing"), block=False, error=None):
-        self.stages = stages
-        self.release = threading.Event()
-        if not block:
-            self.release.set()
-        self.started = []
-        self.error = error
-
-    def __call__(self, source, limits, store, deadline, on_stage, workdir=None):
-        self.started.append(source)
-        for stage in self.stages:
-            on_stage(stage)
-        while not self.release.wait(0.01):
-            deadline.check()
-        if self.error is not None:
-            raise self.error
-        return PipelineResult(STORED, "stored", None)
-
+from jobs_helpers import SRC, Stub
 
 @pytest.fixture
 def make_runner(tmp_path):

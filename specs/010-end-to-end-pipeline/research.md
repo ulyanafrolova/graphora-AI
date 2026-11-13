@@ -170,6 +170,7 @@ might fail where the other succeeds.
 | Exception | `kind` | Message |
 |---|---|---|
 | `RemoteError` | `remote` | its message (already names the repository, ref or host) |
+| `BadInput` (only from GitHub's answer: repository or ref not found, empty repository; the link itself was checked before the job) | `remote` | its message |
 | `LimitExceeded` | `limit` | the CLI template with the API key name: `file limit exceeded: at least 5001 files > max_files 5000` |
 | `UnsafeArchive`, `InvalidArchive` | `archive` | its message (paths inside the archive only) |
 | `StoreUnavailable` | `store` | `store unavailable` (the reason goes to the server log: it may contain the URL) |

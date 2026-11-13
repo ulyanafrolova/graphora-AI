@@ -314,12 +314,19 @@ def _serve(args: argparse.Namespace) -> int:
         import uvicorn
 
         from graphora.api import create_app
-        from graphora.pipeline.jobs import JobRunner
+        from graphora.pipeline.jobs import JobRunner, WorkDirInUse
 
         limits = PipelineLimits(**{key: getattr(args, key) for key in LIMIT_KEYS})
         work_dir = Path(args.work_dir) if args.work_dir else None
         runner = JobRunner(url, limits, workers=args.workers, queue_size=args.queue, work_dir=work_dir)
-        runner.start()
+        try:
+            runner.start()
+        except WorkDirInUse:
+            _log("error", "work folder in use by another graphora serve: use --work-dir")
+            return EXIT_USAGE
+        except OSError as exc:
+            _log("error", f"cannot create work folder: {exc.strerror or exc}")
+            return EXIT_USAGE
         try:
             uvicorn.run(create_app(store, runner), host=args.host, port=args.port)
         finally:
