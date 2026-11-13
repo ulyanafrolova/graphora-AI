@@ -1,4 +1,6 @@
-"""`run_pipeline` gives what `analyze --store` stores, and reports its stages (specs/010 tasks T007)."""
+"""`run_pipeline` stores what `graphora analyze` prints, and reports its stages (specs/010 tasks T007).
+
+The comparison is with a plain run: an `--store` run after the pipeline would only reuse the stored bytes."""
 
 import pytest
 
@@ -35,33 +37,32 @@ def _run(source, store, workdir=None):
     return result, stages
 
 
-def _cli_store(argument, database_url, monkeypatch):
-    monkeypatch.setenv("GRAPHORA_DATABASE_URL", database_url)
-    code, out, err = run_analyze(argument, "--store")
+def _cli(argument):
+    code, out, err = run_analyze(argument)
     assert code == 0, err
     return out
 
 
-def test_local_folder(store, database_url, monkeypatch):
+def test_local_folder(store):
     result, stages = _run(LocalSource(FIXTURES / "py-flat" / "repo"), store)
     assert stages == ["fetching", "analyzing", "storing"]
     assert result.action == "stored" and result.fetched is None
     assert result.analysis.repository == "repo"
-    assert _cli_store(FIXTURES / "py-flat" / "repo", database_url, monkeypatch) == result.analysis.graph
+    assert _cli(FIXTURES / "py-flat" / "repo") == result.analysis.graph
 
 
-def test_zip(store, database_url, monkeypatch, tmp_path):
+def test_zip(store, tmp_path):
     archive = tmp_path / "app.zip"
     archive.write_bytes(fixture_zip("ts-app"))
     result, stages = _run(ZipSource(archive), store, workdir=tmp_path)
     assert stages == ["fetching", "analyzing", "storing"]
     assert result.fetched == "extracted app.zip"
     assert result.analysis.repository == "app"
-    assert _cli_store(archive, database_url, monkeypatch) == result.analysis.graph
+    assert _cli(archive) == result.analysis.graph
     assert sorted(p.name for p in tmp_path.iterdir()) == ["app.zip"]
 
 
-def test_github_then_reuse(store, github, database_url, monkeypatch):
+def test_github_then_reuse(store, github):
     first, stages = _run(GitHubSource("o", "r", None), store)
     assert stages == ["resolving", "fetching", "analyzing", "storing"]
     assert (first.action, first.fetched) == ("stored", f"fetched github.com/o/r at {SHA}")
@@ -72,4 +73,4 @@ def test_github_then_reuse(store, github, database_url, monkeypatch):
     assert (second.action, second.fetched) == ("reused", None)
     assert second.analysis.graph == first.analysis.graph
     assert len(github.urls("codeload.github.com")) == 1
-    assert _cli_store("https://github.com/o/r", database_url, monkeypatch) == first.analysis.graph
+    assert _cli("https://github.com/o/r") == first.analysis.graph

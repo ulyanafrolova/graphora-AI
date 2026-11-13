@@ -73,14 +73,18 @@ Example run for "What breaks if I change AuthService?": Explorer finds the symbo
 ## 5. Backend API
 
 ```
-POST /repos                 import GitHub URL or ZIP, start analysis
-GET  /repos/{id}/status     analysis progress
-GET  /repos/{id}/graph      nodes and edges for Cytoscape.js
-GET  /repos/{id}/file?path= source file for the viewer
-POST /repos/{id}/ask        question to agents, streamed (SSE): trace steps and final answer
+POST /api/v1/jobs                        start an analysis from a GitHub link (JSON body)       (010)
+POST /api/v1/jobs/zip?name=<file>        start an analysis from an uploaded ZIP (raw body)      (010)
+GET  /api/v1/jobs/{id}                   job stage, then the stored repository and snapshot     (010)
+GET  /api/v1/repositories                stored repositories and their snapshots                (005)
+GET  /api/v1/graph?repository=&snapshot= nodes and edges for Cytoscape.js                       (005)
+GET  /api/v1/file?repository=&snapshot=&path=[&start=&end=]  source file for the viewer        (005)
+POST /repos/{id}/ask                     question to agents, streamed (SSE): planned, feature 013
 ```
 
-Long analysis runs as a background job with progress. The MCP server reuses the same graph functions.
+Long analysis runs as a background job with stages (`queued → resolving → fetching → analyzing → storing →
+done/failed`); see specs/010-end-to-end-pipeline/contracts/http-api.md. The MCP server reuses the same graph
+functions and opens a `done` job's result with `graphora mcp --repository … --snapshot …`.
 
 Tools are plain Python functions wrapped with LangChain's @tool. The model is chosen with one config line, for example init_chat_model("ollama:qwen3:8b"), so the provider can be switched without code changes.
 

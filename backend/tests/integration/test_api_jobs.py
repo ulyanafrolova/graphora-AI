@@ -29,9 +29,9 @@ def _start(client, **body):
     return json.loads(response.content)
 
 
-def _cli(argument, database_url, monkeypatch, *args):
-    monkeypatch.setenv("GRAPHORA_DATABASE_URL", database_url)
-    code, out, err = run_analyze(argument, "--store", *args)
+def _cli(argument):
+    """A plain run: an `--store` run after the job would only reuse the stored bytes."""
+    code, out, err = run_analyze(argument)
     assert code == 0, err
     return out, err
 
@@ -51,7 +51,7 @@ def test_stages_move_forward(job_app, github):
     assert [s for s in ORDER if s in seen] == seen
 
 
-def test_done_names_the_stored_analysis(job_app, github, database_url, monkeypatch):
+def test_done_names_the_stored_analysis(job_app, github):
     client, _ = job_app
     done = wait_for_job(client, _start(client, github=LINK)["id"])
     result = done["result"]
@@ -59,7 +59,7 @@ def test_done_names_the_stored_analysis(job_app, github, database_url, monkeypat
 
     graph = client.get("/api/v1/graph", params={"repository": result["repository"], "snapshot": SHA})
     assert graph.status_code == 200
-    out, err = _cli(LINK, database_url, monkeypatch)
+    out, err = _cli(LINK)
     assert graph.content == out
     summary = f"analyzed {result['files']} files, {result['edges']} edges ({result['unresolved']} unresolved)"
     assert summary in err
@@ -101,3 +101,27 @@ def test_lower_limits_are_reported(job_app, github):
     assert started["limits"]["max_files"] == 100 and started["limits"]["max_seconds"] == 2.5
     assert started["source"]["ref"] == "main"
     assert wait_for_job(client, started["id"])["stage"] == "done"
+
+
+def test_start_is_fast_while_a_job_runs(job_app, github):
+    """SC-002: starting a job answers in under 1 s, whatever is running."""
+    import threading
+    import time
+
+    release = threading.Event()
+    tar = fixture_tarball("ts-app", SHA)
+
+    def slow():
+        release.wait(10)
+        yield tar
+
+    github.serve(f"https://codeload.github.com/o/ts-app/tar.gz/{SHA}", body=slow())
+    client, _ = job_app
+    first = _start(client, github=LINK)
+    try:
+        begin = time.monotonic()
+        _start(client, github="https://github.com/o/other")
+        assert time.monotonic() - begin < 1
+    finally:
+        release.set()
+    wait_for_job(client, first["id"])

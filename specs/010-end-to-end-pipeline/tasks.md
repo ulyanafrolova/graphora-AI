@@ -322,18 +322,18 @@ after a crash; bounded queue; clean stop.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T031 [P] Write `backend/tests/golden/test_pipeline_equivalence.py` (`db`, SC-001): for every fixture
+- [X] T031 [P] Write `backend/tests/golden/test_pipeline_equivalence.py` (`db`, SC-001): for every fixture
   in `fixtures/repos/`, (a) serve `fixture_tarball(name, sha)` through `fake_gh` and submit the link, (b)
   upload `fixture_zip(name)`; each stored graph equals `graphora analyze --store` bytes for the same input;
   run the whole loop 3 times with the store truncated in between and compare all bytes.
-- [ ] T032 [P] Add a timing check to `backend/tests/integration/test_api_jobs.py`: `POST /api/v1/jobs`
+- [X] T032 [P] Add a timing check to `backend/tests/integration/test_api_jobs.py`: `POST /api/v1/jobs`
   answers in under 1 s while a blocked job is running (SC-002).
-- [ ] T033 [P] Update `CLAUDE.md` § Commands with `graphora serve` job options and a `curl` example for
+- [X] T033 [P] Update `CLAUDE.md` § Commands with `graphora serve` job options and a `curl` example for
   `POST /api/v1/jobs` (shared file: note it in the PR description).
-- [ ] T034 [P] Update `docs/product/project-context.md` § 5 with the real endpoints (`/api/v1/repositories`,
+- [X] T034 [P] Update `docs/product/project-context.md` § 5 with the real endpoints (`/api/v1/repositories`,
   `/graph`, `/file`, `/jobs`, `/jobs/zip`, `/jobs/{id}`) and § 124 area if needed; note that `/ask` is
   feature 013.
-- [ ] T035 Run `make check` from the repository root (ruff + full suite with PostgreSQL) twice; run the
+- [X] T035 Run `make check` from the repository root (ruff + full suite with PostgreSQL) twice; run the
   manual steps of `specs/010-end-to-end-pipeline/quickstart.md` 1–6 against real GitHub once and note the
   result in the PR description.
 - [ ] T036 Update PR #25: mark ready, list the change to `ingest/fetch.py` for Anna's review, and the

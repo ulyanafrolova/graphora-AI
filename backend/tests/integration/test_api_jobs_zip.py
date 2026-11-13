@@ -28,7 +28,7 @@ def _job_dirs(runner):
     return sorted(p.name for p in runner.work_dir.iterdir() if p.name != ".lock")
 
 
-def test_upload_equals_cli(job_app, tmp_path, database_url, monkeypatch):
+def test_upload_equals_cli(job_app, tmp_path):
     client, runner = job_app
     data = fixture_zip("py-flat")
     response = _upload(client, "app.zip", data)
@@ -40,8 +40,7 @@ def test_upload_equals_cli(job_app, tmp_path, database_url, monkeypatch):
 
     archive = tmp_path / "app.zip"
     archive.write_bytes(data)
-    monkeypatch.setenv("GRAPHORA_DATABASE_URL", database_url)
-    code, out, err = run_analyze(archive, "--store")
+    code, out, err = run_analyze(archive)  # plain: an --store run now would reuse the stored bytes
     assert code == 0, err
     result = done["result"]
     assert result["repository"] == "app" and result["snapshot"].startswith("content:")

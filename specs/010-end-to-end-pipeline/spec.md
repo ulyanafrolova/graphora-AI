@@ -151,6 +151,8 @@ can be stopped; check the status, the store and the temporary folder after each.
 - Client-supplied limits higher than the server's limits: rejected as a bad request; lower limits are
   accepted.
 - A finished job's status is asked for many times: the answer is the same bytes every time.
+- A job is submitted while the service is stopping: rejected with a distinct "the service is stopping"
+  answer; no job is created.
 
 ## Requirements *(mandatory)*
 
