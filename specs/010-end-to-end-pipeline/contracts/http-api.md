@@ -16,6 +16,7 @@ message.
 |---|---|---|
 | 413 | `limit` | upload larger than `max_archive_bytes`; message names the limit and its value |
 | 429 | `too_many_jobs` | the queue already holds `queue_size` waiting jobs |
+| 503 | `stopping` | a job is submitted while the service is shutting down: `the service is stopping` |
 
 ## Job status body
 
