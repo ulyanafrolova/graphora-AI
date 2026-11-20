@@ -283,6 +283,82 @@ uv run pytest               # all, needs GRAPHORA_TEST_DATABASE_URL
 Golden fixtures in [fixtures/repos/](fixtures/repos) (`py-*`, `ts-*`, `js-commonjs`, `mixed-fullstack`)
 have hand-written `expected.json` files as ground truth.
 
+## How to use
+
+A walkthrough on the bundled fixtures. Run every command from `backend/`.
+
+```
+cd backend && uv sync
+```
+
+**1. Build the graph of a C# project**
+
+```
+uv run graphora analyze ../fixtures/repos/csharp-multiproject/repo --out /tmp/multi.json
+```
+
+It prints `analyzed 10 files, 48 edges (9 unresolved)` and writes the graph to `/tmp/multi.json`.
+
+**2. Ask the graph questions**
+
+```
+# projects: which solutions they belong to, what they reference, which packages they use
+uv run graphora query /tmp/multi.json projects
+
+# what project Web depends on, with file:line evidence
+uv run graphora query /tmp/multi.json dependencies src/Web/Web.csproj --level project
+
+# cycles between projects
+uv run graphora query /tmp/multi.json cycles --level project
+
+# what breaks if project Core changes
+uv run graphora query /tmp/multi.json impact src/Core/Core.csproj --level project
+
+# summary of the graph
+uv run graphora query /tmp/multi.json overview
+```
+
+The answer for Web shows:
+
+- Core and Infra are used in code, with the line that uses them;
+- Tools is marked `likely`: the link exists only through a `using`;
+- the package `Microsoft.Extensions.Logging` is referenced but not used (`declared, not used by code`);
+- a reference to a missing project is `unresolved: not_found`, and a reference through the
+  `$(SharedRoot)` property is `unresolved: msbuild_property`.
+
+**3. Look at files and types**
+
+```
+uv run graphora analyze ../fixtures/repos/csharp-types/repo --out /tmp/types.json
+uv run graphora query /tmp/types.json overview
+uv run graphora query /tmp/types.json definitions Mailer   # where type Mailer is declared
+uv run graphora query /tmp/types.json key-files            # the most depended-on files
+```
+
+**4. Try a real repository from GitHub**
+
+```
+uv run graphora analyze https://github.com/<owner>/<repo> --out /tmp/real.json
+uv run graphora query /tmp/real.json projects
+```
+
+Any public .NET project works: put its address in place of `<owner>/<repo>`.
+
+**5. Tests**
+
+```
+uv run pytest tests/golden -k csharp -m "not db"   # C# golden fixtures
+uv run pytest -m "not slow and not db"             # all fast tests, no database
+```
+
+**6. Server for AI agents and HTTP API (optional)**
+
+```
+uv run graphora mcp --help   # MCP server for coding agents such as Claude Code
+make db                      # start PostgreSQL first if you need the HTTP API
+uv run graphora serve        # HTTP API on http://127.0.0.1:8000
+```
+
 ## Authors
 
 This project was completed as part of the AI Agents class at Warsaw University of Technology.
