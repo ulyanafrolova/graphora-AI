@@ -188,3 +188,45 @@ def test_missing_repository_or_snapshot(client, put):
     message = error(get(client, "overview", "ts-app", "content:0000000000000000"), 404, "not_found")
     assert message.startswith("snapshot not found")
     error(client.get("/api/v1/cycles", params={"snapshot": snapshot}), 400, "bad_request")
+
+
+ROUTES = {
+    "dependencies": {"target": "src/util.ts"},
+    "dependents": {"target": "src/util.ts"},
+    "impact": {"target": "src/util.ts"},
+    "neighbors": {"target": "src/util.ts"},
+    "cycles": {},
+    "key_files": {},
+    "definitions": {"name": "helper"},
+    "overview": {},
+    "projects": {},
+}
+
+
+def test_stale(store, client, put):
+    snapshot, _ = put("ts-app")
+    store._conn.execute("UPDATE analyses SET schema_version = schema_version - 1")
+    for question, params in ROUTES.items():
+        message = error(get(client, question, "ts-app", snapshot, **params), 409, "stale")
+        assert message.endswith("analyze it again")
+
+
+HOSTILE = "<script>alert(1)</script>" + "x" * 10_000
+
+
+@pytest.mark.parametrize(
+    ("question", "params"),
+    [
+        ("cycles", {"limit": HOSTILE}),
+        ("cycles", {"include_type_only": HOSTILE}),
+        ("cycles", {"level": HOSTILE}),
+        ("impact", {"target": "src/util.ts", "max_depth": HOSTILE}),
+        ("dependents", {"target": "src/util.ts", "level": "project", "symbol": HOSTILE}),
+        ("overview", {"other": HOSTILE}),
+    ],
+)
+def test_no_echo(client, put, question, params):
+    snapshot, _ = put("ts-app")
+    response = get(client, question, "ts-app", snapshot, **params)
+    assert response.status_code == 400
+    assert "<script>" not in response.text and "xxxx" not in response.text

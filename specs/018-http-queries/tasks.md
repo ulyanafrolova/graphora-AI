@@ -182,11 +182,11 @@ Messages are short, lowercase and English. Push at the end of each phase.
   `limit=x`, `limit=501`, `level=module`, `max_depth=0`, `symbol` on `/cycles`, `max_depth` on `/dependents`,
   `level=project` with `symbol`, `follow_barrels=true` and `include_type_only=false`, an unknown repository, an
   unknown snapshot. Each body is `{"error": {"kind", "message"}}`.
-- [ ] T017 [US4] In the same file add `test_stale`: store a fixture analysis, then set its `schema_version` to
+- [X] T017 [US4] In the same file add `test_stale`: store a fixture analysis, then set its `schema_version` to
   `SCHEMA_VERSION - 1` with SQL on `store._conn` (`UPDATE analyses SET schema_version = …`), and check that every
   one of the nine routes answers 409 `stale`; and `test_no_echo`: a hostile `symbol` / unknown parameter value
   (`<script>…`, a 10 kB string) never appears in the error body (FR-011).
-- [ ] T018 [US4] Fix whatever T016–T017 find in `backend/src/graphora/api/questions.py` (expected: nothing beyond
+- [X] T018 [US4] Fix whatever T016–T017 find in `backend/src/graphora/api/questions.py` (expected: nothing beyond
   Phase 2). Check: `uv run pytest tests/integration/test_http_queries_api.py tests/unit/test_api_questions.py`.
 
 **Checkpoint**: all four stories pass on their own.
