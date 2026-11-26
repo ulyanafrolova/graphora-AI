@@ -88,7 +88,7 @@ message for each, and that no score is reported where there is no history.
    commit `<sha>` and the answer notes that uncommitted changes are not counted.
 3. **Given** a GitHub URL, **When** it is analyzed, **Then** hotspots follow the rule chosen for GitHub sources:
    besides the tarball of the snapshot commit, Graphora fetches only the commits and trees of that commit's
-   history within the window (no file contents) over git's read-only HTTPS protocol, and lists hotspots like for
+   history within the window plus a margin (no file contents) over git's read-only HTTPS protocol, and lists hotspots like for
    a local git folder.
 4. **Given** a GitHub source whose history fetch fails (network error, limit exceeded), **When** it is analyzed,
    **Then** the analysis of the files still succeeds, history is "not available" with the reason, and no hotspots
@@ -173,7 +173,8 @@ a wrong commit count or rank with "count mismatch" / "rank mismatch".
   can be answered later without the source folder from a graph file, a stored analysis, a job result, MCP and HTTP
   alike. The graph schema version MUST be bumped and all consumers updated in the same change.
 - **FR-008a**: For GitHub sources, System MUST fetch the history of the snapshot commit as commits and trees only
-  (no file contents), limited to the history window, over git's read-only HTTPS protocol to the same allowed GitHub
+  (no file contents), limited to the history window plus a margin so that the oldest commits of the window have
+  their parents (commits of the margin are never counted), over git's read-only HTTPS protocol to the same allowed GitHub
   hosts, without running a git binary, and within the ingest size and time limits.
 - **FR-009**: The history summary MUST be deterministic: same snapshot and same extractor versions give identical
   bytes; no wall-clock time, no dependency on file system or dict order. The only exception is a history marked
@@ -184,11 +185,13 @@ a wrong commit count or rank with "count mismatch" / "rank mismatch".
   window, whether history was cut (window, shallow clone, time limit) and, for a dirty snapshot, that local changes
   are not counted.
 - **FR-012**: Hotspots MUST be a query of the shared graph query layer and available through `graphora query`,
-  the MCP server (read-only tool) and the HTTP API, with identical results.
+  the MCP server (read-only tool) and the HTTP API, with identical results. The MCP graph overview also shows the
+  history status.
 - **FR-013**: The claim verifier MUST accept query result claims about hotspots (rank, commits, authors, score)
   and check them against the computed result, with the reasons used for other query claims.
 - **FR-014**: Reading history MUST respect the existing analysis limits (time, size); history reading never
-  follows paths outside the analyzed folder.
+  follows paths outside the analyzed folder's `.git` or the temporary folder of the same analysis (where GitHub
+  history is fetched).
 - **FR-015**: Author names and e-mail addresses MUST NOT be written into the graph document or exposed in hotspot
   answers; only counts are reported.
 
@@ -199,11 +202,15 @@ a wrong commit count or rank with "count mismatch" / "rank mismatch".
 - **FR-017**: History MUST be collected by default on every analysis (CLI and HTTP jobs); a `--no-history` option
   of `graphora analyze`, and the same option of an HTTP analysis job, MUST skip it, and the history is then
   "not available" with the reason "skipped by request".
+- **FR-018**: A stored analysis whose history is only temporary (`partial`, or not available because it was
+  skipped, the fetch failed, a limit was hit or it was not collected) MUST be replaced when the same snapshot is
+  analyzed again with a final history (`available`, or not available because of the source: no git, ZIP,
+  unreadable). A final history is never replaced by a temporary one.
 
 ### Key Entities
 
 - **History summary**: per snapshot — the snapshot commit, the window used, number of commits read, first and last
-  commit date, a "cut" flag with reason, and per file: commit count and author count. Status `available`,
+  commit date, the number of merge commits and shallow commits not counted, a dirty-snapshot note, and per file: commit count and author count. Status `available`,
   `partial` (time limit, with commits read and oldest date reached) or `not_available` with a reason.
 - **Hotspot**: a file with commits, authors (bus factor), direct and transitive dependents, and score; ranked.
 - **Hotspot answer**: the ranked hotspots of one snapshot, with total, truncation, the history base and status.

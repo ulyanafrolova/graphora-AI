@@ -102,14 +102,12 @@ of the group. Push at the end of each phase.
 **Commit**: `graph schema v8 with history section`
 
 - [ ] T009 Add `"history"` to `project()` in `backend/tests/conftest.py` (copied as is) and to the sections of
-  `test_matches_expected` in `backend/tests/golden/test_fixtures.py`. Write a `history` section by hand into
-  every `fixtures/repos/*/expected.json`: `{"status": "not_available", "reason": "no_git", …}` with all keys of
-  the contract. The fixtures are not git roots; until US1 lands, the CLI writes `not_collected`, so this test is
-  expected to fail now and pass after T017.
+  `test_matches_expected` in `backend/tests/golden/test_fixtures.py`. No fixture has the section yet, so the new
+  case is skipped and the suite stays green; the fixtures get it in T017.
 
-**Commit**: `fixtures: expected history section`
+**Commit**: `golden tests: history section`
 
-**Checkpoint**: push. `make check` passes except the golden `history` section.
+**Checkpoint**: push. `make check` passes.
 
 ---
 
@@ -153,7 +151,9 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
   - **repeat**: a second run gives identical bytes (SC-002);
   - **query**: `graphora query <out> hotspots` text and `--format json` list the expected items;
   - **usage errors**: `hotspots` with a target, `--symbol`, `--max-depth`, `--follow-barrels` or `--level
-    project` exits 2.
+    project` exits 2;
+  - **privacy** (FR-015): the graph bytes and the query output contain none of the test authors' names or
+    e-mail addresses.
 
 ### Implementation
 
@@ -215,8 +215,9 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
   - `--limit` default 10, like `key-files`;
   - the same option errors as `key-files`.
   
-  Run `uv run pytest tests/integration/test_history_cli.py tests/golden/test_fixtures.py`: the golden
-  `history` section now passes with `no_git`.
+  Write a `history` section by hand into every `fixtures/repos/*/expected.json`: `{"status": "not_available",
+  "reason": "no_git", …}` with all keys of contracts/graph-schema-v8.md (the fixtures are not git roots). Run
+  `uv run pytest tests/integration/test_history_cli.py tests/golden/test_fixtures.py`.
 
 **Commit**: `history in analyze, query hotspots`
 
@@ -228,7 +229,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
 
 **Goal**: ZIP, plain folders, `--no-history`, unreadable `.git`, dirty trees, shallow clones, the time limit
 and GitHub sources each give the right status and reason, and the store keeps the best history (spec US2,
-FR-008, FR-008a, FR-010, FR-011, FR-014, FR-016, FR-017; research R5–R7).
+FR-008, FR-008a, FR-010, FR-011, FR-014, FR-016, FR-017, FR-018; research R5–R7).
 
 **Independent Test**: analyze a ZIP, a plain folder, a dirty repository, a shallow repository, a repository
 with an expired deadline, and a repository served by a local git server; check status, reason and notes.
@@ -236,7 +237,8 @@ with an expired deadline, and a repository served by a local git server; check s
 ### Tests
 
 - [ ] T018 [P] [US2] Extend `backend/tests/integration/test_history_cli.py`:
-  - a ZIP of a built repository (its `.git` included) → `not_available` / `zip`;
+  - a ZIP of a built repository → `not_available` / `zip` (a `.git` folder in the archive is dropped at
+    extraction, `ingest/archive.py`, so the reason is `zip` either way);
   - a plain folder → `no_git`;
   - `--no-history` → `skipped`, with the info line `not available (skipped by request)`;
   - a `.git` with `objects/info/alternates` → `no_git`, same rule as the snapshot id;
@@ -314,7 +316,7 @@ with an expired deadline, and a repository served by a local git server; check s
   `not history` or its history is final. Read it from the stored graph JSON with a helper `history_final(graph:
   bytes) -> bool` in `backend/src/graphora/history/__init__.py`.
 - [ ] T026 [US2] In `backend/src/graphora/store/store.py` `put`, keep reusing an existing analysis, except when
-  its stored history is retryable and the new document's history is final. Then replace it (research R6). Read
+  its stored history is retryable and the new document's history is final. Then replace it (FR-018, research R6). Read
   the stored graph's `history` with `history_final`.
 - [ ] T027 [US2] Add the jobs flag in `backend/src/graphora/api/jobs.py` and
   `backend/src/graphora/pipeline/jobs.py`:
@@ -411,7 +413,8 @@ true and wrong hotspot claims with the verifier.
   graphora query graph.json hotspots`. Add a short history note under Commands: history is on by default; ZIP
   sources have none.
 - [ ] T035 Run `make check` (with `make db` and `GRAPHORA_TEST_DATABASE_URL`) and `make lint`. Walk through
-  quickstart.md §§ 2–6 and fix what differs. Mark tasks done in this file.
+  quickstart.md §§ 2–6 and fix what differs. SC-003a (GitHub fetch ≤ 60 s) has no automated test: measure it
+  by hand in quickstart § 4 and write the time in the PR description. Mark tasks done in this file.
 
 **Commit**: `hotspots: performance test, docs`
 
