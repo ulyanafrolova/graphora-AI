@@ -29,3 +29,15 @@ def test_every_fixture_round_trips_three_times(store):
             assert run[name] == expected[name], name
         runs.append(run)
     assert runs[0] == runs[1] == runs[2]
+
+
+def test_list_files_matches_get_file(store):
+    for name in ("py-cycles", "ts-app", "csharp-multiproject"):
+        analysis = analyze_fixture(name)
+        store.put(name, analysis)
+        listed = store.list_files(name, analysis.doc.snapshot)
+        assert [p for p, _, _ in listed] == sorted(p for p, _, _ in listed) and listed
+        for path, has_text, line_count in listed:
+            found = store.get_file(name, analysis.doc.snapshot, path)
+            assert (found.has_text, found.line_count) == (has_text, line_count)
+    assert store.list_files("nope", "content:0000000000000000") == []

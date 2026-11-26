@@ -274,6 +274,15 @@ class Store:
                 is not None
             )
 
+    def list_files(self, repository: str, snapshot: str) -> list[tuple[str, bool, int]]:
+        """(path, has_text, line_count) of every stored file of a snapshot, by path (specs/019-frontend research § R5)."""
+        with self._lock, self._guard():
+            rows = self._conn.execute(
+                "SELECT path, has_text, line_count FROM files WHERE repository = %s AND snapshot = %s ORDER BY path COLLATE \"C\"",
+                (repository, snapshot),
+            ).fetchall()
+        return [(path, has_text, line_count) for path, has_text, line_count in rows]
+
     def get_file(
         self, repository: str, snapshot: str, path: str, start: int | None = None, end: int | None = None
     ) -> FileText | None:

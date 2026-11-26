@@ -124,7 +124,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   folder (tmp dir with `index.html` and `assets/app.js`): `GET /` → index, `GET /assets/app.js` → file,
   `GET /r/x/y/graph` → index (200), `GET /api/v1/nope` → JSON 404, `GET /../secret` blocked, CSP header on UI responses
   equals contracts/backend.md; without a UI folder `GET /` → JSON 404 as before.
-- [ ] T017 Add `Store.list_files(repository, snapshot) -> list[tuple[str, bool, int]]` (one `SELECT path, has_text,
+- [X] T017 Add `Store.list_files(repository, snapshot) -> list[tuple[str, bool, int]]` (one `SELECT path, has_text,
   line_count FROM files WHERE repository = %s AND snapshot = %s ORDER BY path`) in
   `backend/src/graphora/store/store.py`, with a test in `backend/tests/golden/test_store_roundtrip.py`.
 - [ ] T018 Add `GET /api/v1/files` (uses `stored_index` for 404/409, then `list_files`) and `GET /api/v1/info` (no
