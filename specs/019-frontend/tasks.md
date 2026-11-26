@@ -310,7 +310,7 @@ equals the API answer.
   results (path, line, kind, full name); choosing one selects the file in the graph (`node=`); "no definitions" for an
   empty answer.
 - [X] T053 [US3] Implement `frontend/src/graph/Search.tsx` and wire it into the graph toolbar. Check: T052 passes.
-- [ ] T054 [US3] Write `frontend/tests/e2e/us3-insights.spec.ts`: Cycles on `py-cycles` lists the groups of
+- [X] T054 [US3] Write `frontend/tests/e2e/us3-insights.spec.ts`: Cycles on `py-cycles` lists the groups of
   `/api/v1/cycles` with their cut; Hotspots on the e2e git repository shows tiles and the table equal to
   `/api/v1/hotspots`; on `py-cycles` (no git) "history not available"; search for a known class opens its file.
 
