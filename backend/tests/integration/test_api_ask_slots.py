@@ -261,3 +261,22 @@ def test_thread_that_cannot_start_frees_the_slot(ask_app, monkeypatch):
     monkeypatch.setattr(threading.Thread, "start", real_start)
     ask_app.models.append(scripted("x", "y", ClaimsReply(claims=[]))[0])
     assert ask_app.client.post("/api/v1/ask", json=ask_app.body()).status_code == 200
+
+
+def test_slot_is_free_when_the_answer_arrives(ask_app, monkeypatch):
+    """A follow-up sent on `answer` is not refused as busy, even if closing the connection is slow (013 review)."""
+    real_close = ask_module.AskService._close
+
+    def slow_close(served):
+        time.sleep(0.3)
+        real_close(served)
+
+    monkeypatch.setattr(ask_module.AskService, "_close", staticmethod(slow_close))
+    ask_app.models.append(scripted("x", "y", ClaimsReply(claims=[]))[0])
+    with ask_app.client.stream("POST", "/api/v1/ask", json=ask_app.body()) as r:
+        for line in r.iter_lines():
+            if line.startswith("event: answer"):
+                assert ask_app.service.running() == 0
+                break
+        else:
+            pytest.fail("no answer")

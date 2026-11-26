@@ -117,6 +117,7 @@ class AskRun:
             self.stop.set()
 
     def _run(self) -> None:
+        final: tuple[str, Any] = ("error", None)
         try:
             run = ask(
                 self.question,
@@ -126,14 +127,14 @@ class AskRun:
                 on_event=lambda event: self._put(("step", event)),
                 stop=self.stop.is_set,
             )
-            self._put(("answer", run))
+            final = ("answer", run)
         except Exception as exc:
             log.error("ask failed", exc_info=exc)
-            self._put(("error", None))
         finally:
-            if self.served.store is not None:
-                self.served.store.close()
+            # free the connection and the slot before the client sees the last message (a follow-up is not busy)
+            AskService._close(self.served)
             self.service._finished(self)
+            self._put(final)
             self._put(None)
 
     async def stream(self) -> AsyncIterator[bytes]:
