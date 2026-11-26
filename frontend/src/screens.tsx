@@ -4,12 +4,10 @@ import { CodePage } from "./code/CodePage";
 import { GraphPage } from "./graph/GraphPage";
 import { CyclesPage } from "./insights/CyclesPage";
 import { HotspotsPage } from "./insights/HotspotsPage";
+import { McpPage } from "./integrations/McpPage";
+import { NotAvailable } from "./integrations/NotAvailable";
 import type { RouteState } from "./state/route";
 import { useRoute } from "./state/useRoute";
-
-function Soon({ name }: { name: string }) {
-  return <h1>{name}</h1>;
-}
 
 export function Screen() {
   const route = useRoute();
@@ -31,7 +29,11 @@ function ScreenFor({ route }: { route: RouteState }) {
       return <AskPage key={`${route.repository}@${route.snapshot}`} route={route} />;
     case "trace":
       return <TracePage route={route} />;
-    default:
-      return <Soon name={route.screen} />;
+    case "mcp":
+      return <McpPage route={route} />;
+    case "pr-impact":
+      return <NotAvailable title="PR impact" />;
+    case "security":
+      return <NotAvailable title="Security" />;
   }
 }

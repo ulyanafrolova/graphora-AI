@@ -392,12 +392,12 @@ equals the API answer.
 
 ## Phase 8: User Story 6 - MCP page and placeholders (Priority: P3)
 
-- [ ] T070 [P] [US6] Write `frontend/tests/unit/mcp.test.tsx`: Claude Code command `claude mcp add graphora -- uv run
+- [X] T070 [P] [US6] Write `frontend/tests/unit/mcp.test.tsx`: Claude Code command `claude mcp add graphora -- uv run
   --directory <backend dir placeholder> graphora mcp --repository <repo> --snapshot <snap>` and Cursor JSON with the
   open repository and snapshot, copy buttons; tools table = `/info` `mcp_tools` (name, description), all marked
   read-only; "server: stdio" note; no benchmark numbers; PR impact and Security pages show "not available in this
   version" and contain no digits.
-- [ ] T071 [US6] Implement `frontend/src/integrations/McpPage.tsx` and `NotAvailable.tsx`; routes `pr-impact`,
+- [X] T071 [US6] Implement `frontend/src/integrations/McpPage.tsx` and `NotAvailable.tsx`; routes `pr-impact`,
   `security`, `mcp`. Check: T070 passes.
 - [ ] T072 [US6] Write `frontend/tests/e2e/us6-mcp.spec.ts`: MCP page lists the tools of `/api/v1/info`; PR impact and
   Security show the placeholder.
