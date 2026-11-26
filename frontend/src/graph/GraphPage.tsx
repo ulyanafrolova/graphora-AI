@@ -27,7 +27,11 @@ export function GraphPage({ route }: { route: RouteState }) {
   );
 
   const failed = graph.error ?? components.error;
-  if (failed) return <ErrorState error={failed} onRetry={() => void graph.refetch()} />;
+  const retry = () => {
+    void graph.refetch();
+    void components.refetch();
+  };
+  if (failed) return <ErrorState error={failed} onRetry={retry} />;
   if (!graph.data || !components.data) return <Loading what="graph" />;
 
   return (
