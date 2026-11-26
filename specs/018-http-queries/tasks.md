@@ -176,7 +176,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 **Independent Test**: the error table as one parametrized test; a stored analysis with an old schema version.
 
-- [ ] T016 [US4] In `backend/tests/integration/test_http_queries_api.py` add `test_errors`, parametrized over
+- [X] T016 [US4] In `backend/tests/integration/test_http_queries_api.py` add `test_errors`, parametrized over
   (route, extra params, status, kind) covering every row of contracts/http-api.md § Errors: unknown parameter,
   repeated parameter (raw URL `…&limit=1&limit=2`), missing `repository`/`snapshot`/`target`, `include_type_only=yes`,
   `limit=x`, `limit=501`, `level=module`, `max_depth=0`, `symbol` on `/cycles`, `max_depth` on `/dependents`,

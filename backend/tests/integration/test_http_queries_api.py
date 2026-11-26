@@ -146,3 +146,45 @@ def test_unknown_name(client, put):
 def test_definitions_parameters(client, put, params, message):
     snapshot, _ = put("ts-app")
     assert error(get(client, "definitions", "ts-app", snapshot, **params), 400, "bad_request") == message
+
+
+ERRORS = [
+    ("impact", {"target": "src/util.ts", "other": "1"}, 400, "bad_request"),
+    ("impact", {}, 400, "bad_request"),
+    ("impact", {"target": ""}, 400, "bad_request"),
+    ("cycles", {"include_type_only": "yes"}, 400, "bad_request"),
+    ("cycles", {"limit": "x"}, 400, "bad_request"),
+    ("cycles", {"limit": "501"}, 400, "bad_request"),
+    ("cycles", {"limit": "-1"}, 400, "bad_request"),
+    ("cycles", {"level": "module"}, 400, "bad_request"),
+    ("impact", {"target": "src/util.ts", "max_depth": "0"}, 400, "bad_request"),
+    ("cycles", {"symbol": "x"}, 400, "bad_request"),
+    ("dependents", {"target": "src/util.ts", "max_depth": "1"}, 400, "bad_request"),
+    ("dependents", {"target": "src/util.ts", "symbol": ""}, 400, "bad_request"),
+    ("dependents", {"target": "src/util.ts", "level": "project", "symbol": "helper"}, 400, "bad_request"),
+    ("impact", {"target": "src/util.ts", "level": "project", "follow_barrels": "true"}, 400, "bad_request"),
+    ("cycles", {"level": "project", "include_type_only": "false"}, 400, "bad_request"),
+    ("neighbors", {"target": "src/util.ts", "level": "file"}, 400, "bad_request"),
+]
+
+
+@pytest.mark.parametrize(("question", "params", "status", "kind"), ERRORS)
+def test_errors(client, put, question, params, status, kind):
+    snapshot, _ = put("ts-app")
+    response = get(client, question, "ts-app", snapshot, **params)
+    assert set(response.json()) == {"error"} and set(response.json()["error"]) == {"kind", "message"}
+    error(response, status, kind)
+
+
+def test_repeated_parameter(client, put):
+    snapshot, _ = put("ts-app")
+    response = client.get(f"/api/v1/cycles?repository=ts-app&snapshot={snapshot}&limit=1&limit=2")
+    assert error(response, 400, "bad_request") == "parameter given more than once: limit"
+
+
+def test_missing_repository_or_snapshot(client, put):
+    snapshot, _ = put("ts-app")
+    assert error(get(client, "overview", "nope", snapshot), 404, "not_found") == "repository not found: nope"
+    message = error(get(client, "overview", "ts-app", "content:0000000000000000"), 404, "not_found")
+    assert message.startswith("snapshot not found")
+    error(client.get("/api/v1/cycles", params={"snapshot": snapshot}), 400, "bad_request")
