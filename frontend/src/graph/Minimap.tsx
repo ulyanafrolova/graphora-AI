@@ -37,7 +37,8 @@ export function Minimap({ cy, ready }: { cy: Core | null; ready: boolean }) {
       cy.off("viewport", update);
     };
   }, [cy, ready]);
-  if (frame === null) return null;
+  // the box keeps its place before the picture exists, so the graph does not shrink after fitting
+  if (frame === null) return <div className="minimap" aria-hidden="true" />;
   const pan = (e: React.MouseEvent) => {
     if (cy === null || box.current === null) return;
     const r = box.current.getBoundingClientRect();
