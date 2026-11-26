@@ -180,3 +180,21 @@ def test_project_level_usage_errors(cs_graph, extra, message):
 def test_not_a_project(cs_graph):
     code, _, err = run_query(cs_graph, "dependencies", "README.md", "--level", "project")
     assert code == 8 and "README.md is not a project" in err  # the existing not-found exit status
+
+
+def test_components(graph):
+    code, out, err = run_query(graph, "components", "--format", "json")
+    assert (code, err) == (0, "")
+    assert out == dumps(queries.components(queries.index(loads(analyzed_graph("py-flat")))))
+    code, out, _ = run_query(graph, "components", "--no-type-only", "--format", "json")
+    assert json.loads(out)["options"] == {"include_type_only": False}
+    text = run_query(graph, "components")[1].decode()
+    assert text.startswith("components @ ") and "total: " in text
+
+
+@pytest.mark.parametrize(
+    "args", [["x.py"], ["--limit", "3"], ["--symbol", "a"], ["--max-depth", "1"], ["--follow-barrels"], ["--level", "project"]]
+)
+def test_components_usage(graph, args):
+    code, _, err = run_query(graph, "components", *args)
+    assert code == 2 and err

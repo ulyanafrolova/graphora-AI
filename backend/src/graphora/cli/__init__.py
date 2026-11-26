@@ -132,7 +132,17 @@ def _parser() -> argparse.ArgumentParser:
 
 
 _QUESTIONS = (
-    "dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "hotspots", "overview", "definitions", "projects"
+    "dependencies",
+    "dependents",
+    "impact",
+    "neighbors",
+    "cycles",
+    "key-files",
+    "hotspots",
+    "overview",
+    "definitions",
+    "projects",
+    "components",
 )
 _WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors", "definitions")
 _LEVEL_QUESTIONS = ("dependencies", "dependents", "impact", "cycles")
@@ -203,6 +213,9 @@ def _query(args: argparse.Namespace) -> int:
     if question in ("overview", "projects") and (args.limit is not None or args.no_type_only):
         _log("error", f"{question} takes only --format")
         return EXIT_USAGE
+    if question == "components" and args.limit is not None:
+        _log("error", "components takes only --no-type-only and --format")
+        return EXIT_USAGE
     if question == "definitions" and args.no_type_only:
         _log("error", "definitions takes only --limit and --format")
         return EXIT_USAGE
@@ -250,6 +263,8 @@ def _query(args: argparse.Namespace) -> int:
             answer = queries.projects(ix)
         elif question == "definitions":
             answer = queries.definitions(ix, args.target, limit=args.limit)
+        elif question == "components":
+            answer = queries.components(ix, include_type_only=not args.no_type_only)
         else:
             answer = asks[question](ix, *target, **options)
     except InvalidGraph as exc:

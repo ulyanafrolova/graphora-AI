@@ -102,7 +102,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   T009, `has_cycle`/`in_cycle` from `cycles(ix, include_type_only=include_type_only)` groups. Check: T009 and
   `tests/golden/test_queries.py` pass; the new `components` entries keep `tests/golden/test_mcp_queries.py` red until
   T014 and `tests/golden/test_http_queries.py` until T015 (expected).
-- [ ] T013 Add `components` to the CLI: `_QUESTIONS`, no target, rejects `--limit`, `--symbol`, `--max-depth`,
+- [X] T013 Add `components` to the CLI: `_QUESTIONS`, no target, rejects `--limit`, `--symbol`, `--max-depth`,
   `--follow-barrels`, `--level` like `overview` does, in `backend/src/graphora/cli/__init__.py`; test in
   `backend/tests/integration/test_query_cli.py` (text and json, usage errors).
 - [ ] T014 Add MCP tool `components(include_type_only: bool = True)` with a fixed description in `DESCRIPTIONS` to
