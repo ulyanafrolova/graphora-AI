@@ -78,3 +78,17 @@ def test_history_not_available(store, client, stored):
     response = get(client, repository="zip-app", snapshot=doc.snapshot)
     assert response.status_code == 200
     assert response.json()["items"] == [] and response.json()["history"]["reason"] == "zip"
+
+
+def test_older_schema(store, client, stored):
+    old = stored.doc.snapshot
+    graph = store.get_analysis("app", old).graph.replace(b'"schema_version": 8', b'"schema_version": 7')
+    store._conn.execute(
+        "UPDATE analyses SET graph = %s, schema_version = 7 WHERE repository = 'app' AND snapshot = %s", (graph, old)
+    )
+    response = get(client, repository="app", snapshot=old)
+    assert response.status_code == 409
+    assert response.json()["error"] == {
+        "kind": "stale",
+        "message": f"app {old} was analyzed with graph schema 7; analyze it again",
+    }
