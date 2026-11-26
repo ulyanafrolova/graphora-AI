@@ -1,4 +1,4 @@
-"""Schema v6 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
+"""Schema v8 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
 
 import copy
 
@@ -382,4 +382,57 @@ SLN_INVALID = {
 def test_solution_invalid_rejected(sln_doc, validator, case):
     bad = copy.deepcopy(sln_doc)
     SLN_INVALID[case](bad)
+    assert not validator.is_valid(bad)
+
+
+SHA = "e" * 40
+AVAILABLE = {
+    "status": "available",
+    "reason": None,
+    "commit": SHA,
+    "window_start": "2025-01-01T00:00:00Z",
+    "newest": "2026-01-01T00:00:00Z",
+    "oldest": "2025-03-01T00:00:00Z",
+    "commits_read": 3,
+    "merges_skipped": 1,
+    "shallow_skipped": 0,
+    "local_changes": False,
+    "files": [{"path": "a.py", "commits": 3, "authors": 2}],
+}
+
+
+@pytest.mark.parametrize("status", ["available", "partial"])
+def test_history_with_commits_valid(doc, validator, status):
+    good = copy.deepcopy(doc)
+    good["history"] = dict(AVAILABLE, status=status)
+    validator.validate(good)
+
+
+def test_history_not_available_valid(doc, validator):
+    assert doc["history"]["status"] == "not_available"
+    validator.validate(doc)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"status": "not_available", "reason": "zip", "commit": None},
+        {"reason": "zip"},
+        {"commit": None},
+        {"commit": "E" * 40},
+        {"newest": "2026-01-01"},
+        {"files": [{"path": "a.py", "commits": 0, "authors": 1}]},
+        {"files": [{"path": "a.py", "commits": 1, "authors": 1, "name": "x"}]},
+        {"status": "done"},
+    ],
+)
+def test_history_rules(doc, validator, changes):
+    bad = copy.deepcopy(doc)
+    bad["history"] = dict(AVAILABLE, **changes)
+    assert not validator.is_valid(bad)
+
+
+def test_history_required(doc, validator):
+    bad = copy.deepcopy(doc)
+    del bad["history"]
     assert not validator.is_valid(bad)

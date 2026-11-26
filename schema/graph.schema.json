@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://graphora.dev/schema/graph.schema.json",
   "title": "Graphora graph document",
-  "description": "Schema version 7. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
+  "description": "Schema version 8. Commit-pinned dependency graph with provenance on every edge. Python, TypeScript, JavaScript and C#.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,11 +11,12 @@
     "extractors",
     "nodes",
     "edges",
-    "coverage"
+    "coverage",
+    "history"
   ],
   "properties": {
     "schema_version": {
-      "const": 7
+      "const": 8
     },
     "snapshot": {
       "$ref": "#/$defs/snapshot"
@@ -42,6 +43,9 @@
     },
     "coverage": {
       "$ref": "#/$defs/coverage"
+    },
+    "history": {
+      "$ref": "#/$defs/history"
     }
   },
   "$defs": {
@@ -1221,6 +1225,166 @@
               "pattern": "\\.slnx?$"
             }
           ]
+        }
+      }
+    },
+    "history": {
+      "description": "Counts from the git history of the snapshot commit (specs/014-hotspots). No author names or e-mail addresses.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "commit",
+        "window_start",
+        "newest",
+        "oldest",
+        "commits_read",
+        "merges_skipped",
+        "shallow_skipped",
+        "local_changes",
+        "files"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "available",
+            "partial",
+            "not_available"
+          ]
+        },
+        "reason": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "no_git",
+                "zip",
+                "unreadable",
+                "skipped",
+                "fetch_failed",
+                "too_large",
+                "time_limit",
+                "not_collected"
+              ]
+            }
+          ]
+        },
+        "commit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          ]
+        },
+        "window_start": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            }
+          ]
+        },
+        "newest": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            }
+          ]
+        },
+        "oldest": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            }
+          ]
+        },
+        "commits_read": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "merges_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "shallow_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "local_changes": {
+          "type": "boolean"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "commits",
+              "authors"
+            ],
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/relpath"
+              },
+              "commits": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "authors": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "status": {
+            "const": "not_available"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "commit": {
+            "type": "null"
+          },
+          "files": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "reason": {
+            "type": "null"
+          },
+          "commit": {
+            "type": "string"
+          }
         }
       }
     }

@@ -86,7 +86,7 @@ of the group. Push at the end of each phase.
   with sorted keys, called from `to_dict`). Read and check it in `backend/src/graphora/graph/load.py`
   (`_history`, with the checks of T005). Add `"history-reader": history.HISTORY_READER_VERSION` to
   `current_extractors()` in `backend/src/graphora/graph/build.py`.
-- [ ] T007 Update `schema/graph.schema.json` to v8 as contracts/graph-schema-v8.md says:
+- [X] T007 Update `schema/graph.schema.json` to v8 as contracts/graph-schema-v8.md says:
   - description "Schema version 8";
   - `schema_version` const 8;
   - `history` required;
