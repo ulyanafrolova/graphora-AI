@@ -7,8 +7,8 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 
-import { server } from "../setup";
 import answer from "../fixtures/ask-answer.json";
+import { server } from "../setup";
 
 import { AnswerCard } from "@/agents/AnswerCard";
 import { AskPage } from "@/agents/AskPage";
@@ -32,7 +32,9 @@ test("answer card: facts with citations, hypothesis apart, text as text", () => 
     "href",
     `/r/py-cycles/${encodeURIComponent(SNAP)}/code?path=loop%2Fc.py&line=1`,
   );
-  expect(screen.getByTestId("hypothesis")).toHaveTextContent("Hypothesis — `frontend.ts` imports `loop/a.py`. Not statically proven.");
+  expect(screen.getByTestId("hypothesis")).toHaveTextContent(
+    "Hypothesis — `frontend.ts` imports `loop/a.py`. Not statically proven.",
+  );
   expect(screen.getByText("Changing loop/a.py breaks loop/c.py and user.py.")).toBeInTheDocument();
   expect(screen.getByText("1 tool calls · 1 revisions · scripted:e2e")).toBeInTheDocument();
 });
@@ -41,8 +43,18 @@ test("ask streams steps, shows the answer and keeps it in history", async () => 
   const h = await openHistory();
   await clearRuns(h, "py-cycles", SNAP);
   server.use(
-    http.get("*/api/v1/info", () => HttpResponse.json({ ask: { enabled: true, model: "scripted:e2e" }, jobs: { enabled: false, limits: null }, mcp_tools: [] })),
-    http.post("*/api/v1/ask", () => new HttpResponse(readFileSync("tests/fixtures/ask.sse"), { headers: { "Content-Type": "text/event-stream" } })),
+    http.get("*/api/v1/info", () =>
+      HttpResponse.json({
+        ask: { enabled: true, model: "scripted:e2e" },
+        jobs: { enabled: false, limits: null },
+        mcp_tools: [],
+      }),
+    ),
+    http.post(
+      "*/api/v1/ask",
+      () =>
+        new HttpResponse(readFileSync("tests/fixtures/ask.sse"), { headers: { "Content-Type": "text/event-stream" } }),
+    ),
   );
   render(
     <QueryClientProvider client={makeQueryClient()}>
@@ -61,8 +73,19 @@ test("ask streams steps, shows the answer and keeps it in history", async () => 
 
 test("busy is shown with retry", async () => {
   server.use(
-    http.get("*/api/v1/info", () => HttpResponse.json({ ask: { enabled: true, model: "x:y" }, jobs: { enabled: false, limits: null }, mcp_tools: [] })),
-    http.post("*/api/v1/ask", () => HttpResponse.json({ error: { kind: "busy", message: "busy" } }, { status: 429, headers: { "Retry-After": "30" } })),
+    http.get("*/api/v1/info", () =>
+      HttpResponse.json({
+        ask: { enabled: true, model: "x:y" },
+        jobs: { enabled: false, limits: null },
+        mcp_tools: [],
+      }),
+    ),
+    http.post("*/api/v1/ask", () =>
+      HttpResponse.json(
+        { error: { kind: "busy", message: "busy" } },
+        { status: 429, headers: { "Retry-After": "30" } },
+      ),
+    ),
   );
   render(
     <QueryClientProvider client={makeQueryClient()}>

@@ -341,7 +341,7 @@ equals the API answer.
   T031's table); "Highlighted on graph" mini graph of the cited files with links between them from `/neighbors`;
   clicking a node opens it in the main graph; busy (429) and model unavailable (503) states with Retry; history list of
   earlier runs with "Clear history"; "history will not be kept" note when not persistent.
-- [ ] T060 [US4] Implement `frontend/src/agents/AskPage.tsx`, `StepList.tsx`, `AnswerCard.tsx`, `CitedGraph.tsx`,
+- [X] T060 [US4] Implement `frontend/src/agents/AskPage.tsx`, `StepList.tsx`, `AnswerCard.tsx`, `CitedGraph.tsx`,
   `RunHistory.tsx`. Check: T059 passes.
 - [ ] T061 [P] [US4] Write `frontend/tests/unit/trace.test.tsx`: for a stored run, the timeline lists each trace event
   with role, tool and arguments, result summary, duration when present; revision requests shown as red notes; "Agent
