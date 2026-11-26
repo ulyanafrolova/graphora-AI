@@ -121,6 +121,8 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
                 item["type_only"] = True
             if "alias" in e:
                 item["alias"] = e["alias"]
+            if "route_line" in e:
+                item["route_line"] = e["route_line"]
             if "directive" in e:
                 item["directive"] = e["directive"]
                 item["global_using"] = e["global_using"]

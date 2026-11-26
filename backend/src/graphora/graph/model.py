@@ -20,16 +20,18 @@ UnresolvedReason = Literal[
     "msbuild_property",
     "not_csharp",
 ]
-HeuristicReason = Literal["namespace_spread", "partial_type", "package_prefix", "msbuild_condition"]
+HeuristicReason = Literal["namespace_spread", "partial_type", "package_prefix", "msbuild_condition", "http_route"]
 Reason = Literal[UnresolvedReason, HeuristicReason]
 Status = Literal["analyzed", "detected_only", "not_code"]
 Flag = Literal["parse_error", "unreadable", "ambiguous_project"]
 SkipReason = Literal["excluded_dir", "nested_repository", "symlink", "minified", "unreadable_dir"]
 DefinitionKind = Literal["class", "function", "method", "interface", "type_alias", "enum", "struct", "record", "delegate"]
 Category = Literal["stdlib", "builtin", "third_party"]
-Ecosystem = Literal["python", "npm", "dotnet", "nuget"]
+Ecosystem = Literal["python", "npm", "dotnet", "nuget", "http"]
 Form = Literal["static", "dynamic", "require"]
-EdgeType = Literal["imports", "reexports", "project_reference", "package_reference", "type_reference", "solution_member"]
+EdgeType = Literal[
+    "imports", "reexports", "project_reference", "package_reference", "type_reference", "solution_member", "http_call"
+]
 Directive = Literal["using", "using_static", "using_alias"]
 
 UNRESOLVED_REASONS: frozenset[str] = frozenset(get_args(UnresolvedReason))
@@ -139,6 +141,7 @@ class Edge:
     alias: str | None = None
     directive: Directive | None = None  # C# `using` edges only
     global_using: bool | None = None  # set exactly when `directive` is
+    route_line: int | None = None  # 015: the route's line in the target file, `http_call` edges to a file only
 
     def __post_init__(self) -> None:
         if self.confidence == "resolved" and self.reason is not None:
@@ -162,6 +165,15 @@ class Edge:
             raise ValueError("a 'type_reference' edge has no directive and no alias")
         if self.type == "reexports" and self.form != "static":
             raise ValueError("'reexports' edges always have form 'static'")
+        if self.type == "http_call":
+            if self.confidence == "resolved":
+                raise ValueError("an 'http_call' edge is never 'resolved'")
+            if (self.route_line is not None) != self.target.startswith("file:"):
+                raise ValueError("route_line is set exactly on 'http_call' edges to a file")
+            if self.route_line is not None and self.route_line < 1:
+                raise ValueError("route_line is at least 1")
+        elif self.route_line is not None:
+            raise ValueError("route_line is allowed only on 'http_call' edges")
 
 
 @dataclass(frozen=True)

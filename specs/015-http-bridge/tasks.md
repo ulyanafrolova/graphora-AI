@@ -33,7 +33,7 @@ with a spec reference, one-line docstrings where not obvious).
 
 ## Phase 1: Setup
 
-- [ ] T001 Create the fixture folder `fixtures/repos/http-bridge/repo/` with empty `backend/app/` and
+- [X] T001 Create the fixture folder `fixtures/repos/http-bridge/repo/` with empty `backend/app/` and
   `frontend/src/` subfolders (files are added per story) and a `README.md` of one paragraph saying which
   scenario of `specs/015-http-bridge/spec.md` each file covers.
 
@@ -45,36 +45,36 @@ with a spec reference, one-line docstrings where not obvious).
 
 ### Tests
 
-- [ ] T002 [P] Extend `backend/tests/contract/test_schema.py`: a v8 document with an `http_call` edge
+- [X] T002 [P] Extend `backend/tests/contract/test_schema.py`: a v8 document with an `http_call` edge
   (`confidence: heuristic`, `reason: http_route`, `route_line: 8`, `file:` target) is accepted; one with an
   `unresolved` `http_call` to `unresolved:http:GET /api/x` and `reason: not_found`, and an unresolved node
   `{"id": "unresolved:http:GET /api/x", "kind": "unresolved", "ecosystem": "http", …}` is accepted; rejected:
   a `resolved` `http_call`, a heuristic `http_call` without `route_line`, an unresolved `http_call` with
   `route_line`, an unresolved `http_call` with `reason: namespace_spread`, `route_line: 0`,
   `schema_version: 7`.
-- [ ] T003 [P] Extend `backend/tests/unit/test_serialize.py`: an `Edge`
+- [X] T003 [P] Extend `backend/tests/unit/test_serialize.py`: an `Edge`
   with `type="http_call"`, `route_line=8` serializes `route_line` after `line`-related fields with sorted keys,
   `load` reads it back equal; an edge without `route_line` has no such key; `SCHEMA_VERSION == 8`.
 
 ### Implementation
 
-- [ ] T004 Apply contracts/graph-schema-v8.md to `schema/graph.schema.json`: `schema_version` `const 8`; `http_call`
+- [X] T004 Apply contracts/graph-schema-v8.md to `schema/graph.schema.json`: `schema_version` `const 8`; `http_call`
   in the edge `type` enum; `http_route` in the heuristic `reason` enum; `http` in the unresolved-node
   `ecosystem` enum and in the `^unresolved:(python|npm|dotnet|http):.+$` id pattern (and an
   `unresolved:http:` branch with the reasons `dynamic`, `not_found`, `ambiguous`); optional edge property
   `route_line` (`integer`, `minimum: 1`); conditional rules "`type == http_call` ⇒ `confidence` ≠ `resolved`",
   "`http_call` with a `file:` target ⇒ `route_line` required", "`route_line` present ⇒ `type == http_call`".
-- [ ] T005 Update `backend/src/graphora/graph/model.py`: `EdgeType` + `"http_call"`, `HeuristicReason` +
+- [X] T005 Update `backend/src/graphora/graph/model.py`: `EdgeType` + `"http_call"`, `HeuristicReason` +
   `"http_route"`, `Ecosystem` + `"http"` (unresolved nodes only), `Edge.route_line: int | None = None`.
-- [ ] T006 Update `backend/src/graphora/graph/serialize.py` (`SCHEMA_VERSION = 8`; write `route_line` when set)
+- [X] T006 Update `backend/src/graphora/graph/serialize.py` (`SCHEMA_VERSION = 8`; write `route_line` when set)
   and `backend/src/graphora/graph/load.py` (read `route_line`; v8 only).
-- [ ] T007 Add `"route_line"` to the edge projection in `project()` of `backend/tests/conftest.py` (only when
+- [X] T007 Add `"route_line"` to the edge projection in `project()` of `backend/tests/conftest.py` (only when
   present) so `expected.json` can state it.
-- [ ] T008 Create `backend/src/graphora/resolve/http.py` with `HTTP_VERSION = "0.1.0"`, `EXTRACTOR =
+- [X] T008 Create `backend/src/graphora/resolve/http.py` with `HTTP_VERSION = "0.1.0"`, `EXTRACTOR =
   f"http-bridge@{HTTP_VERSION}"` and an empty `bridge(py_facts, js_facts, import_index, snapshot) ->
   tuple[list[Edge], dict[str, Node]]`; call it from `graph/build.py` (`_http_graph`) after the JS graph and add
   `"http-bridge": HTTP_VERSION` to `current_extractors()`.
-- [ ] T009 Run `uv run pytest -m "not db and not slow"`; fix tests that pinned schema version 7 or the extractor
+- [X] T009 Run `uv run pytest -m "not db and not slow"`; fix tests that pinned schema version 7 or the extractor
   list (e.g. store reuse, overview, MCP overview, golden v1 loader checks) to the new values, changing nothing
   else; `fixtures/repos/*/expected.json` and `backend/tests/golden/v1/` stay untouched.
 

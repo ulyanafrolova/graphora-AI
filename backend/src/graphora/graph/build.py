@@ -30,6 +30,7 @@ from graphora.graph.serialize import snippet_hash
 from graphora.ingest.snapshot import snapshot_id
 from graphora.ingest.walk import Deadline, read_file, walk
 from graphora.resolve import csharp as cs_resolve
+from graphora.resolve import http as http_resolve
 from graphora.resolve import js as js_resolve
 from graphora.resolve import python as py_resolve
 from graphora.resolve.tsconfig import load_configs
@@ -61,6 +62,7 @@ def current_extractors() -> dict[str, str]:
         "python-adapter": python.VERSION,
         "python-resolver": py_resolve.RESOLVER_VERSION,
         "python-stdlib": py_resolve.STDLIB_VERSION,
+        "http-bridge": http_resolve.HTTP_VERSION,
     }
 
 
@@ -135,6 +137,20 @@ def _js_graph(
                         alias=name.alias,
                     )
                 )
+
+
+def _http_graph(
+    py_facts: dict[str, py_extract.FileFacts | None],
+    js_facts: dict[str, js_extract.FileFacts | None],
+    snapshot: str,
+    nodes: dict[str, Node],
+    edges: list[Edge],
+) -> None:
+    """Frontend HTTP calls linked to backend routes (specs/015-http-bridge research R1)."""
+    found, unresolved = http_resolve.bridge(py_facts, js_facts, snapshot)
+    for node in unresolved:
+        nodes.setdefault(node.id, node)
+    edges.extend(found)
 
 
 def _node_for(target: str) -> Node | None:
@@ -404,6 +420,7 @@ def analyze(root: Path, max_files: int, max_bytes: int, deadline: Deadline, snap
     _python_graph(py_facts, snapshot, nodes, edges)
     resolver = js_resolve.JsResolver(files, frozenset(languages), configs, js_resolve.workspace_names(files, read))
     _js_graph(js_facts, languages, resolver, snapshot, nodes, edges)
+    _http_graph(py_facts, js_facts, snapshot, nodes, edges)
     projects = cs_resolve.Projects(csproj_facts, props_facts)
     _project_graph(projects, snapshot, nodes, edges)
     _solution_graph(solution_facts, solution_paths, projects.paths, snapshot, nodes, edges)

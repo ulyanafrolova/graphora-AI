@@ -15,7 +15,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": 7
+      "const": 8
     },
     "snapshot": {
       "$ref": "#/$defs/snapshot"
@@ -467,7 +467,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^unresolved:(python|npm|dotnet):.+$"
+          "pattern": "^unresolved:(python|npm|dotnet|http):.+$"
         },
         "kind": {
           "const": "unresolved"
@@ -480,7 +480,8 @@
           "enum": [
             "python",
             "npm",
-            "dotnet"
+            "dotnet",
+            "http"
           ]
         }
       },
@@ -529,6 +530,22 @@
             "properties": {
               "id": {
                 "pattern": "^unresolved:dotnet:"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "ecosystem": {
+                "const": "http"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "id": {
+                "pattern": "^unresolved:http:"
               }
             }
           }
@@ -594,7 +611,8 @@
             "project_reference",
             "package_reference",
             "type_reference",
-            "solution_member"
+            "solution_member",
+            "http_call"
           ]
         },
         "form": {
@@ -626,6 +644,10 @@
           "type": "integer",
           "minimum": 1
         },
+        "route_line": {
+          "type": "integer",
+          "minimum": 1
+        },
         "snapshot": {
           "$ref": "#/$defs/snapshot"
         },
@@ -651,7 +673,8 @@
             "partial_type",
             "package_prefix",
             "msbuild_condition",
-            "not_csharp"
+            "not_csharp",
+            "http_route"
           ]
         },
         "extractor": {
@@ -728,7 +751,8 @@
                   "namespace_spread",
                   "partial_type",
                   "package_prefix",
-                  "msbuild_condition"
+                  "msbuild_condition",
+                  "http_route"
                 ]
               }
             }
@@ -1019,6 +1043,112 @@
             "properties": {
               "type": {
                 "const": "solution_member"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "http_call"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "confidence": {
+                "enum": [
+                  "heuristic",
+                  "unresolved"
+                ]
+              },
+              "source": {
+                "pattern": "^file:"
+              },
+              "form": {
+                "const": "static"
+              },
+              "type_only": {
+                "const": false
+              },
+              "target": {
+                "pattern": "^(file|unresolved):"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "http_call"
+              },
+              "target": {
+                "pattern": "^file:"
+              }
+            },
+            "required": [
+              "type",
+              "target"
+            ]
+          },
+          "then": {
+            "required": [
+              "route_line"
+            ],
+            "properties": {
+              "reason": {
+                "const": "http_route"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "http_call"
+              },
+              "target": {
+                "pattern": "^unresolved:"
+              }
+            },
+            "required": [
+              "type",
+              "target"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "route_line"
+              ]
+            },
+            "properties": {
+              "target": {
+                "pattern": "^unresolved:http:"
+              },
+              "reason": {
+                "enum": [
+                  "dynamic",
+                  "not_found",
+                  "ambiguous"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "route_line"
+            ]
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "const": "http_call"
               }
             }
           }

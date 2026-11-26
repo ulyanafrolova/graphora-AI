@@ -77,8 +77,8 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_7():
-    assert to_dict(_doc())["schema_version"] == 7
+def test_schema_version_8():
+    assert to_dict(_doc())["schema_version"] == 8
 
 
 def test_sort_orders():
@@ -257,3 +257,27 @@ def test_alias_on_python_imports_only():
         Edge("file:a.ts", "file:b.ts", "f", 1, 1, SNAP, "resolved", None, "js-adapter@0.2.0", h, alias="g")
     with pytest.raises(ValueError):
         Edge("file:a.py", "file:b.py", "f", 1, 1, SNAP, "resolved", None, "python-adapter@0.4.0", h, alias="f")
+
+
+def test_http_call_route_line_round_trip():
+    """015: route_line is written for http_call edges and read back; other edges have no such key."""
+    from graphora.graph.load import loads
+    from graphora.graph.serialize import SCHEMA_VERSION
+
+    assert SCHEMA_VERSION == 8
+    http = Edge("file:a.ts", "file:b.py", "GET /x", 2, 1, SNAP, "heuristic", "http_route", "http-bridge@0.1.0",
+                "sha256:0000000000000000", type="http_call", route_line=8)
+    doc = GraphDocument(
+        snapshot=SNAP,
+        extractors={"http-bridge": "0.1.0"},
+        nodes=(FileNode("a.ts", "typescript", (), ()), FileNode("b.py", "python")),
+        edges=(http,),
+        files=(CoverageFile("a.ts", "typescript", "analyzed"), CoverageFile("b.py", "python", "analyzed")),
+        skipped=(),
+    )
+    data = to_dict(doc)
+    assert data["edges"][0]["route_line"] == 8
+    assert "route_line" not in to_dict(_doc())["edges"][0]
+    assert loads(dumps(doc)).edges == (http,)
+    with pytest.raises(ValueError):
+        _edge("file:a.py", "file:b.py", 1, route_line=3)
