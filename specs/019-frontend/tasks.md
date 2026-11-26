@@ -173,7 +173,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   false; sidebar sections and items exactly as FR-001 with the active item marked; footer text.
 - [X] T028 Implement `frontend/src/shell/Header.tsx`, `SnapshotPicker.tsx`, `Sidebar.tsx`, `Layout.tsx` and wire them in
   `frontend/src/App.tsx`. Check: T027 passes.
-- [ ] T029 [P] Write `frontend/tests/unit/errors.test.tsx`: `ErrorState` renders each row of contracts/ui.md § Error and
+- [X] T029 [P] Write `frontend/tests/unit/errors.test.tsx`: `ErrorState` renders each row of contracts/ui.md § Error and
   empty states with its message and action; `Legend` renders the shared visual language rows.
 - [ ] T030 Implement `frontend/src/shell/ErrorState.tsx`, `Legend.tsx`, `Loading.tsx`, `Empty.tsx`. Check: T029 passes.
 - [ ] T031 [P] Write `frontend/tests/unit/hostile.test.tsx`: a shared `Text`/`Path`/`Code` component and every screen
