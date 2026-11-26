@@ -396,8 +396,10 @@ def _serve(args: argparse.Namespace) -> int:
             # open streams are cancelled 5 s after Ctrl-C; their runs stop at the next step (013 research R5)
             uvicorn.run(create_app(store, runner, asks), host=args.host, port=args.port, timeout_graceful_shutdown=5)
         finally:
-            asks.stop()
-            runner.stop()
+            try:
+                asks.stop()
+            finally:
+                runner.stop()
     finally:
         store.close()
     return EXIT_OK

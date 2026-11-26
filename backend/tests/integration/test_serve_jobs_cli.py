@@ -96,3 +96,24 @@ def test_ask_service_gets_the_options(db, monkeypatch, tmp_path):
     monkeypatch.setenv("GRAPHORA_MODEL", "ollama:llama3.1:8b")
     assert cli.main(["serve", "--work-dir", str(tmp_path / "w2")]) == 0
     assert (services[-1].limit, services[-1].setting) == (1, "ollama:llama3.1:8b")
+
+
+@pytest.mark.db
+def test_job_runner_stops_even_if_stopping_asks_fails(db, monkeypatch, tmp_path):
+    """A second Ctrl-C while `asks.stop()` waits must not leave jobs running (013 review)."""
+    import uvicorn
+
+    from graphora.api.ask import AskService
+
+    stopped = []
+    real_runner_stop = JobRunner.stop
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: None)
+
+    def interrupted(self, timeout=120.0):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(AskService, "stop", interrupted)
+    monkeypatch.setattr(JobRunner, "stop", lambda self: stopped.append(True) or real_runner_stop(self))
+    with pytest.raises(KeyboardInterrupt):
+        cli.main(["serve", "--work-dir", str(tmp_path / "w")])
+    assert stopped == [True]
