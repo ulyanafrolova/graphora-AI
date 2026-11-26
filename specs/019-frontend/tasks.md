@@ -328,7 +328,7 @@ equals the API answer.
   multi-line `data`, `\r\n`, chunks split mid-line and mid-UTF-8 character, comments (`:`), and yields `{event, id,
   data}`; `streamAsk` posts `{"repository", "snapshot", "question"}`, yields `step` events, resolves on `answer`, rejects
   on `error` events and on 429/503 bodies (`ApiError`), and stops on abort.
-- [ ] T056 [US4] Implement `frontend/src/api/sse.ts` (`parseEvents`, `streamAsk`). Check: T055 passes.
+- [X] T056 [US4] Implement `frontend/src/api/sse.ts` (`parseEvents`, `streamAsk`). Check: T055 passes.
 - [ ] T057 [P] [US4] Write `frontend/tests/unit/history.test.ts` (`fake-indexeddb`): `saveRun` keeps the newest 20 per
   (repository, snapshot) and drops older ones; other snapshots untouched; `listRuns` newest first; `clearRuns` removes
   one snapshot's runs; unavailable IndexedDB → in-memory fallback with `persistent: false`.

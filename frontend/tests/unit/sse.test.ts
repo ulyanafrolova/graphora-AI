@@ -11,7 +11,9 @@ const enc = new TextEncoder();
 
 test("events across chunks, multi-line data, CRLF, comments and split UTF-8", () => {
   const p = new EventParser();
-  const bytes = enc.encode(": hi\r\nevent: step\r\nid: 1\r\ndata: {\"a\":\r\ndata: \"é\"}\r\n\r\nevent: answer\ndata: {}\n\n");
+  const bytes = enc.encode(
+    ': hi\r\nevent: step\r\nid: 1\r\ndata: {"a":\r\ndata: "é"}\r\n\r\nevent: answer\ndata: {}\n\n',
+  );
   const out = [];
   for (let i = 0; i < bytes.length; i += 3) out.push(...p.push(bytes.slice(i, i + 3)));
   expect(out).toEqual([
@@ -38,12 +40,23 @@ test("streamAsk yields steps and resolves with the answer", async () => {
 });
 
 test("busy and error events reject", async () => {
-  server.use(http.post("*/api/v1/ask", () => HttpResponse.json({ error: { kind: "busy", message: "busy" } }, { status: 429 })));
-  await expect(streamAsk({ repository: "r", snapshot: "s", question: "q" }, {})).rejects.toMatchObject({ kind: "busy" });
   server.use(
-    http.post("*/api/v1/ask", () =>
-      new HttpResponse('event: error\ndata: {"message": "internal error"}\n\n', { headers: { "Content-Type": "text/event-stream" } }),
+    http.post("*/api/v1/ask", () => HttpResponse.json({ error: { kind: "busy", message: "busy" } }, { status: 429 })),
+  );
+  await expect(streamAsk({ repository: "r", snapshot: "s", question: "q" }, {})).rejects.toMatchObject({
+    kind: "busy",
+  });
+  server.use(
+    http.post(
+      "*/api/v1/ask",
+      () =>
+        new HttpResponse('event: error\ndata: {"message": "internal error"}\n\n', {
+          headers: { "Content-Type": "text/event-stream" },
+        }),
     ),
   );
-  await expect(streamAsk({ repository: "r", snapshot: "s", question: "q" }, {})).rejects.toMatchObject({ kind: "stream", message: "internal error" });
+  await expect(streamAsk({ repository: "r", snapshot: "s", question: "q" }, {})).rejects.toMatchObject({
+    kind: "stream",
+    message: "internal error",
+  });
 });
