@@ -4,7 +4,7 @@
 
 ```python
 queries.components(ix: GraphIndex, *, include_type_only: bool = True) -> Answer
-queries.cycles(ix, *, include_type_only=True, limit=None, level="file") -> Answer   # each file-level group gains `cut`
+queries.cycles(ix, *, include_type_only=True, limit=None, level="file") -> Answer   # each file-level group gains `suggested_cut`
 ```
 
 `components` answer (`results.dumps`, abbreviated):
@@ -35,28 +35,28 @@ queries.cycles(ix, *, include_type_only=True, limit=None, level="file") -> Answe
   "cycle": [ {"source": "file:loop/a.py", "target": "file:loop/b.py", "…": "…"} ],
   "type_only": false,
   "confidence": "resolved",
-  "cut": {"method": "exact", "links": [ {"source": "file:loop/c.py", "target": "file:loop/a.py", "edges": ["…"]} ]}
+  "suggested_cut": {"method": "exact", "links": [ {"source": "file:loop/c.py", "target": "file:loop/a.py", "edges": ["…"]} ]}
 }
 ```
 
-Text rendering adds one line per group: `cut (exact): loop/c.py:3 → loop/a.py`.
+Text rendering adds one line per group: `suggested cut (exact): loop/c.py:3 → loop/a.py`.
 
 ## CLI
 
 `graphora query <graph> components [--no-type-only] [--format json|text]` (no target, no `--limit`). `cycles` output
-gains the cut line / field.
+gains the suggested cut line / field.
 
 ## MCP
 
 New tool `components(include_type_only: bool = True)`, read-only, description in `DESCRIPTIONS`. `cycles` results gain
-`cut`. Structured content equals the CLI JSON.
+`suggested_cut`. Structured content equals the CLI JSON.
 
 ## HTTP
 
 | Route | Parameters | Body |
 |---|---|---|
 | `GET /api/v1/components` | `repository`, `snapshot`, `include_type_only` | = `graphora query … components --format json` |
-| `GET /api/v1/cycles` (018) | unchanged | now includes `cut` |
+| `GET /api/v1/cycles` (018) | unchanged | now includes `suggested_cut` |
 | `GET /api/v1/files` | `repository`, `snapshot` | `{"repository", "snapshot", "files": [{"path", "has_text", "line_count"}]}` sorted by path |
 | `GET /api/v1/info` | none | `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled"}, "mcp_tools": [{"name", "description"}]}` |
 

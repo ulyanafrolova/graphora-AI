@@ -30,7 +30,7 @@ client-side state.
 (component order), `links: [ComponentLink]` (sorted by source, target), `total` = number of components,
 `truncated: false`, `completeness`.
 
-### CycleCut (new field `cut` of `CycleGroup`)
+### CycleCut (new field `suggested_cut` of `CycleGroup`)
 
 | Field | Type | Rule |
 |---|---|---|

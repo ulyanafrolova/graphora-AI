@@ -65,7 +65,7 @@ document (schema v9 bump, every fixture and consumer changes, for a number the s
 
 ## R4. Cycle cut suggestion (backend, FR-022, clarification Q1)
 
-**Decision**: Each `CycleGroup` of `queries.cycles` gets `cut`: `{"method": "exact" | "greedy", "links": [Link, …]}`.
+**Decision**: Each `CycleGroup` of `queries.cycles` gets `suggested_cut`: `{"method": "exact" | "greedy", "links": [Link, …]}`.
 
 - Candidate links: the file links inside the group (same graph as the group, respecting `include_type_only`).
 - Cost of a set: (number of links, total import edges in the links, sorted list of (source, target)), compared in that
@@ -76,7 +76,7 @@ document (schema v9 bump, every fixture and consumer changes, for a number the s
 - `greedy` otherwise: repeatedly remove the link on the most simple cycles of what remains (cycles counted with
   `nx.simple_cycles` up to 10,000 per round, else the link with the highest in-group degree product), ties by fewest
   import edges then path, until no cycle is left.
-- Project-level cycles (`level=project`) get no `cut` in this feature.
+- Project-level cycles (`level=project`) get no `suggested_cut` in this feature.
 
 **Rationale**: matches the clarification (exact minimum for small groups, greedy for large) and stays deterministic and
 bounded in time on 5,000-file graphs. The spec text is refined to mention the budget fallback.

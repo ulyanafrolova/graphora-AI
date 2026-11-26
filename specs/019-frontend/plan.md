@@ -17,7 +17,7 @@ What it adds:
     IndexedDB (R10), large-graph rendering (R11), strict text-only rendering (R12).
 - **Backend** (computed by code, same answer on CLI, MCP and HTTP):
   - `components` query: Louvain with seed 0, folder names (R3);
-  - `cut` on cycle groups: exact minimum set for ≤ 20 files, greedy above (R4);
+  - `suggested_cut` on cycle groups: exact minimum set for ≤ 20 files, greedy above (R4);
   - `GET /api/v1/files` line counts (R5), `GET /api/v1/info` (R6);
   - `graphora serve` serves the built UI with a CSP header and SPA fallback (R7).
 - **Infra**: `make web`, `make web-build`, `make web-test`, `make e2e`; CI jobs `frontend` and `e2e`; an e2e server
@@ -140,7 +140,7 @@ the modules above; graph facts only in `graph/queries.py`.
 
 - Ulyana reviews the changes in her modules: `api/routes.py` (`/files`, `/info`), `api/__init__.py` (UI serving, CSP),
   `store/store.py` (`list_files`), `graph/results.py` (new types).
-- The `cut` field changes the `cycles` answer of CLI, MCP and HTTP (additive). Agents that read `cycles` (012) are
+- The `suggested_cut` field changes the `cycles` answer of CLI, MCP and HTTP (additive). Agents that read `cycles` (012) are
   unaffected; the verifier ignores unknown fields.
 - PR #41 is stacked on #39; after #39 merges, its base becomes `main`.
 - `docs/demo/README.md` stays the concept; README gets a "Web UI" section with the two run modes.
