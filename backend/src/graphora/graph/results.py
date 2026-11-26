@@ -13,7 +13,16 @@ from graphora.graph.serialize import _edge_dict, history_dict
 
 LinkConfidence = Literal["resolved", "heuristic"]
 Question = Literal[
-    "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions", "projects", "hotspots"
+    "dependencies",
+    "dependents",
+    "impact",
+    "neighbors",
+    "cycles",
+    "key_files",
+    "definitions",
+    "projects",
+    "hotspots",
+    "components",
 ]
 
 
@@ -164,6 +173,43 @@ class ProjectSummary:
 
 
 @dataclass(frozen=True)
+class Component:
+    """A group of files found by community detection (specs/019-frontend data-model.md)."""
+
+    id: str
+    name: str
+    files: tuple[str, ...]
+    has_cycle: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "files": list(self.files),
+            "file_count": len(self.files),
+            "has_cycle": self.has_cycle,
+        }
+
+
+@dataclass(frozen=True)
+class ComponentLink:
+    source: str
+    target: str
+    imports: int
+    heuristic: int
+    in_cycle: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "source": self.source,
+            "target": self.target,
+            "imports": self.imports,
+            "heuristic": self.heuristic,
+            "in_cycle": self.in_cycle,
+        }
+
+
+@dataclass(frozen=True)
 class Answer:
     """`None` marks a field the question does not use; it is left out of the JSON (contracts/answers.md)."""
 
@@ -183,6 +229,8 @@ class Answer:
     definitions: tuple[DefinitionMatch, ...] | None = None
     projects: tuple[ProjectSummary, ...] | None = None
     history: History | None = None
+    components: tuple[Component, ...] | None = None  # 019
+    links: tuple[ComponentLink, ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -193,7 +241,7 @@ class Answer:
             "total": self.total,
             "truncated": self.truncated,
         }
-        for name in ("items", "incoming", "outgoing", "groups", "definitions", "projects"):
+        for name in ("items", "incoming", "outgoing", "groups", "definitions", "projects", "components", "links"):
             value = getattr(self, name)
             if value is not None:
                 out[name] = [x.to_dict() for x in value]
@@ -326,6 +374,18 @@ def _group_lines(answer: Answer) -> list[str]:
     return lines
 
 
+def _component_lines(answer: Answer) -> list[str]:
+    names = {c.id: c.name for c in answer.components or ()}
+    lines = [f"{c.name}  {_files(len(c.files))}{'  cycle' if c.has_cycle else ''}" for c in answer.components or ()]
+    if answer.links:
+        lines.append("links:")
+    for link in answer.links or ():
+        heuristic = f"  heuristic {link.heuristic}" if link.heuristic else ""
+        cycle = "  cycle" if link.in_cycle else ""
+        lines.append(f"  {names[link.source]} → {names[link.target]}  imports {link.imports}{heuristic}{cycle}")
+    return lines
+
+
 def _definition_lines(answer: Answer) -> list[str]:
     lines = []
     for d in answer.definitions or ():
@@ -369,6 +429,7 @@ _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
     "key_files": _key_file_lines,
     "definitions": _definition_lines,
     "hotspots": _hotspot_lines,
+    "components": _component_lines,
 }
 
 

@@ -91,7 +91,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `{"source", "target", "imports", "heuristic", "in_cycle"}`), derived by reading the fixture sources; extend
   `project_answer` in `backend/tests/golden/test_queries.py` to project `components` and `links` that way, and add
   `components` to `_QUESTIONS`.
-- [ ] T011 Add `Component`, `ComponentLink` to `backend/src/graphora/graph/results.py` (fields of data-model.md),
+- [X] T011 Add `Component`, `ComponentLink` to `backend/src/graphora/graph/results.py` (fields of data-model.md),
   `components` and `links` fields on `Answer` (left out of JSON when `None`), `"components"` in `Question`, and text
   lines in `render_text` (`<name>  files <n>  [cycle]`, then `links:` lines `<source name> → <target name>  imports <n>
   [heuristic <h>] [cycle]`).
