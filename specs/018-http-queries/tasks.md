@@ -195,7 +195,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 ## Phase 7: Polish & cross-cutting
 
-- [ ] T019 [P] Write `backend/tests/integration/test_http_queries_performance.py` (`pytest.mark.slow` and
+- [X] T019 [P] Write `backend/tests/integration/test_http_queries_performance.py` (`pytest.mark.slow` and
   `pytest.mark.db`): store the 5,000-file graph built by `_graph()` of `tests/integration/test_query_performance.py`
   (import it; store it as `store.put("perf", Analysis(doc=loads(_graph()), warnings=(), contents={}))` with
   `Analysis` from `graph/build.py`),
