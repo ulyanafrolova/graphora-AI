@@ -71,3 +71,16 @@ test("legend subset", () => {
   render(<Legend only={["heuristic", "cycle"]} />);
   expect(screen.getAllByRole("listitem")).toHaveLength(2);
 });
+
+test("stale on a GitHub snapshot opens import with the same commit", () => {
+  const sha = "08b803cf32ceb2ae6a772c62d5da42757a897d44";
+  render(
+    <MemoryRouter initialEntries={[`/r/${encodeURIComponent("github.com/pallets/click")}/${sha}/graph`]}>
+      <ErrorState error={new ApiError(409, "stale", "x")} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByRole("link", { name: "Analyze again" })).toHaveAttribute(
+    "href",
+    `/import?github=${encodeURIComponent("https://github.com/pallets/click")}&ref=${sha}`,
+  );
+});

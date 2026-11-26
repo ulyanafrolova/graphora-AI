@@ -32,10 +32,10 @@ const DONE = job("done", {
   },
 });
 
-function show() {
+function show(at = "/import") {
   render(
     <QueryClientProvider client={makeQueryClient()}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[at]}>
         <ImportPage poll={5} />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -152,4 +152,11 @@ test("a stage passed between two polls is shown as done", async () => {
   for (const label of ["Queued", "Snapshot commit", "Fetch source"])
     expect(screen.getByText(label)).toHaveClass("done");
   expect(screen.getByText("Build graph and store")).toHaveClass("todo");
+});
+
+test("a GitHub link and commit in the address fill the form", async () => {
+  server.use(http.get("*/api/v1/info", () => HttpResponse.json(info)));
+  show("/import?github=https%3A%2F%2Fgithub.com%2Fpallets%2Fclick&ref=08b803c");
+  expect(await screen.findByLabelText("GitHub URL")).toHaveValue("https://github.com/pallets/click");
+  expect(screen.getByLabelText("Branch, tag or commit")).toHaveValue("08b803c");
 });

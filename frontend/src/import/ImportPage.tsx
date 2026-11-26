@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 import "./import.css";
 
@@ -100,8 +100,9 @@ function Coverage({ repository, snapshot }: { repository: string; snapshot: stri
 export function ImportPage({ poll = 1000 }: { poll?: number }) {
   const info = useInfo();
   const [tab, setTab] = useState<"github" | "zip">("github");
-  const [url, setUrl] = useState("");
-  const [ref, setRef] = useState("");
+  const [params] = useSearchParams();
+  const [url, setUrl] = useState(params.get("github") ?? "");
+  const [ref, setRef] = useState(params.get("ref") ?? "");
   const [job, setJob] = useState<Job | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [seen, setSeen] = useState<Stage[]>([]);

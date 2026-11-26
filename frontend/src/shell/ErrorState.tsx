@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 
 import type { ApiError } from "@/api/client";
+import { useRoute } from "@/state/useRoute";
 
 interface Shown {
   title: string;
@@ -32,14 +33,26 @@ function describe(error: ApiError): Shown {
   }
 }
 
+/** A GitHub snapshot id is its commit, so the same source can be analyzed again from Import. */
+function againAt(repository: string, snapshot: string): string | null {
+  if (!/^github\.com\/[^/]+\/[^/]+$/.test(repository)) return null;
+  const query = new URLSearchParams({ github: `https://${repository}` });
+  if (/^[0-9a-f]{40}$/.test(snapshot)) query.set("ref", snapshot);
+  return `/import?${query.toString()}`;
+}
+
 export function ErrorState({ error, onRetry }: { error: ApiError; onRetry?: () => void }) {
   const shown = describe(error);
+  const route = useRoute();
+  const again = error.kind === "stale" && route !== null ? againAt(route.repository, route.snapshot) : null;
   return (
     <div className="panel error-state" role="alert">
       <strong>{shown.title}</strong>
       {shown.hint !== undefined && <p className="muted">{shown.hint}</p>}
       <p className="muted mono">{error.message}</p>
-      {shown.action === "import" ? (
+      {again !== null ? (
+        <Link to={again}>Analyze again</Link>
+      ) : shown.action === "import" ? (
         <Link to="/import">Import</Link>
       ) : (
         onRetry !== undefined && (
