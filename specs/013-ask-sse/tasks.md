@@ -168,7 +168,7 @@ completes meanwhile.
 
 ### Tests
 
-- [ ] T016 [P] [US3] Write `backend/tests/integration/test_api_ask_slots.py` (marked `db`): with a scripted
+- [X] T016 [P] [US3] Write `backend/tests/integration/test_api_ask_slots.py` (marked `db`): with a scripted
   model gated on a `threading.Event`, (a) a second ask while the first waits → 429 `busy`, header
   `Retry-After: 30`, no second model built; (b) after the first stream ends, an ask is accepted; (c) with
   `limit=2` two gated asks are accepted and the third is busy; (d) with the app built with both a `JobRunner`
@@ -178,10 +178,10 @@ completes meanwhile.
 
 ### Implementation
 
-- [ ] T017 [US3] Add `--asks N` (default 1, ≥ 1, error `--asks must be at least 1`) and `--model` to `serve` in
+- [X] T017 [US3] Add `--asks N` (default 1, ≥ 1, error `--asks must be at least 1`) and `--model` to `serve` in
   `backend/src/graphora/cli/__init__.py`; build `AskService(url, args.model or setting_from_env(),
   limit=args.asks)` and pass it to `create_app(store, runner, service)`.
-- [ ] T018 [US3] Run `uv run pytest tests/integration/test_api_ask_slots.py tests/integration/test_serve_jobs_cli.py`
+- [X] T018 [US3] Run `uv run pytest tests/integration/test_api_ask_slots.py tests/integration/test_serve_jobs_cli.py`
   until green; add a case to the serve CLI tests that `--asks 0` exits 2.
 
 ---
@@ -196,7 +196,7 @@ gate, the script has unused replies, the run ended `stopped`, the slot is free.
 
 ### Tests
 
-- [ ] T019 [US4] Extend `backend/tests/integration/test_api_ask_slots.py`: (a) read the first `step`, close
+- [X] T019 [US4] Extend `backend/tests/integration/test_api_ask_slots.py`: (a) read the first `step`, close
   the `TestClient` stream, release the gate → within 2 s the run's thread has ended, `stop` is set, the
   scripted model has unused replies left (no new call), the store connection is closed and a new ask is
   accepted (SC-004); the suite's network block (`tests/conftest.py` `_no_network`) stays on, so a run reaching any
@@ -206,13 +206,13 @@ gate, the script has unused replies, the run ended `stopped`, the slot is free.
 
 ### Implementation
 
-- [ ] T020 [US4] In `backend/src/graphora/api/ask.py`: the async generator sets `run.stop` in `finally`
+- [X] T020 [US4] In `backend/src/graphora/api/ask.py`: the async generator sets `run.stop` in `finally`
   (disconnect, cancellation, normal end); `AskService.stop()` sets every running stop and joins all threads
   within one overall limit of 120 s (daemon threads left after it end with the process); the service refuses new asks after `stop()` with the existing `Stopping` error.
-- [ ] T021 [US4] In `_serve` in `backend/src/graphora/cli/__init__.py`: run uvicorn with
+- [X] T021 [US4] In `_serve` in `backend/src/graphora/cli/__init__.py`: run uvicorn with
   `timeout_graceful_shutdown=5`; after `uvicorn.run` returns, call `asks.stop()` (refuse new asks, set every
   stop, join all run threads within one overall limit of 120 s) and then `runner.stop()`, in the `finally`.
-- [ ] T022 [US4] Run `uv run pytest tests/integration/test_api_ask_slots.py` until green.
+- [X] T022 [US4] Run `uv run pytest tests/integration/test_api_ask_slots.py` until green.
 
 ---
 
@@ -225,14 +225,14 @@ waiting and step ids stay consecutive.
 
 ### Tests
 
-- [ ] T023 [US5] Extend `backend/tests/integration/test_api_ask_slots.py`: monkeypatch
+- [X] T023 [US5] Extend `backend/tests/integration/test_api_ask_slots.py`: monkeypatch
   `fastapi.sse._PING_INTERVAL` (and the name FastAPI's routing module imported, if any) to `0.2`; hold the
   gate for 1 s → at least 3 `ping` entries before the next `step`; `messages(...)` without pings has step ids
   `1…N` consecutive and ends with `answer` (SC-006); assert the unpatched value is `15.0` (FR-007).
 
 ### Implementation
 
-- [ ] T024 [US5] No code beyond `EventSourceResponse`; if T023 shows FastAPI's interval cannot be patched in
+- [X] T024 [US5] No code beyond `EventSourceResponse`; if T023 shows FastAPI's interval cannot be patched in
   tests, wrap the generator to yield a comment `ServerSentEvent(comment="ping")` after
   `KEEPALIVE_SECONDS = 15` of queue silence in `backend/src/graphora/api/ask.py` instead. Run the test until
   green and record which way was taken in `specs/013-ask-sse/research.md` § R2.
