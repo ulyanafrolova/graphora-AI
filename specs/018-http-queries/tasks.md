@@ -162,7 +162,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 - [X] T014 [P] [US3] In `backend/tests/integration/test_http_queries_api.py` add: an unknown name gives 200 with no
   items (not 404); `name` missing or empty → 400; `target=` instead of `name=` → 400 `unknown parameter: target`;
   `include_type_only` → 400.
-- [ ] T015 [US3] Add the row `definitions` (target parameter `name`; no options; 50) in
+- [X] T015 [US3] Add the row `definitions` (target parameter `name`; no options; 50) in
   `backend/src/graphora/api/questions.py`, and its path in `backend/tests/integration/test_api.py`. Check: T013,
   T014 pass.
 

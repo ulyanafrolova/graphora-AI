@@ -34,6 +34,7 @@ QUESTIONS: tuple[Question, ...] = (
     Question("dependents", queries.dependents, "target", ("symbol", "include_type_only", "follow_barrels", "level"), DEFAULT_LIMIT),
     Question("impact", queries.impact, "target", ("max_depth", "include_type_only", "follow_barrels", "level"), DEFAULT_LIMIT),
     Question("neighbors", queries.neighbors, "target", ("include_type_only",), DEFAULT_LIMIT),
+    Question("definitions", queries.definitions, "name", (), DEFAULT_LIMIT),
     Question("cycles", queries.cycles, None, ("include_type_only", "level"), DEFAULT_LIMIT),
     Question("key_files", queries.key_files, None, ("include_type_only",), 10),
     Question("overview", queries.overview, None, (), None),

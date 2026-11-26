@@ -221,6 +221,7 @@ QUESTION_PATHS = [  # 018
     "/api/v1/impact",
     "/api/v1/neighbors",
     "/api/v1/cycles",
+    "/api/v1/definitions",
     "/api/v1/key_files",
     "/api/v1/overview",
     "/api/v1/projects",
