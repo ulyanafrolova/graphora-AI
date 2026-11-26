@@ -253,7 +253,7 @@ with an expired deadline, and a repository served by a local git server; check s
   - `oldest` is the date of the N-th;
   - with N = 0 → `not_available` / `time_limit`;
   - the reader never raises `LimitExceeded`.
-- [ ] T020 [P] [US2] Write `backend/tests/integration/test_history_github.py`. Serve a built repository with
+- [X] T020 [P] [US2] Write `backend/tests/integration/test_history_github.py`. Serve a built repository with
   `dulwich.web.make_wsgi_chain` from a `wsgiref` server on `127.0.0.1` in a thread, and point
   `history.github` at it through a test hook (module-level base URL function, like `ingest.github._open`).
   Cases:
@@ -266,7 +266,7 @@ with an expired deadline, and a repository served by a local git server; check s
     `fetch_snapshot` block.
   - With the tarball faked as in 002 (`tests/fake_github.py`), `run_analyze("https://github.com/o/r")` writes
     `history.available`.
-- [ ] T021 [P] [US2] Write `backend/tests/integration/test_history_store.py` (marked `db`):
+- [X] T021 [P] [US2] Write `backend/tests/integration/test_history_store.py` (marked `db`):
   - a stored analysis with `skipped` is replaced by a later run with `available` (action `replaced`);
   - one with `available` is reused by a `--no-history` run;
   - `partial` is not reused by the pipeline's reuse check when history is wanted;
@@ -280,7 +280,7 @@ with an expired deadline, and a repository served by a local git server; check s
 
 ### Implementation
 
-- [ ] T022 [US2] Implement `backend/src/graphora/history/github.py`: `fetch_history(source, sha, workdir,
+- [X] T022 [US2] Implement `backend/src/graphora/history/github.py`: `fetch_history(source, sha, workdir,
   limits, deadline) -> (store, shallow) | reason`, per research R5.
   - **Client**: `Urllib3HttpGitClient` on `https://github.com/<owner>/<repo>.git` (base URL behind a test
     hook), with the 002 User-Agent, `Retry(redirect=0)` and per-request timeout `deadline.remaining()`.
