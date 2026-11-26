@@ -592,6 +592,7 @@ def overview(ix: GraphIndex) -> Overview:
         },
         edges=len(doc.edges),
         unresolved_imports=ix.completeness.unresolved_imports,
+        history=doc.history,
     )
 
 

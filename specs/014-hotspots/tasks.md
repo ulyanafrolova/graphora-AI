@@ -385,7 +385,7 @@ true and wrong hotspot claims with the verifier.
 
 **Commit**: `verify hotspot claims`
 
-- [ ] T031 [US3] In `backend/src/graphora/mcp/server.py`:
+- [X] T031 [US3] In `backend/src/graphora/mcp/server.py`:
   - add the `hotspots(include_type_only=True, limit=10)` tool with the fixed description of
     contracts/interfaces.md, calling `queries.hotspots` through `ask`;
   - add `history` to `Overview` in `backend/src/graphora/graph/results.py` (JSON `{status, reason}` and a text

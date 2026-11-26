@@ -220,9 +220,10 @@ class Overview:
     nodes: dict[str, int]
     edges: int
     unresolved_imports: int
+    history: History | None = None  # 014
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "snapshot": self.snapshot,
             "schema_version": self.schema_version,
             "extractors": dict(self.extractors),
@@ -232,6 +233,9 @@ class Overview:
             "edges": self.edges,
             "unresolved_imports": self.unresolved_imports,
         }
+        if self.history is not None:
+            out["history"] = {"status": self.history.status, "reason": self.history.reason}
+        return out
 
 
 def dumps(answer: Answer | Overview) -> bytes:
@@ -399,6 +403,9 @@ def _overview_text(o: Overview) -> str:
         f"{n['project']} project, {n['solution']} solution",
         f"edges: {o.edges} ({o.unresolved_imports} unresolved imports)",
     ]
+    if o.history is not None:
+        h = o.history
+        lines.append(f"history: not available ({h.reason})" if h.status == "not_available" else f"history: {h.status}")
     return "\n".join(lines) + "\n"
 
 
