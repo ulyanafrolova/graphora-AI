@@ -90,7 +90,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 **Independent Test**: store a fixture, request each question for a known file, compare with the CLI bytes.
 
-- [ ] T005 [P] [US1] Write `backend/tests/golden/test_http_queries.py` (`pytestmark = pytest.mark.db`):
+- [X] T005 [P] [US1] Write `backend/tests/golden/test_http_queries.py` (`pytestmark = pytest.mark.db`):
   - `CASES` from every `fixtures/repos/*/queries.json` entry, as in `tests/golden/test_mcp_queries.py`, filtered to
     `HTTP = {"dependencies", "dependents", "impact", "neighbors"}` (later phases extend the set);
   - a module-level cache of `analyze_fixture(name)` per fixture, so each fixture is analyzed once;
