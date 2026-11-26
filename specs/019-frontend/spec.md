@@ -313,17 +313,17 @@ placeholder pages contain no numbers.
   detection with a fixed seed and stable tie-break (constitution II), each component named after the longest common
   folder of its files, or, when they share none, the most frequent top-level folder among them (ties by path order);
   equal names are made unique with ` · 2`, ` · 3`, … in the order of each component's first file path. Each
-  component has its files, file count, lines of code, links to other components with their import counts and
+  component has its files, file count, links to other components with their import counts and
   confidence, and whether it contains a cycle. It MUST be available through
   the command line, the MCP server and the HTTP API, with byte-identical answers.
 - **FR-022**: The cycles answer MUST include, for each cycle group, the suggested links to remove: a minimum
   feedback arc set (the fewest links whose removal leaves the group without cycles), computed exactly for groups of
   up to 20 files, with ties broken by the fewest imported names in total and then by path order; for larger groups the
   greedy rule (repeatedly the link that breaks the most remaining cycles, then the fewest imported names, then path
-  order). Each suggested link carries its import line(s), and the answer states the method (`exact` or `greedy`). It
+  order). A group of up to 20 files whose exact search exceeds a fixed work budget also uses the greedy rule. Each suggested link carries its import line(s), and the answer states the method (`exact` or `greedy`). It
   MUST be available through all interfaces like FR-021.
 - **FR-023**: The service MUST provide per-file line counts of a stored snapshot in one request, so that the hotspot
-  map and component sizes do not need one request per file.
+  map and component sizes (the sum of their files' line counts) do not need one request per file.
 - **FR-024**: The service MUST tell the UI which model answers questions and whether asking is enabled, so the header
   badge and Ask agents can show it.
 - **FR-025**: When a built UI is present, the Graphora service MUST serve it from the same address as the API, so that
