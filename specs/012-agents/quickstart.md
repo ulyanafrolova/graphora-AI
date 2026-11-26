@@ -48,7 +48,7 @@ Expected: `Facts`, `Likely`, `Hypotheses (not proven)` and `Summary` parts; ever
 OLLAMA_HOST=http://127.0.0.1:1 uv run graphora ask "What imports loop/a.py?" --graph /tmp/g.json; echo $?
 ```
 
-Expected: one `error: model ollama:qwen3:8b unavailable at http://127.0.0.1:1: …` line, no traceback, `9`.
+Expected: one `graphora: error: model ollama:qwen3:8b unavailable at http://127.0.0.1:1: cannot connect` line, no traceback, `9`.
 
 ## 4. Live model (manual, SC-007)
 

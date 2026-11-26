@@ -17,7 +17,7 @@ graphora ask QUESTION (--graph FILE | --repository NAME --snapshot ID [--databas
 ## Output
 
 - stdout: `render_answer(answer)` (text) or the JSON document. Nothing else.
-- stderr: `error: …` / `warning: …` lines, as the other commands.
+- stderr: `graphora: error: …` / `graphora: warning: …` lines, as the other commands.
 
 ## Exit codes
 
@@ -28,7 +28,7 @@ graphora ask QUESTION (--graph FILE | --repository NAME --snapshot ID [--databas
 | 6 | store unavailable |
 | 7 | invalid graph |
 | 8 | repository or snapshot not found |
-| 9 | model unavailable: unknown provider, missing integration package, cannot connect, model not pulled; also `model_failed` with no claims. Message: `error: model ollama:qwen3:8b unavailable at http://127.0.0.1:11434: <reason>` |
+| 9 | model unavailable: unknown provider, missing integration package, cannot connect, model not pulled; also `model_failed` with no claims. Message: `graphora: error: model ollama:qwen3:8b unavailable at http://127.0.0.1:11434: <reason>` |
 | 130 | interrupted |
 
 No traceback is printed for codes 2–9.

@@ -35,6 +35,7 @@ class _Recorder:
         self.on_event = on_event
         self.pending: list[TraceEvent] = []
         self.failed = False
+        self.error: str | None = None
 
     def emit(self, kind: str, role: str, **fields: Any) -> None:
         self.n += 1
@@ -43,8 +44,9 @@ class _Recorder:
         if self.on_event is not None and not self.failed:
             try:
                 self.on_event(event)
-            except Exception:
+            except Exception as exc:
                 self.failed = True
+                self.error = f"trace callback failed: {type(exc).__name__}: {exc}"[:300]
 
     def flush(self) -> list[TraceEvent]:
         out, self.pending = self.pending, []
@@ -66,6 +68,7 @@ class _Agents:
         self.summary = summary
         self.rec = _Recorder(on_event)
         self.ids = CitationIds()
+        self.error: str | None = None
         self.tools = {role: RoleTools(role, served) for role in ("explorer", "analyst")}
 
     # -- shared pieces -------------------------------------------------------------------------------------------
@@ -83,9 +86,12 @@ class _Agents:
         try:
             return runnable.invoke(messages)
         except Exception as exc:
-            if parse and isinstance(exc, (ValidationError, ValueError)) and model_failure(exc, self.setting) is None:
+            known = model_failure(exc, self.setting)
+            if parse and isinstance(exc, (ValidationError, ValueError)) and known is None:
                 return None
             counters["failed"] = "model_failed"
+            if self.error is None:
+                self.error = known.message if known is not None else f"model {self.setting} failed: {type(exc).__name__}: {exc}"[:300]
             return None
 
     def _tool_loop(self, role: str, messages: list[BaseMessage], counters: dict[str, Any], cap: int) -> str:
@@ -259,4 +265,5 @@ def ask(
         "failed": None,
     }
     final = agents.build().invoke(start, {"recursion_limit": 3 * (MAX_REVISIONS + 1) + 5})
-    return Run(final["answer"], tuple(final["trace"]))
+    error = agents.error or agents.rec.error if final["answer"].end == "model_failed" else None
+    return Run(final["answer"], tuple(final["trace"]), error)

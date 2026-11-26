@@ -243,7 +243,7 @@ replies and a model error all end within the limits with the right end reason.
 
 ### Tests
 
-- [ ] T026 [P] [US3] Write `backend/tests/unit/test_agents_budget.py` on a synthetic graph (no store):
+- [X] T026 [P] [US3] Write `backend/tests/unit/test_agents_budget.py` on a synthetic graph (no store):
   (a) a model that always calls `dependents` → exactly 15 tool calls executed, the 16th gets `error: tool
   budget spent, write your result now`, the analyst's claims call still runs and its claims are verified
   (FR-008), `end == "budget_spent"`; a budget spent during the explorer's turn skips the analyst's tool loop
@@ -260,7 +260,7 @@ replies and a model error all end within the limits with the right end reason.
   failure; (h) on this graph-file snapshot (no store) `read_lines` is not offered and a scripted definition
   claim is rejected `text_unavailable` and ends as a hypothesis, while a dependency claim in the same run is
   a fact.
-- [ ] T027 [P] [US3] Write `backend/tests/unit/test_agents_trace.py`: the trace of a scripted run lists in
+- [X] T027 [P] [US3] Write `backend/tests/unit/test_agents_trace.py`: the trace of a scripted run lists in
   order `role_start`, `tool_call`, `claim`, `claim_invalid`, `verdict`, `revision`, `hypothesis`, `summary`,
   `end`, with `n` 1…N; `on_event` receives the same events in the same order; no event contains tool text,
   model text or any line of a fixture file containing a planted string `IGNORE PREVIOUS INSTRUCTIONS`
@@ -268,16 +268,16 @@ replies and a model error all end within the limits with the right end reason.
 
 ### Implementation
 
-- [ ] T028 [US3] Complete budget handling in `backend/src/graphora/agents/graph.py` and
+- [X] T028 [US3] Complete budget handling in `backend/src/graphora/agents/graph.py` and
   `backend/src/graphora/agents/tools.py`: count every requested tool call before validation; refuse past
   `MAX_TOOL_CALLS`; once spent, skip later tool loops but keep the analyst's claims call while model calls
   remain; per-turn and per-run model-call caps; catch model exceptions with `model_failure` (and any
   other exception from the model or `on_event`) and route to `answer` with the right end reason; parse
   failures of the claims phase as one model call.
-- [ ] T029 [US3] Complete trace emission in every node (`role_start`, `tool_call` with name, sorted args,
+- [X] T029 [US3] Complete trace emission in every node (`role_start`, `tool_call` with name, sorted args,
   citation ids, `cut`, `error`; `claim`, `claim_invalid`, `verdict`, `revision`, `hypothesis`, `summary`,
   `end`), calling `on_event` for each event as it is appended (research R9).
-- [ ] T030 [US3] Run `uv run pytest tests/unit/test_agents_budget.py tests/unit/test_agents_trace.py` until
+- [X] T030 [US3] Run `uv run pytest tests/unit/test_agents_budget.py tests/unit/test_agents_trace.py` until
   green.
 
 ---
@@ -291,7 +291,7 @@ an unavailable model exits 9 with one error line.
 
 ### Tests
 
-- [ ] T031 [US4] Write `backend/tests/integration/test_ask_cli.py`, injecting a `ScriptedModel` by
+- [X] T031 [US4] Write `backend/tests/integration/test_ask_cli.py`, injecting a `ScriptedModel` by
   monkeypatching `graphora.agents.model.model_from_setting`: `ask QUESTION --graph FILE` prints `Facts`,
   `Likely`, `Hypotheses (not proven)`, `Summary` and exit 0; `--json` prints `Run.to_dict()` JSON with sorted
   keys; `--trace FILE` writes JSON lines equal to `run.trace`; `--trace -` writes them to stderr; `--no-summary`
@@ -303,12 +303,12 @@ an unavailable model exits 9 with one error line.
 
 ### Implementation
 
-- [ ] T032 [US4] Add the `ask` subcommand to `backend/src/graphora/cli/__init__.py`: arguments of
+- [X] T032 [US4] Add the `ask` subcommand to `backend/src/graphora/cli/__init__.py`: arguments of
   contracts/cli.md; snapshot loading and its errors shared with `_mcp` (extract a helper `_served(args)` used
   by both, keeping `graphora mcp` behaviour and messages unchanged, `--graph -` allowed only for `ask`);
   `EXIT_MODEL = 9`; model from `--model` or `setting_from_env()`; print `render_answer` or JSON to stdout,
   trace lines to `--trace`; close the store.
-- [ ] T033 [US4] Run `uv run pytest tests/integration/test_ask_cli.py tests/integration/test_mcp_cli.py`
+- [X] T033 [US4] Run `uv run pytest tests/integration/test_ask_cli.py tests/integration/test_mcp_cli.py`
   until green (the MCP CLI tests guard the shared helper).
 
 **Checkpoint**: commit `agents: budget, trace and ask command` and push.

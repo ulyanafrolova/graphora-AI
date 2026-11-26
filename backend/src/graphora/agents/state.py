@@ -138,9 +138,11 @@ class Answer:
 class Run:
     answer: Answer
     trace: tuple[TraceEvent, ...]
+    error: str | None = None  # why the model failed, when `answer.end` is model_failed
 
     def to_dict(self) -> dict[str, Any]:
-        return {"answer": self.answer.to_dict(), "trace": [e.to_dict() for e in self.trace]}
+        out = {"answer": self.answer.to_dict(), "trace": [e.to_dict() for e in self.trace]}
+        return out | ({"error": self.error} if self.error is not None else {})
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), sort_keys=True, ensure_ascii=False, indent=2) + "\n"

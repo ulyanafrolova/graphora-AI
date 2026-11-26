@@ -11,7 +11,7 @@ ask(
     setting: str | None = None,           # None → $GRAPHORA_MODEL or "ollama:qwen3:8b"
     summary: bool = True,
     on_event: Callable[[TraceEvent], None] | None = None,
-) -> Run                                  # Run(answer: Answer, trace: tuple[TraceEvent, ...])
+) -> Run                                  # Run(answer, trace: tuple[TraceEvent, ...], error: str | None)
 
 model_from_setting(setting: str) -> BaseChatModel     # agents/model.py; raises ModelUnavailable
 class ModelUnavailable(Exception): setting, address, reason
@@ -26,7 +26,8 @@ class ModelUnavailable(Exception): setting, address, reason
 - `answer.likely` holds only `heuristic` verdicts; `answer.hypotheses` only `rejected` ones.
 - At most `MAX_TOOL_CALLS` tool calls, `MAX_REVISIONS` revisions, `MAX_MODEL_CALLS` model calls.
 - A `ModelUnavailable` or other model exception during the run does not escape `ask`: the run ends with
-  `end = model_failed` and the parts built so far. `model_from_setting` raises it for an unknown provider or
+  `end = model_failed`, the parts built so far and `Run.error` saying why (the `ModelUnavailable` message for
+  connection and missing-model failures). `model_from_setting` raises it for an unknown provider or
   a missing integration package, before the run.
 - Same `question`, `served` and model replies → equal `Run` (and identical `to_dict` JSON).
 - `on_event` is called once per trace event, in order, before `ask` returns; an exception in it ends the run
@@ -42,7 +43,8 @@ class ModelUnavailable(Exception): setting, address, reason
 | answer | none | 0 or 1 (summary) | answer, end |
 
 Tool messages: `ToolResult.text`, then `citations:` and one line per citation `[cN] <cite> → <target or
-symbol>` (heuristic-capable lines keep the 011 `(likely)` mark). The whole message is at most
+symbol>`; `file:` node ids are shown as paths. The 011 `(likely)` mark stays in the tool text above the
+  list; citation lines carry no confidence (the verifier decides it). The whole message is at most
 `MAX_TOOL_MESSAGE_CHARS` (5,000): citation lines over 160 characters are shortened in the middle with `…`,
 and the list is cut by whole lines with `(… N more citations)`; cut citations keep their ids in the state. Invalid call → `error: <message>`;
 budget spent → `error: tool budget spent, write your result now`.

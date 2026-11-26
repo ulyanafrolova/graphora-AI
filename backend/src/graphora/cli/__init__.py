@@ -1,5 +1,6 @@
-"""`graphora analyze`, `graphora serve` and `graphora query` (contracts/cli.md; 005:
-specs/005-storage-http-api/contracts/cli.md; 004: specs/004-graph-queries/contracts/cli.md)."""
+"""`graphora analyze`, `graphora serve`, `graphora query`, `graphora mcp` and `graphora ask` (contracts/cli.md; 005:
+specs/005-storage-http-api/contracts/cli.md; 004: specs/004-graph-queries/contracts/cli.md; 012:
+specs/012-agents/contracts/cli.md)."""
 
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ from graphora.pipeline.messages import limit_message
 
 EXIT_OK, EXIT_USAGE, EXIT_LIMIT = 0, 2, 3
 EXIT_ARCHIVE, EXIT_REMOTE, EXIT_STORE, EXIT_INTERRUPTED = 4, 5, 6, 130
-EXIT_GRAPH, EXIT_NOT_FOUND = 7, 8
+EXIT_GRAPH, EXIT_NOT_FOUND, EXIT_MODEL = 7, 8, 9
 
 
 
@@ -108,6 +109,16 @@ def _parser() -> argparse.ArgumentParser:
     mcp.add_argument("--repository", help="store mode: a stored repository name")
     mcp.add_argument("--snapshot", help="store mode: a stored snapshot id")
     mcp.add_argument("--database", help="store mode: PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
+    ask = commands.add_parser("ask", help="answer a question about one snapshot with the agents; facts are verified")
+    ask.add_argument("question", help="the question, in quotes")
+    ask.add_argument("--graph", help="a graph JSON written by `graphora analyze` (- for standard input)")
+    ask.add_argument("--repository", help="store mode: a stored repository name")
+    ask.add_argument("--snapshot", help="store mode: a stored snapshot id")
+    ask.add_argument("--database", help="store mode: PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
+    ask.add_argument("--model", help="provider:model (default: $GRAPHORA_MODEL or ollama:qwen3:8b)")
+    ask.add_argument("--no-summary", action="store_true", help="no model summary; the summary is built by code")
+    ask.add_argument("--json", action="store_true", help="print the answer and trace as JSON")
+    ask.add_argument("--trace", metavar="FILE", help="also write the trace as JSON lines to FILE (- for stderr)")
     return parser
 
 
@@ -148,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
         return _query(args)
     if args.command == "mcp":
         return _mcp(args)
+    if args.command == "ask":
+        return _ask(args)
 
     # SIGTERM must also unwind through fetch_snapshot so the temp folder is removed (research § R11).
     in_main_thread = threading.current_thread() is threading.main_thread()
@@ -243,10 +256,13 @@ def _query(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
-def _mcp(args: argparse.Namespace) -> int:
-    """`graphora mcp` (specs/006-mcp-server contracts/cli.md). Only the protocol may write to stdout."""
+def _served(args: argparse.Namespace, command: str) -> object:
+    """The snapshot of `--graph`, or of `--repository` and `--snapshot` from the store; an exit code on failure
+    (specs/006-mcp-server contracts/cli.md, shared by `ask`)."""
     from graphora.graph.load import InvalidGraph
-    from graphora.mcp import PairNotFound, create_server, from_graph_file, from_store
+    from graphora.graph.load import loads as load_graph
+    from graphora.graph.queries import index
+    from graphora.mcp import PairNotFound, Served, from_graph_file, from_store
     from graphora.store import StoreUnavailable
 
     store_mode = args.repository is not None or args.snapshot is not None
@@ -259,7 +275,7 @@ def _mcp(args: argparse.Namespace) -> int:
     if store_mode and (args.repository is None or args.snapshot is None):
         _log("error", "--repository and --snapshot go together")
         return EXIT_USAGE
-    if args.graph == "-":
+    if args.graph == "-" and command == "mcp":
         _log("error", "--graph - is not allowed: standard input carries the MCP protocol")
         return EXIT_USAGE
     if args.graph is not None and args.database is not None:
@@ -271,9 +287,10 @@ def _mcp(args: argparse.Namespace) -> int:
             url = _database_url(args.database)
             if url is None:
                 raise StoreUnavailable("no database URL: use --database or GRAPHORA_DATABASE_URL")
-            served = from_store(url, args.repository, args.snapshot)
-        else:
-            served = from_graph_file(args.graph)
+            return from_store(url, args.repository, args.snapshot)
+        if args.graph == "-":
+            return Served(index(load_graph(sys.stdin.buffer.read())))
+        return from_graph_file(args.graph)
     except OSError as exc:
         _log("error", f"cannot read {args.graph}: {exc.strerror or exc}")
         return EXIT_USAGE
@@ -286,11 +303,54 @@ def _mcp(args: argparse.Namespace) -> int:
     except PairNotFound as exc:
         _log("error", exc.message)
         return EXIT_NOT_FOUND
+
+
+def _mcp(args: argparse.Namespace) -> int:
+    """`graphora mcp` (specs/006-mcp-server contracts/cli.md). Only the protocol may write to stdout."""
+    from graphora.mcp import create_server
+
+    served = _served(args, "mcp")
+    if isinstance(served, int):
+        return served
     try:
         create_server(served).run("stdio")
     finally:
         if served.store is not None:
             served.store.close()
+    return EXIT_OK
+
+
+def _ask(args: argparse.Namespace) -> int:
+    """`graphora ask` (specs/012-agents contracts/cli.md)."""
+    from graphora.agents import ModelUnavailable, ask, model, render_answer
+
+    if not args.question.strip():
+        _log("error", "the question must not be empty")
+        return EXIT_USAGE
+    setting = args.model or model.setting_from_env()
+    try:
+        chat = model.model_from_setting(setting)
+    except ModelUnavailable as exc:
+        _log("error", exc.message)
+        return EXIT_MODEL
+    served = _served(args, "ask")
+    if isinstance(served, int):
+        return served
+    try:
+        run = ask(args.question, served, model=chat, setting=setting, summary=not args.no_summary)
+    finally:
+        if served.store is not None:
+            served.store.close()
+    if run.answer.end == "model_failed" and not run.answer.facts and not run.answer.likely and not run.answer.hypotheses:
+        _log("error", run.error or f"model {setting} unavailable at {model.address(setting)}: the run failed")
+        return EXIT_MODEL
+    if args.trace is not None:
+        lines = "".join(json.dumps(e.to_dict(), sort_keys=True, ensure_ascii=False) + "\n" for e in run.trace)
+        if args.trace == "-":
+            sys.stderr.write(lines)
+        else:
+            Path(args.trace).write_text(lines, encoding="utf-8")
+    sys.stdout.write(run.to_json() if args.json else render_answer(run.answer))
     return EXIT_OK
 
 
