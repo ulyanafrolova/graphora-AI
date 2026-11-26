@@ -171,7 +171,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
 
 **Commit**: `history reader for local commits`
 
-- [ ] T014 [US1] Implement `backend/src/graphora/history/local.py`: `local_source(root, snapshot)`. It returns
+- [X] T014 [US1] Implement `backend/src/graphora/history/local.py`: `local_source(root, snapshot)`. It returns
   `(Repo, sha, shallow, dirty)` or a `not_available` reason:
   - `no_git` for a `content:` snapshot or when `ingest.snapshot._usable_git_dir(root)` is false;
   - `unreadable` for any dulwich error.
