@@ -409,7 +409,7 @@ equals the API answer.
 - [X] T073 [P] Write `frontend/tests/e2e/errors.spec.ts`: service stopped → "Graphora service unavailable" + Retry;
   unknown snapshot address → "Snapshot not found"; a `stale` analysis (schema version lowered in the test database by
   `e2e_server.py --stale` repository) → "analyze again".
-- [ ] T074 [P] Write `frontend/tests/e2e/hostile.spec.ts` (SC-004): `e2e_server.py` stores a hand-built analysis whose
+- [X] T074 [P] Write `frontend/tests/e2e/hostile.spec.ts` (SC-004): `e2e_server.py` stores a hand-built analysis whose
   file names, contents and symbol names contain the T031 strings and a scripted answer quoting them; every screen shows
   them literally and no dialog opens (`page.on("dialog")` fails the test).
 - [ ] T075 [P] Add a "Web UI" section to `README.md` (develop with `make web`, demo with `make web-build` + `graphora
