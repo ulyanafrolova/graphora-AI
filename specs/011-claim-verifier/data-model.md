@@ -9,7 +9,7 @@ One import link a claim relies on (R3, R5).
 
 | Field | Type | Rule |
 |---|---|---|
-| `path` | str | repository-relative path of the importing file (or `.csproj` for project references) |
+| `path` | str | repository-relative path of the source: a file, or a `.csproj` / `.sln` for project, package and solution edges |
 | `line` | int | ≥ 1, the import line |
 | `target` | str | anything `queries.resolve` accepts: path, node id, package name |
 | `name` | str \| None | imported name; checked with `queries.matches_symbol` when set |
@@ -25,7 +25,7 @@ One import link a claim relies on (R3, R5).
 | `path`, `line`, `symbol` | str, int, str | definition, mention |
 | `question` | `dependencies \| dependents \| impact \| neighbors \| cycles \| key_files` | query |
 | `target` | str \| None | query; None only for `cycles` and `key_files` |
-| `options` | dict | query; allowed keys per question: `include_type_only`, `follow_barrels`, `symbol` (dependents), `max_depth` (impact) |
+| `options` | dict | query; allowed keys per question: `include_type_only`, `follow_barrels`, `symbol` (dependents), `max_depth` (impact), `level` (dependencies, dependents, impact, cycles) |
 | `count` | int \| None | query; exactly one of `count`, `member`, `rank` |
 | `member` | str \| None | query; a node the result contains (path or id) |
 | `distance` | int \| None | query with `member`, impact only |

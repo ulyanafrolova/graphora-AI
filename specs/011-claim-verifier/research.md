@@ -58,8 +58,8 @@ Decisions for [plan.md](plan.md). Each item: decision, rationale, alternatives c
 
 ## R5 — Dependency and chain checks
 
-- **Decision**: the source path resolves with `queries.resolve`; it must be a `file:` (or `project:` for C#
-  project references) node whose coverage status is `analyzed`, otherwise `file_not_analyzed` /
+- **Decision**: the source path resolves with `queries.resolve`; it must be a `file:`, `project:` or `solution:` node
+  (C# project, package and solution edges); a file's coverage status must be `analyzed`, otherwise `file_not_analyzed` /
   `file_not_in_snapshot`. The target resolves with `queries.resolve`; its `NodeNotFound.status` becomes the
   reason. Edges come from `ix.links` (`GraphIndex.link`) for the pair, filtered to the cited line; with a
   name, also filtered by the query layer's symbol rule, made public as `queries.matches_symbol` (now
@@ -93,7 +93,7 @@ Decisions for [plan.md](plan.md). Each item: decision, rationale, alternatives c
 
 - **Decision**: a query claim runs the named question from `graph/queries.py` with the claim's options and
   `limit=None`; options are validated against an allow-list per question (`include_type_only`,
-  `follow_barrels`, `symbol`, `max_depth`). Count: compare with `Answer.total` → `count_mismatch` with the
+  `follow_barrels`, `symbol`, `max_depth`, `level`). Count: compare with `Answer.total` → `count_mismatch` with the
   actual count. Member: the node must be an item (`items`, or `incoming`/`outgoing` for neighbors, a group
   member for cycles), with `distance` compared when given → `not_in_result`. Rank: `key_files`, the node's
   1-based position must be ≤ `rank` → `rank_mismatch` with the actual position. Status: count → `heuristic` if
