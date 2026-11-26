@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections import Counter, defaultdict
+from itertools import combinations
 from typing import TypeVar
 
 import networkx as nx
@@ -27,6 +28,7 @@ from graphora.graph.results import (
     Completeness,
     Component,
     ComponentLink,
+    CycleCut,
     CycleGroup,
     DefinitionMatch,
     Item,
@@ -469,6 +471,54 @@ def _shortest_cycle(g: nx.DiGraph, start: str, members: set[str]) -> list[str]:
     raise AssertionError(f"{start} is in a loop but no cycle was found")
 
 
+CUT_BUDGET = 200_000  # acyclicity checks of the exact search before it falls back to greedy
+CUT_EXACT_FILES = 20
+
+
+def _greedy_cut(g: nx.DiGraph) -> list[tuple[str, str]]:
+    g = g.copy()
+    chosen = []
+    while not nx.is_directed_acyclic_graph(g):
+        on: Counter[tuple[str, str]] = Counter()
+        for n, cycle in enumerate(nx.simple_cycles(g)):
+            if n >= 10_000:
+                break
+            on.update(zip(cycle, cycle[1:] + cycle[:1], strict=True))
+        if not on:
+            on.update({(a, b): g.in_degree(a) * g.out_degree(b) for a, b in g.edges})
+        pick = min(on, key=lambda pair: (-on[pair], len(g.edges[pair]["edges"]), pair))
+        g.remove_edge(*pick)
+        chosen.append(pick)
+    return chosen
+
+
+def _exact_cut(g: nx.DiGraph) -> list[tuple[str, str]] | None:
+    """The fewest links that leave `g` acyclic, then fewest import edges, then path order; None over budget."""
+    links = sorted(g.edges, key=lambda pair: (len(g.edges[pair]["edges"]), pair))
+    checks = 0
+    for k in range(1, len(links) + 1):
+        best = None
+        for combo in combinations(links, k):
+            checks += 1
+            if checks > CUT_BUDGET:
+                return None
+            h = g.copy()
+            h.remove_edges_from(combo)
+            if nx.is_directed_acyclic_graph(h):
+                cost = (sum(len(g.edges[pair]["edges"]) for pair in combo), sorted(combo))
+                best = cost if best is None or cost < best else best
+        if best is not None:
+            return best[1]
+    return None
+
+
+def _suggested_cut(ix: GraphIndex, g: nx.DiGraph, include_type_only: bool) -> CycleCut:
+    exact = _exact_cut(g) if g.number_of_nodes() <= CUT_EXACT_FILES else None
+    pairs = exact if exact is not None else _greedy_cut(g)
+    links = tuple(ix.link(a, b, include_type_only) for a, b in sorted(pairs))
+    return CycleCut("exact" if exact is not None else "greedy", links)
+
+
 def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = None, level: str = "file") -> Answer:
     """Every group of files that depend on each other in a loop, with one example cycle each (FR-008)."""
     _check_limit(limit)
@@ -487,6 +537,7 @@ def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None 
                 cycle=cycle,
                 type_only=not _loops(runtime.subgraph(members)),
                 confidence=weakest(link.confidence for link in cycle),
+                suggested_cut=_suggested_cut(ix, files.subgraph(members), include_type_only),
             )
         )
     shown, total, truncated = _limit(groups, limit)

@@ -98,19 +98,34 @@ class Item:
 
 
 @dataclass(frozen=True)
+class CycleCut:
+    """The links suggested for removal: `exact` minimum set, or `greedy` (specs/019-frontend research § R4)."""
+
+    method: Literal["exact", "greedy"]
+    links: tuple[Link, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"method": self.method, "links": [link.to_dict() for link in self.links]}
+
+
+@dataclass(frozen=True)
 class CycleGroup:
     files: tuple[str, ...]
     cycle: tuple[Link, ...]
     type_only: bool
     confidence: LinkConfidence
+    suggested_cut: CycleCut | None = None  # 019: file level only
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "files": list(self.files),
             "cycle": [link.to_dict() for link in self.cycle],
             "type_only": self.type_only,
             "confidence": self.confidence,
         }
+        if self.suggested_cut is not None:
+            out["suggested_cut"] = self.suggested_cut.to_dict()
+        return out
 
 
 @dataclass(frozen=True)
@@ -371,6 +386,9 @@ def _group_lines(answer: Answer) -> list[str]:
         marks = (" (likely)" if group.confidence == "heuristic" else "") + (" (type-only)" if group.type_only else "")
         lines.append(f"cycle {n}: {', '.join(_name(f) for f in group.files)}{marks}")
         lines.append(f"  {_chain_text(group.cycle)}")
+        if group.suggested_cut is not None:
+            cut = ", ".join(f"{_name(link.edges[0].source)}:{link.edges[0].line} → {_name(link.target)}" for link in group.suggested_cut.links)
+            lines.append(f"  suggested cut ({group.suggested_cut.method}): {cut}")
     return lines
 
 

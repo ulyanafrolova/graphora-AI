@@ -282,7 +282,7 @@ equals the API answer.
   `{"method", "links": ["<source path>:<line> -> <target path>", …]}`) and project it in `project_answer` of
   `backend/tests/golden/test_queries.py`; extend `test_cited_edges_are_graph_edges_and_chains_connect` to check cut
   edges are graph edges.
-- [ ] T047 [US3] Add `CycleCut` and `CycleGroup.suggested_cut` (JSON `suggested_cut`, text line `suggested cut
+- [X] T047 [US3] Add `CycleCut` and `CycleGroup.suggested_cut` (JSON `suggested_cut`, text line `suggested cut
   (<method>): <source>:<line> → <target>, …`) in `backend/src/graphora/graph/results.py`; implement the exact search
   (budget constant `CUT_BUDGET = 200_000` acyclicity checks, groups ≤ 20 files) and the greedy rule in
   `backend/src/graphora/graph/queries.py` per research R4; call it for file-level groups in `cycles`. Check: T045, T046,
