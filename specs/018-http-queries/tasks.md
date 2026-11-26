@@ -208,7 +208,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 - [X] T021 [P] Add to `CLAUDE.md`, after the `/hotspots` lines of the analysis store block, one paragraph "Graph
   questions over HTTP (feature 018)" with two `curl` examples (`/api/v1/impact?…&target=<path>` and
   `/api/v1/cycles?…`) and the note that each answer equals `graphora query … --format json`.
-- [ ] T022 Run the quickstart (`specs/018-http-queries/quickstart.md`) by hand against `graphora serve`, then the full
+- [X] T022 Run the quickstart (`specs/018-http-queries/quickstart.md`) by hand against `graphora serve`, then the full
   suite `uv run pytest` and `uv run pytest -m slow` (SC-006); mark tasks done.
 
 ---
