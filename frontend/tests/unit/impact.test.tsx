@@ -26,7 +26,14 @@ const IMPACT = {
   target: "file:a1",
   total: 7,
   truncated: true,
-  items: [item("file:a2"), item("file:b1"), item("file:b2"), item("file:b3"), item("file:w1", "heuristic"), item("file:w2", "heuristic")],
+  items: [
+    item("file:a2"),
+    item("file:b1"),
+    item("file:b2"),
+    item("file:b3"),
+    item("file:w1", "heuristic"),
+    item("file:w2", "heuristic"),
+  ],
 } as unknown as Answer;
 
 test("counts per component, heuristic apart", () => {

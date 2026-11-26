@@ -5,6 +5,9 @@ import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 
 import { ApiError } from "@/api/client";
+import type { Edge } from "@/api/types";
+import { CodeView } from "@/code/CodeView";
+import { ProvenancePanel } from "@/code/ProvenancePanel";
 import { ErrorState } from "@/shell/ErrorState";
 import { Header } from "@/shell/Header";
 import { Path } from "@/shell/Path";
@@ -22,6 +25,38 @@ export const SCREENS: [string, (text: string) => ReactElement][] = [
   ["Path", (t) => <Path value={t} line={3} />],
   ["Header", (t) => <Header repository={t} snapshot="content:0123456789abcdef" files={[]} ask={null} />],
   ["ErrorState", (t) => <ErrorState error={new ApiError(404, "not_found", t)} />],
+  [
+    "CodeView",
+    (t) => (
+      <CodeView
+        lines={{ path: "a.txt", has_text: true, line_count: 1, start: 1, end: 1, lines: [{ n: 1, text: t }] }}
+        markers={new Map()}
+        selected={null}
+        onSelect={() => undefined}
+      />
+    ),
+  ],
+  [
+    "ProvenancePanel",
+    (t) => (
+      <ProvenancePanel
+        edge={
+          {
+            id: "e",
+            source: `file:${t}`,
+            target: "file:b.py",
+            line: 1,
+            symbol: t,
+            type: "imports",
+            confidence: "resolved",
+            extractor: t,
+            snippet_hash: t,
+            snapshot: "content:1",
+          } as unknown as Edge
+        }
+      />
+    ),
+  ],
 ];
 
 test.each(SCREENS.flatMap(([name, make]) => HOSTILE.map((text) => [name, make, text] as const)))(

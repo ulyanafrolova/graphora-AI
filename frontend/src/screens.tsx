@@ -1,3 +1,4 @@
+import { CodePage } from "./code/CodePage";
 import { GraphPage } from "./graph/GraphPage";
 import type { RouteState } from "./state/route";
 import { useRoute } from "./state/useRoute";
@@ -16,6 +17,8 @@ function ScreenFor({ route }: { route: RouteState }) {
   switch (route.screen) {
     case "graph":
       return <GraphPage key={`${route.repository}@${route.snapshot}`} route={route} />;
+    case "code":
+      return <CodePage route={route} />;
     default:
       return <Soon name={route.screen} />;
   }

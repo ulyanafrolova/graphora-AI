@@ -9,8 +9,22 @@ import { ProvenancePanel } from "@/code/ProvenancePanel";
 
 const SHA = "a3f9c1e0000000000000000000000000000000000";
 const edge = (more: Partial<Edge>): Edge =>
-  ({ id: "e", source: "file:api/routes.py", target: "file:auth/service.py", line: 3, column: 1, type: "imports", symbol: "AuthService",
-    confidence: "resolved", type_only: false, extractor: "python-adapter@0.1.0", snippet_hash: "sha256:9be1aaaa0c04", form: "static", snapshot: SHA, ...more }) as Edge;
+  ({
+    id: "e",
+    source: "file:api/routes.py",
+    target: "file:auth/service.py",
+    line: 3,
+    column: 1,
+    type: "imports",
+    symbol: "AuthService",
+    confidence: "resolved",
+    type_only: false,
+    extractor: "python-adapter@0.1.0",
+    snippet_hash: "sha256:9be1aaaa0c04",
+    form: "static",
+    snapshot: SHA,
+    ...more,
+  }) as Edge;
 
 test("tree from coverage files", () => {
   const tree = buildTree([
@@ -19,7 +33,16 @@ test("tree from coverage files", () => {
     { path: "README.md", language: null, status: "not_code", flags: [] },
   ]);
   expect(tree.map((n) => n.name)).toEqual(["api", "README.md"]);
-  render(<FileTree files={[{ path: "api/routes.py", language: "python", status: "analyzed", flags: [] }, { path: "api/x.go", language: "go", status: "detected_only", flags: [] }]} selected="api/routes.py" onOpen={vi.fn()} />);
+  render(
+    <FileTree
+      files={[
+        { path: "api/routes.py", language: "python", status: "analyzed", flags: [] },
+        { path: "api/x.go", language: "go", status: "detected_only", flags: [] },
+      ]}
+      selected="api/routes.py"
+      onOpen={vi.fn()}
+    />,
+  );
   expect(screen.getByText("x.go")).toHaveClass("detected");
   expect(screen.getByText("routes.py").closest("button")).toHaveAttribute("aria-current", "true");
 });
@@ -32,11 +55,26 @@ test("markers by edge kind", () => {
     edge({ line: 12, confidence: "unresolved", target: "unresolved:python:x" }),
     edge({ source: "file:other.py", line: 5 }),
   ]);
-  expect([...markers.entries()].map(([line, m]) => [line, m.kind])).toEqual([[2, "external"], [3, "resolved"], [9, "http"], [12, "unresolved"]]);
+  expect([...markers.entries()].map(([line, m]) => [line, m.kind])).toEqual([
+    [2, "external"],
+    [3, "resolved"],
+    [9, "http"],
+    [12, "unresolved"],
+  ]);
 });
 
-const LINES: FileLines = { path: "api/routes.py", has_text: true, line_count: 3, start: 1, end: 3,
-  lines: [{ n: 1, text: "# routes" }, { n: 2, text: "from fastapi import x" }, { n: 3, text: "from ..auth.service import AuthService" }] };
+const LINES: FileLines = {
+  path: "api/routes.py",
+  has_text: true,
+  line_count: 3,
+  start: 1,
+  end: 3,
+  lines: [
+    { n: 1, text: "# routes" },
+    { n: 2, text: "from fastapi import x" },
+    { n: 3, text: "from ..auth.service import AuthService" },
+  ],
+};
 
 test("code lines as text with markers, selecting a line", async () => {
   const select = vi.fn();
@@ -51,7 +89,14 @@ test("code lines as text with markers, selecting a line", async () => {
 });
 
 test("binary and missing files", () => {
-  render(<CodeView lines={{ ...LINES, has_text: false, lines: [] }} markers={new Map()} selected={null} onSelect={vi.fn()} />);
+  render(
+    <CodeView
+      lines={{ ...LINES, has_text: false, lines: [] }}
+      markers={new Map()}
+      selected={null}
+      onSelect={vi.fn()}
+    />,
+  );
   expect(screen.getByText("Binary file: no text to show.")).toBeInTheDocument();
 });
 

@@ -226,7 +226,7 @@ equals the API answer.
   route, call reference); selecting a line shows `ProvenancePanel` with type and symbol, `source path:line@short
   commit`, confidence badge, `extractor@version`, snippet hash; outgoing and incoming lists from `/dependencies` and
   `/dependents` with confidence badges and, for heuristic incoming, the matched call/route text from the edge.
-- [ ] T040 [US1] Implement `frontend/src/code/CodePage.tsx`, `FileTree.tsx`, `CodeView.tsx`, `ProvenancePanel.tsx`,
+- [X] T040 [US1] Implement `frontend/src/code/CodePage.tsx`, `FileTree.tsx`, `CodeView.tsx`, `ProvenancePanel.tsx`,
   `tokens.ts` (Shiki `codeToTokens` with `createJavaScriptRegexEngine()`, no WASM engine; languages python, typescript, tsx, javascript, csharp loaded lazily; tokens
   rendered as `<span>` text only; fall back to plain text on failure). Check: T039 passes; add these components to
   T031's table.
