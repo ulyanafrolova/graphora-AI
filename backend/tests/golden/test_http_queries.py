@@ -53,8 +53,8 @@ def stored(store, tmp_path, name):
     return analysis.doc.snapshot, str(graph)
 
 
-def ask(client, name, snapshot, question, **params):
-    response = client.get(f"/api/v1/{question}", params={"repository": name, "snapshot": snapshot} | params)
+def ask(client, repo, snapshot, question, **params):
+    response = client.get(f"/api/v1/{question}", params={"repository": repo, "snapshot": snapshot} | params)
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "application/json"
     return response.content

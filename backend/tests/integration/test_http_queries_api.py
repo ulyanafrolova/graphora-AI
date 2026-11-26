@@ -32,8 +32,8 @@ def put(store, tmp_path):
     return put
 
 
-def get(client, question, name, snapshot, **params):
-    return client.get(f"/api/v1/{question}", params={"repository": name, "snapshot": snapshot} | params)
+def get(client, question, repo, snapshot, **params):
+    return client.get(f"/api/v1/{question}", params={"repository": repo, "snapshot": snapshot} | params)
 
 
 def cli(graph, *args):
