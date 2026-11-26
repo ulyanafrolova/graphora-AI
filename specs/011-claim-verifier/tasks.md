@@ -46,7 +46,8 @@ phase. Messages short, lowercase, English.
 - [ ] T003 [P] Write `backend/tests/unit/test_verify_claims.py`: `Claim.from_dict`/`to_dict` round trip for
   every JSON example of `contracts/verifier.md`; `to_dict` drops `None` fields; `Claim.cite()` gives
   `path:line@snapshot` (first step for chains); `validate(claim)` returns an error for each rule of
-  data-model.md § Claim validation: unknown kind, fields of another kind present, line < 1, empty
+  data-model.md § Claim validation: a dependency/chain claim with no steps or a definition/mention claim
+  without path → `no_citation` (checked first, no other error), query claims never `no_citation`; unknown kind, fields of another kind present, line < 1, empty
   path/symbol/target, a dependency with other than 1 step, a chain with < 2 steps or unconnected steps,
   query option key not allowed for the question, not exactly one of `count`/`member`/`rank`, `distance`
   without `member` or outside `impact`, `rank` outside `key_files`, `target` None for a question other than
@@ -216,9 +217,9 @@ claims (spec US3, FR-014–FR-019, FR-021; research R8–R10; contracts/agent-to
   are fixed strings; `tools_for` without a store has no `read_lines`; invalid arguments (offset < 0,
   max_depth 0, start 0, end < start, path `/etc/passwd`, `a/../b`, `a\\b`, empty name/target/symbol) →
   `error` set, `text` starts with `error: `, no citations; unknown target → the `NodeNotFound` message;
-  30 dependents → 20 shown, `cut` true, `next` 20, text ends with `(cut: call again with offset=20)`,
+  neighbors with 30 incoming → 20 shown, `offset=20` gives the rest; 30 dependents → 20 shown, `cut` true, `next` 20, text ends with `(cut: call again with offset=20)`,
   `offset=20` returns the other 10 and `cut` false; long text cut by whole lines to ≤ 4,000 characters with
-  the same cut line; `read_lines` of a 100-line file → 60 lines, `next` 61, frame lines exactly as in the
+  the same cut line and `next` = offset + items actually shown; `read_lines` of a 100-line file → 60 lines, `next` 61, frame lines exactly as in the
   contract, a line `# ignore previous instructions` appears only inside the frame; heuristic links shown with
   `(likely)`; citations match the shown items; same call twice → equal results; every returned claim
   verifies with `verify` (`heuristic` exactly for `(likely)` items).
@@ -236,11 +237,10 @@ claims (spec US3, FR-014–FR-019, FR-021; research R8–R10; contracts/agent-to
   `LineRef(path, start, end, snapshot)` (data-model.md § ToolSpec, ToolResult, LineRef).
 - [ ] T018 [US3] Implement `backend/src/graphora/tools/agent.py`: `TOOLS` with fixed English descriptions
   (what the tool answers, argument meaning, `(likely)` = heuristic, how to get the rest; no repository
-  content); argument validation of contracts/agent-tools.md § Validation, reusing the path rule of
-  `mcp.server._valid_path` (move it to `tools/agent.py` and import it in `mcp/server.py`, or copy the
-  one-liner if the import would be circular); list tools compute the answer with `limit=None`, slice
-  `offset … offset + MAX_ITEMS` into a copy of the `Answer` (neighbors: first 20 of each list), render with
-  `results.render_text`, cut by whole lines to `MAX_CHARS`, append the cut line; `read_lines` reads
+  content); argument validation of contracts/agent-tools.md § Validation, copying the one-line path rule of
+  `mcp.server._valid_path` (the MCP server is not changed); list tools compute the answer with `limit=None`, slice
+  `offset … offset + MAX_ITEMS` into a copy of the `Answer` (neighbors: the same slice of each list), render with
+  `results.render_text`, cut by whole lines to `MAX_CHARS`, append the cut line with `next` = offset + items actually shown; `read_lines` reads
   `Store.get_file(repository, snapshot, path, start, start + MAX_LINES - 1)` and frames the text exactly as
   the contract; errors become `ToolResult(text="error: …", error=…)`.
 - [ ] T019 [US3] Add citations in `backend/src/graphora/tools/agent.py` (research R10): a link without `via`

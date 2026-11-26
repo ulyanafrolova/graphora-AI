@@ -27,7 +27,7 @@ lc_tools = [StructuredTool.from_function(fns[s.name], name=s.name, description=s
 | `read_lines` | `path: str`, `start: int = 1`, `end: int \| None = None` | `Store.get_file` | `lines: LineRef` |
 | `dependents` | `target: str`, `symbol: str \| None = None`, `follow_barrels: bool = False`, `include_type_only: bool = True`, `offset: int = 0` | `queries.dependents` | `dependency` per item; `chain` for a barrel link |
 | `impact` | `target: str`, `max_depth: int \| None = None`, `follow_barrels: bool = False`, `include_type_only: bool = True`, `offset: int = 0` | `queries.impact` | `chain` (or `dependency` at distance 1) per item |
-| `neighbors` | `target: str`, `include_type_only: bool = True` | `queries.neighbors` | `dependency` per incoming and outgoing item |
+| `neighbors` | `target: str`, `include_type_only: bool = True`, `offset: int = 0` | `queries.neighbors` | `dependency` per incoming and outgoing item |
 | `cycles` | `include_type_only: bool = True`, `offset: int = 0` | `queries.cycles` | one closed `chain` per group |
 
 Descriptions are short fixed English text (no repository content), each saying what the tool answers, what
@@ -43,7 +43,7 @@ the arguments mean, that `(likely)` marks a heuristic link and how to get the re
 ## Output
 
 - Lists: items `offset … offset+20` of the full answer (computed with `limit=None`), rendered with
-  `results.render_text`. Neighbors: at most 20 per list.
+  `results.render_text`. Neighbors: the same slice of each of its two lists.
 - `read_lines`: at most 60 lines from `start`; framed as
 
   ```
@@ -55,7 +55,9 @@ the arguments mean, that `(likely)` marks a heuristic link and how to get the re
   ```
 
 - Text is cut by whole lines to 4,000 characters. A cut answer ends with
-  `(cut: call again with offset=N)` or `(cut: call again with start=N)`, and `cut=True`, `next=N`.
+  `(cut: call again with offset=N)` or `(cut: call again with start=N)`, and `cut=True`,
+  `next=N`, where N is `offset` plus the number of items actually shown (or the line after the last shown
+  line).
 - Citations match the items shown in `text`, not the whole answer.
 - Errors: `ToolResult(text="error: <message>", error="<message>")`.
 - Same call on the same snapshot → identical `ToolResult`.

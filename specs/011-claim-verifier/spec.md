@@ -143,7 +143,7 @@ check that the verifier marks it `verified` (or `heuristic` where the tool marke
 
 ### Edge Cases
 
-- A claim with no citation at all is `rejected` with the reason "no citation": it can only be a hypothesis.
+- A claim with no citation at all (other than a query result claim, which names a question instead) is `rejected` with the reason "no citation": it can only be a hypothesis.
 - A claim that names a target in a form the graph knows (file path, node id, external package name such as
   `requests`, C# project path) is resolved the same way as in graph queries; an ambiguous or unknown target
   is `rejected` with the reason the query layer gives.
@@ -166,7 +166,8 @@ check that the verifier marks it `verified` (or `heuristic` where the tool marke
 **Claims and verdicts**
 
 - **FR-001**: The system MUST define a claim as: a kind, the statement it supports (free text, never parsed
-  for facts), and one or more citations. A citation is a repository-relative path, a line, the snapshot id and,
+  for facts), and one or more citations; a query result claim has no citation and names a graph question
+  instead. A citation is a repository-relative path, a line, the snapshot id and,
   depending on the kind, a symbol or a target.
 - **FR-002**: The system MUST support these claim kinds: **dependency** (a file depends on a target, cited at
   the import line), **chain** (an ordered list of dependency steps, used for transitive dependencies and
@@ -237,9 +238,9 @@ check that the verifier marks it `verified` (or `heuristic` where the tool marke
   analyzed repository.
 - **FR-018**: Every tool answer MUST include, next to the short text for the model, the citations it is based
   on in the claim format of FR-001, so that an agent can attach them to a claim without retyping paths and
-  lines.
+  lines; for file lines it returns the shown range, from which the agent builds mention claims.
 - **FR-019**: Tool answers MUST keep facts and likely links apart: a heuristic link is marked as likely in
-  the text and in the citations.
+  the text, and its citation verifies as `heuristic`, never as `verified`.
 
 **Quality**
 

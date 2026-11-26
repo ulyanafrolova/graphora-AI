@@ -110,7 +110,7 @@ Decisions for [plan.md](plan.md). Each item: decision, rationale, alternatives c
 - **Decision**: `tools_for(served) -> dict[str, Callable]` builds six closures named as in MCP:
   `find_definitions(name, offset=0)`, `read_lines(path, start=1, end=None)`, `dependents(target, symbol=None,
   follow_barrels=False, include_type_only=True, offset=0)`, `impact(target, max_depth=None,
-  follow_barrels=False, include_type_only=True, offset=0)`, `neighbors(target, include_type_only=True)`,
+  follow_barrels=False, include_type_only=True, offset=0)`, `neighbors(target, include_type_only=True, offset=0)`,
   `cycles(include_type_only=True, offset=0)`. `TOOLS` is the fixed tuple of `ToolSpec(name, description)` in
   that order. Every call returns `ToolResult(text, citations, cut, next, error)`; errors (bad arguments,
   `NodeNotFound`, `ValueError`, store `ValueError`) become `error` text and nothing else.

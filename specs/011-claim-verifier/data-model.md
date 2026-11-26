@@ -31,7 +31,8 @@ One import link a claim relies on (R3, R5).
 | `distance` | int \| None | query with `member`, impact only |
 | `rank` | int \| None | query, `key_files` only: the member is within the first `rank` files |
 
-Validation (any failure → `invalid_claim`): known kind; fields of other kinds absent; lines ≥ 1; symbol, path
+A dependency or chain claim without steps, or a definition or mention claim without a path, is rejected with
+`no_citation` before validation. Validation (any other failure → `invalid_claim`): known kind; fields of other kinds absent; lines ≥ 1; symbol, path
 and target non-empty; chain steps connected; option keys allowed for the question; exactly one query assertion.
 
 `Claim.cite()` gives the display form `path:line@snapshot` (first step for chains).
