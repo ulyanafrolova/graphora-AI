@@ -315,7 +315,7 @@ with an expired deadline, and a repository served by a local git server; check s
   `backend/src/graphora/pipeline/run.py`. In `run_pipeline`, reuse a stored analysis before fetching only if
   `not history` or its history is final. Read it from the stored graph JSON with a helper `history_final(graph:
   bytes) -> bool` in `backend/src/graphora/history/__init__.py`.
-- [ ] T026 [US2] In `backend/src/graphora/store/store.py` `put`, keep reusing an existing analysis, except when
+- [X] T026 [US2] In `backend/src/graphora/store/store.py` `put`, keep reusing an existing analysis, except when
   its stored history is retryable and the new document's history is final. Then replace it (FR-018, research R6). Read
   the stored graph's `history` with `history_final`.
 - [ ] T027 [US2] Add the jobs flag in `backend/src/graphora/api/jobs.py` and
