@@ -230,3 +230,42 @@ def test_no_echo(client, put, question, params):
     response = get(client, question, "ts-app", snapshot, **params)
     assert response.status_code == 400
     assert "<script>" not in response.text and "xxxx" not in response.text
+
+
+PARAMETERS = {
+    "dependencies": ["target", "include_type_only", "level", "limit"],
+    "dependents": ["target", "symbol", "include_type_only", "follow_barrels", "level", "limit"],
+    "impact": ["target", "max_depth", "include_type_only", "follow_barrels", "level", "limit"],
+    "neighbors": ["target", "include_type_only", "limit"],
+    "cycles": ["include_type_only", "level", "limit"],
+    "key_files": ["include_type_only", "limit"],
+    "definitions": ["name", "limit"],
+    "overview": [],
+    "projects": [],
+}
+
+
+def test_openapi(client):
+    paths = client.app.openapi()["paths"]
+    for question, names in PARAMETERS.items():
+        listed = paths[f"/api/v1/{question}"]["get"]["parameters"]
+        assert [p["name"] for p in listed] == ["repository", "snapshot", *names]
+        required = [p["name"] for p in listed if p["required"]]
+        assert required == ["repository", "snapshot"] + [n for n in names if n in ("target", "name")]
+        by_name = {p["name"]: p["schema"] for p in listed}
+        if "limit" in by_name:
+            assert (by_name["limit"]["minimum"], by_name["limit"]["maximum"]) == (0, 500)
+            assert by_name["limit"]["default"] == (10 if question == "key_files" else 50)
+        if "level" in by_name:
+            assert by_name["level"]["enum"] == ["file", "project"]
+
+
+def test_concurrent(client, put):
+    from concurrent.futures import ThreadPoolExecutor
+
+    snapshot, _ = put("ts-app")
+    alone = {q: get(client, q, "ts-app", snapshot, **p).content for q, p in ROUTES.items()}
+    jobs = [q for q in ROUTES for _ in range(2)]
+    with ThreadPoolExecutor(8) as pool:
+        answers = list(pool.map(lambda q: (q, get(client, q, "ts-app", snapshot, **ROUTES[q]).content), jobs))
+    assert all(body == alone[q] for q, body in answers)

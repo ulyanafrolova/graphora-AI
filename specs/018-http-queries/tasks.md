@@ -201,7 +201,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   `Analysis` from `graph/build.py`),
   then time one request per route (impact/dependents/dependencies/neighbors on a central file such as
   `pkg00/m0000.py`, definitions with any name) and assert each < 3 s (SC-003).
-- [ ] T020 [P] In `backend/tests/integration/test_http_queries_api.py` add `test_openapi`: for each of the nine
+- [X] T020 [P] In `backend/tests/integration/test_http_queries_api.py` add `test_openapi`: for each of the nine
   routes, `client.app.openapi()["paths"]` lists exactly the parameters of contracts/http-api.md with the right
   `required` flags, `limit` `minimum` 0 / `maximum` 500 and default, `level` enum; and `test_concurrent`: eight
   threads asking different questions of one snapshot get the same bytes as single requests.
