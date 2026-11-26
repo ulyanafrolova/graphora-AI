@@ -326,8 +326,7 @@ an unavailable model exits 9 with one error line.
 - [X] T035 [P] Update `CLAUDE.md` § Commands with `uv run graphora ask "<question>" --graph graph.json`
   (and store mode), `GRAPHORA_MODEL` / `GRAPHORA_MODEL_CTX`, and `-m "not llm"`; mark `/ask` in
   `docs/product/project-context.md` §5 as using the 012 agents.
-- [ ] T036 Run `make check` (ruff and the full test suite with PostgreSQL, `-m "not llm"`); fix findings.
-  (Lint and `-m "not db"` pass; the `db` variants wait for PostgreSQL.)
+- [X] T036 Run `make check` (ruff and the full test suite with PostgreSQL, `-m "not llm"`); fix findings.
 - [X] T037 Run the quickstart sections 1–3 (`specs/012-agents/quickstart.md`) and, with Ollama available,
   section 4; note the measured time, the laptop and the model for SC-007 in the PR description.
 
