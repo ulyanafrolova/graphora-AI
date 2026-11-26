@@ -206,7 +206,7 @@ equals the API answer.
   initial positions on a circle in node-id order so every load gives the same picture), level switch System / Component / File (Symbol tab opens search),
   click component → `level=component&component=…`, click file → `node=…`, filters `hide`, search box placeholder, footer
   breadcrumb "System › <component> (<shown> of <n> files shown)" and the Legend.
-- [ ] T035 [P] [US1] Write `frontend/tests/unit/side-panel.test.tsx`: component panel (name, file count, lines of code =
+- [X] T035 [P] [US1] Write `frontend/tests/unit/side-panel.test.tsx`: component panel (name, file count, lines of code =
   sum of `/files` line counts of its files, depends on / used by counts from component links, centrality rank from
   key_files order, key files list, issues from cycles groups intersecting it, "Expand component", "Ask about <name>");
   file panel (path, lines, hotspot rank if present, dependencies and dependents lists with confidence badges, cycles it
