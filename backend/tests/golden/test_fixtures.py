@@ -8,6 +8,7 @@ import pytest
 
 from graphora.adapters import csharp, js, msbuild, python
 from graphora.adapters.msbuild import sln
+from graphora.resolve import http as http_resolve
 from conftest import FIXTURES, REPO_ROOT, edge_key, project, run_analyze
 
 FIXTURE_NAMES = sorted(p.name for p in FIXTURES.iterdir() if (p / "expected.json").is_file())
@@ -57,6 +58,9 @@ def test_provenance_consistent(name):
     }
     for edge in doc["edges"]:
         assert edge["snapshot"] == doc["snapshot"]
+        if edge["type"] == "http_call":  # 015: the bridge links two languages; it has its own extractor
+            assert edge["extractor"] == http_resolve.EXTRACTOR
+            continue
         assert edge["extractor"] == extractors[languages[edge["source"]]]
 
 
@@ -126,14 +130,16 @@ def _ecosystem(node_id):
 
 @pytest.mark.parametrize("name", FIXTURE_NAMES)
 def test_ecosystems_separate(name):
-    """003 US3, 007 R7: a target's ecosystem always matches its source file's language."""
+    """003 US3, 007 R7: a target's ecosystem always matches its source file's language; 015: an unresolved HTTP
+    call has the `http` ecosystem."""
     doc = json.loads(_analyze(FIXTURES / name / "repo"))
     languages = {n["id"]: n["language"] for n in doc["nodes"] if n["kind"] == "file"}
     languages.update({n["id"]: "csharp" for n in doc["nodes"] if n["kind"] in ("project", "solution")})
     allowed = {"python": {"python"}, "typescript": {"npm"}, "javascript": {"npm"}, "csharp": {"dotnet", "nuget"}}
     for edge in doc["edges"]:
         if edge["target"].startswith(("ext:", "unresolved:")):
-            assert _ecosystem(edge["target"]) in allowed[languages[edge["source"]]], edge
+            expected = {"http"} if edge["type"] == "http_call" else allowed[languages[edge["source"]]]
+            assert _ecosystem(edge["target"]) in expected, edge
 
 
 def test_mixed_fullstack_has_no_cross_language_edges():

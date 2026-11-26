@@ -18,6 +18,7 @@
     {"id": "file:frontend/src/main.tsx", "kind": "file", "language": "typescript", "definitions": [
       {"kind": "function", "name": "App", "line": 5, "exported_as": ["App"]}
     ], "exports": []},
+    {"id": "unresolved:http:GET /api/items", "kind": "unresolved", "ecosystem": "http"},
     {"id": "unresolved:python:app", "kind": "unresolved", "ecosystem": "python"}
   ],
   "edges": [
@@ -26,6 +27,7 @@
     {"source": "file:backend/app/api.py", "line": 3, "target": "file:backend/app/models.py", "type": "imports", "form": "static", "symbol": "models", "confidence": "resolved", "reason": null},
     {"source": "file:backend/app/api.py", "line": 10, "target": "unresolved:python:app", "type": "imports", "form": "static", "symbol": "models", "alias": "subproject_models", "confidence": "unresolved", "reason": "not_found"},
 
+    {"source": "file:frontend/src/api.ts", "line": 2, "target": "unresolved:http:GET /api/items", "type": "http_call", "form": "static", "symbol": "GET /api/items", "confidence": "unresolved", "reason": "not_found"},
     {"source": "file:frontend/src/main.tsx", "line": 1, "target": "ext:npm:react", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
     {"source": "file:frontend/src/main.tsx", "line": 2, "target": "ext:npm:yaml", "type": "imports", "form": "static", "symbol": "parse", "confidence": "resolved", "reason": null},
     {"source": "file:frontend/src/main.tsx", "line": 3, "target": "file:frontend/src/api.ts", "type": "imports", "form": "static", "symbol": "fetchItems", "confidence": "resolved", "reason": null}

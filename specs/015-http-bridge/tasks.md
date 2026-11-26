@@ -92,24 +92,24 @@ with a spec reference, one-line docstrings where not obvious).
 
 ### Tests
 
-- [ ] T010 [P] [US1] Write `backend/tests/unit/test_http_extract.py` (Python part): from source text,
+- [X] T010 [P] [US1] Write `backend/tests/unit/test_http_extract.py` (Python part): from source text,
   `extract()` returns `RouteFact`s for `@app.get("/a")` (methods `("GET",)`), `@router.post("/a")`,
   `@app.api_route("/a", methods=["GET", "POST"])` (sorted), `@app.route("/a")` (Flask default `("GET",)`),
   `@bp.route("/a", methods=["DELETE"])`; with `obj`, `line`, `column`, `text`; no fact for `@app.get(path)`
   (non-literal), `@cache` (no call), `@app.get` on a class or nested function is still recorded (decorators
   apply wherever written); a string `"/a"` in a comment or a plain call `app.get("/a")` outside a decorator
   gives nothing.
-- [ ] T011 [P] [US1] Extend `backend/tests/unit/test_http_extract.py` (JS/TS part): `HttpCallFact` for
+- [X] T011 [P] [US1] Extend `backend/tests/unit/test_http_extract.py` (JS/TS part): `HttpCallFact` for
   `fetch("/a")` (method `GET`), `fetch("/a", { method: "POST" })` (`POST`), `window.fetch("/a")`,
   `globalThis.fetch("/a")`, `axios.get("/a")`, `axios.delete('/a')`, `axios({ url: "/a", method: "put" })`
   (`PUT`), `axios.request({ url: "/a", method: "patch" })` (`PATCH`), with `parts`
   `(Part("text", "/a"),)`, line and column; `fetch("/a", { method: m })` has `method=None`; `getUser("/a")`
   and a member call `client.get("/a")` give nothing; works in `.ts`, `.tsx`, `.js`, `.jsx`.
-- [ ] T012 [P] [US1] Write `backend/tests/unit/test_http_match.py`: with hand-built `Route`s and calls,
+- [X] T012 [P] [US1] Write `backend/tests/unit/test_http_match.py`: with hand-built `Route`s and calls,
   a `GET /api/items` call matches the `GET /api/items` route of `backend/app/items.py`; a `POST` call does not
   match a `GET`-only route; a route with methods `("GET", "POST")` matches both; the result carries the route
   file and line.
-- [ ] T013 [US1] Write the US1 part of the fixture: `fixtures/repos/http-bridge/repo/backend/app/items.py`
+- [X] T013 [US1] Write the US1 part of the fixture: `fixtures/repos/http-bridge/repo/backend/app/items.py`
   (FastAPI `app = FastAPI()`, `@app.get("/api/items")`, `@app.post("/api/items")`),
   `backend/app/legacy.py` (Flask `app = Flask(__name__)`, `@app.route("/legacy/ping")`),
   `frontend/src/items.ts` (`fetch("/api/items")`, `axios.post("/api/items", body)`, `fetch("/legacy/ping")`,
@@ -117,7 +117,7 @@ with a spec reference, one-line docstrings where not obvious).
   and its hand-written `fixtures/repos/http-bridge/expected.json` with all nodes, the import edges of these
   files and the three `http_call` edges (`heuristic`, `http_route`, symbols `GET /api/items`,
   `POST /api/items`, `GET /legacy/ping`, call lines, `route_line`s), plus coverage.
-- [ ] T014 [P] [US1] Write `backend/tests/integration/test_http_bridge_queries.py`: on the analyzed fixture,
+- [X] T014 [P] [US1] Write `backend/tests/integration/test_http_bridge_queries.py`: on the analyzed fixture,
   `dependents("backend/app/items.py")` lists `frontend/src/items.ts` with confidence `heuristic` and
   `(likely)` in the text; `impact` includes it as heuristic; `dependents(..., symbol="GET /api/items")` keeps
   only the `GET` call; a dependency `Claim` from `frontend/src/items.ts` at the `fetch` line to
@@ -127,19 +127,19 @@ with a spec reference, one-line docstrings where not obvious).
 
 ### Implementation
 
-- [ ] T015 [US1] Add `RouteFact` and route detection to `backend/src/graphora/adapters/python/extract.py`
+- [X] T015 [US1] Add `RouteFact` and route detection to `backend/src/graphora/adapters/python/extract.py`
   (decorators of `decorated_definition`, research R2; `FileFacts.routes`), bump `VERSION` in
   `backend/src/graphora/adapters/python/__init__.py` to `0.5.0` with a comment "routes for the HTTP bridge
   (015)".
-- [ ] T016 [US1] Add `HttpCallFact`, `Part` and literal-URL call detection to
+- [X] T016 [US1] Add `HttpCallFact`, `Part` and literal-URL call detection to
   `backend/src/graphora/adapters/js/extract.py` (`call_expression` forms of research R3; `FileFacts.http_calls`),
   bump `VERSION` in `backend/src/graphora/adapters/js/__init__.py` to `0.3.0` with a comment "HTTP calls for the
   bridge (015)".
-- [ ] T017 [US1] Implement in `backend/src/graphora/resolve/http.py`: `Route`, routes from `RouteFact`s
+- [X] T017 [US1] Implement in `backend/src/graphora/resolve/http.py`: `Route`, routes from `RouteFact`s
   without prefixes yet, `match()` for literal paths (method, segment equality), and `bridge()` emitting one
   `http_call` edge per matched call (data-model.md § Graph: `heuristic`, `http_route`, `symbol` `"<METHOD>
   <path>"`, call `line`/`column`, `route_line`, `snippet_hash` of the call text, `extractor` EXTRACTOR).
-- [ ] T018 [US1] Run `uv run pytest tests/unit/test_http_extract.py tests/unit/test_http_match.py
+- [X] T018 [US1] Run `uv run pytest tests/unit/test_http_extract.py tests/unit/test_http_match.py
   tests/integration/test_http_bridge_queries.py tests/golden/test_fixtures.py -k "http or bridge"` until green.
 
 ---
@@ -152,18 +152,18 @@ with a spec reference, one-line docstrings where not obvious).
 
 ### Tests
 
-- [ ] T019 [P] [US2] Write `backend/tests/unit/test_http_normalize.py`: `normalize` gives `("users", "*")` for
+- [X] T019 [P] [US2] Write `backend/tests/unit/test_http_normalize.py`: `normalize` gives `("users", "*")` for
   `/users/{user_id}`, `/users/{id:int}`, `/users/<user_id>`, `/users/<int:user_id>`; `("api", "items")` for
   `/api/items/`, `/api/items?page=2`, `/api/items#top`, `//api//items`; `("files", "*")` for
   `/files/{path:path}`; a mixed segment `v{n}` → `*`; the display path is `/users/{}`.
-- [ ] T020 [P] [US2] Extend `backend/tests/unit/test_http_extract.py`: `` fetch(`/users/${id}`) `` →
+- [X] T020 [P] [US2] Extend `backend/tests/unit/test_http_extract.py`: `` fetch(`/users/${id}`) `` →
   parts `text "/users/", param`; `fetch("/users/" + id + "/orders")` → `text, param, text`; a template with
   only text equals the literal.
-- [ ] T021 [P] [US2] Extend `backend/tests/unit/test_http_match.py`: routes `/users/me` and `/users/{id}` in
+- [X] T021 [P] [US2] Extend `backend/tests/unit/test_http_match.py`: routes `/users/me` and `/users/{id}` in
   one file — a call `/users/me` matches `/users/me` (route line of that route), a call `` `/users/${x}` ``
   matches `/users/{id}`; a call `/users/1/orders` matches `/users/{id}/orders` and not `/users/{id}`; the
   same path declared as `/users/<int:id>` in Flask matches the template call; segment counts must agree.
-- [ ] T022 [US2] Add the US2 files to the fixture: `fixtures/repos/http-bridge/repo/backend/app/users.py`
+- [X] T022 [US2] Add the US2 files to the fixture: `fixtures/repos/http-bridge/repo/backend/app/users.py`
   (`@app.get("/users/me")`, `@app.get("/users/{user_id}")`, `@app.get("/users/{user_id}/orders")`) and
   `backend/app/legacy.py` gains `@app.route("/legacy/users/<int:user_id>")`;
   `frontend/src/users.ts` with `` fetch(`/users/${id}`) ``, `fetch("/users/me")`,
@@ -172,11 +172,11 @@ with a spec reference, one-line docstrings where not obvious).
 
 ### Implementation
 
-- [ ] T023 [US2] Implement `normalize` and the display path in `backend/src/graphora/resolve/http.py`
+- [X] T023 [US2] Implement `normalize` and the display path in `backend/src/graphora/resolve/http.py`
   (research R4) and use it for routes and calls; template and concatenation parts in
   `backend/src/graphora/adapters/js/extract.py`; scoring "one point per literal position, ties by earliest
   literal" and the route line of the best match.
-- [ ] T024 [US2] Run `uv run pytest tests/unit/test_http_normalize.py tests/unit/test_http_extract.py
+- [X] T024 [US2] Run `uv run pytest tests/unit/test_http_normalize.py tests/unit/test_http_extract.py
   tests/unit/test_http_match.py tests/golden/test_fixtures.py -k "http"` until green.
 
 **Checkpoint**: commit `http bridge: routes, calls and matching` and push.
@@ -192,13 +192,13 @@ and same-file base constants applied when literal; never guessed otherwise.
 
 ### Tests
 
-- [ ] T025 [P] [US3] Extend `backend/tests/unit/test_http_extract.py`: `RouterFact` for
+- [X] T025 [P] [US3] Extend `backend/tests/unit/test_http_extract.py`: `RouterFact` for
   `router = APIRouter(prefix="/api")` (`router`, `/api`), `APIRouter()` (`""`), `app = FastAPI()` (`app`,
   `""`), `bp = Blueprint("b", __name__, url_prefix="/b")`, a non-literal prefix → `prefix=None`; `MountFact`
   for `app.include_router(items.router, prefix="/v1")` (target `items.router`), `app.include_router(router)`
   (`""`), `app.register_blueprint(bp, url_prefix="/x")`, a non-literal prefix → `None`; JS `constants` for
   `const API = "/api"` at top level only (not inside a function, not `let`, not a template).
-- [ ] T026 [P] [US3] Extend `backend/tests/unit/test_http_match.py`: route prefixes compose router prefix +
+- [X] T026 [P] [US3] Extend `backend/tests/unit/test_http_match.py`: route prefixes compose router prefix +
   mount prefix through an imported name (`from backend.app.routers import items` + `items.router`, using the
   Python import index); FastAPI `include_router(prefix="/v1")` of a router with `prefix="/orders"` gives
   `/v1/orders/…`; Flask `register_blueprint(bp, url_prefix="/x")` of a blueprint with `url_prefix="/b"` gives
@@ -206,7 +206,7 @@ and same-file base constants applied when literal; never guessed otherwise.
   routes; a never-mounted router keeps its own prefix; a
   non-literal prefix anywhere on the path makes the route match nothing; a call `` `${API}/items` `` with
   `const API = "/api"` reads `/api/items`; an imported `API` (not a same-file constant) makes the call dynamic.
-- [ ] T027 [US3] Add the US3 files to the fixture. Imports between backend files use the full dotted path from
+- [X] T027 [US3] Add the US3 files to the fixture. Imports between backend files use the full dotted path from
   the repository root (`backend.app…`; the Python resolver's source roots are the root and `src/`), and
   `backend/`, `backend/app/` and `backend/app/routers/` get `__init__.py`:
   `fixtures/repos/http-bridge/repo/backend/app/main.py` (`app = FastAPI()`,
@@ -222,12 +222,12 @@ and same-file base constants applied when literal; never guessed otherwise.
 
 ### Implementation
 
-- [ ] T028 [US3] Add `RouterFact`/`MountFact` detection to `backend/src/graphora/adapters/python/extract.py`
+- [X] T028 [US3] Add `RouterFact`/`MountFact` detection to `backend/src/graphora/adapters/python/extract.py`
   and top-level `constants` to `backend/src/graphora/adapters/js/extract.py`.
-- [ ] T029 [US3] Compose route prefixes in `backend/src/graphora/resolve/http.py` (research R2: router prefix +
+- [X] T029 [US3] Compose route prefixes in `backend/src/graphora/resolve/http.py` (research R2: router prefix +
   mount prefixes, names resolved through the Python resolver index already built in `graph/build.py`; unknown
   prefix → no route) and substitute a leading same-file constant in call paths (research R3).
-- [ ] T030 [US3] Run the US3 tests and `tests/golden/test_fixtures.py -k http` until green.
+- [X] T030 [US3] Run the US3 tests and `tests/golden/test_fixtures.py -k http` until green.
 
 ---
 
@@ -239,26 +239,26 @@ and same-file base constants applied when literal; never guessed otherwise.
 
 ### Tests
 
-- [ ] T031 [P] [US4] Extend `backend/tests/unit/test_http_match.py`: a call with `parts=None` → `dynamic`,
+- [X] T031 [P] [US4] Extend `backend/tests/unit/test_http_match.py`: a call with `parts=None` → `dynamic`,
   target `unresolved:http:GET ?`; no candidate → `not_found` with target `unresolved:http:GET /nowhere`;
   equal best matches in two files → `ambiguous`, no `file:` edge; `method=None` matching routes in one file →
   edge, in two files → `ambiguous` (target `unresolved:http:? /api/items`); an absolute URL
   (`https://api.github.com/x`, `//cdn.x/y`) → nothing; the unresolved node has ecosystem `http`.
-- [ ] T032 [US4] Add the US4 files to the fixture: `fixtures/repos/http-bridge/repo/backend/app/health_a.py`
+- [X] T032 [US4] Add the US4 files to the fixture: `fixtures/repos/http-bridge/repo/backend/app/health_a.py`
   and `health_b.py` (both `@app.get("/health")` on their own apps), `frontend/src/misc.ts` with
   `fetch(url)`, `fetch(buildUrl())`, `fetch("/health")`, `fetch("/nowhere")`,
   `fetch("https://api.github.com/repos")`, `fetch("/api/items", { method: m })`; update
   `fixtures/repos/http-bridge/expected.json` by hand (unresolved nodes and edges with reasons).
-- [ ] T033 [US4] Update `fixtures/repos/mixed-fullstack/expected.json` by hand: the `fetch("/api/items")` call in
+- [X] T033 [US4] Update `fixtures/repos/mixed-fullstack/expected.json` by hand: the `fetch("/api/items")` call in
   `frontend/src/api.ts` becomes an `http_call` edge to `unresolved:http:GET /api/items`, reason `not_found`,
   with its node.
 
 ### Implementation
 
-- [ ] T034 [US4] Implement in `backend/src/graphora/resolve/http.py`: unresolved edges and `UnresolvedNode(ref,
+- [X] T034 [US4] Implement in `backend/src/graphora/resolve/http.py`: unresolved edges and `UnresolvedNode(ref,
   "http")` for `dynamic`, `not_found`, `ambiguous` (data-model.md § Resolver), dropping absolute URLs; in
   `backend/src/graphora/adapters/js/extract.py` mark scheme or `//` URLs `absolute=True`.
-- [ ] T035 [US4] Run `uv run pytest -m "not db and not slow"` until green; every fixture except
+- [X] T035 [US4] Run `uv run pytest -m "not db and not slow"` until green; every fixture except
   `http-bridge` and `mixed-fullstack` must match its unchanged `expected.json` (FR-016).
 
 **Checkpoint**: commit `http bridge: prefixes and unresolved calls` and push.
