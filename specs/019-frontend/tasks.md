@@ -58,7 +58,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [X] T006 [P] Add to `Makefile`: `web` (`cd frontend && npm run dev`), `web-build` (`cd frontend && npm ci && npm run
   build`), `web-test` (`cd frontend && npm run lint && npm run typecheck && npm test`), `e2e` (`cd frontend && npm run
   build && npx playwright test`); add them to `.PHONY`.
-- [ ] T007 Add jobs to `.github/workflows/checks.yml`: `frontend` (ubuntu, `actions/setup-node@v4` with Node 22 and npm
+- [X] T007 Add jobs to `.github/workflows/checks.yml`: `frontend` (ubuntu, `actions/setup-node@v4` with Node 22 and npm
   cache on `frontend/package-lock.json`, `npm ci`, `npm run lint`, `npm run typecheck`, `npm run gen:types && git diff
   --exit-code src/api/graph.gen.ts`, `npm test`, `npm run build`), and `e2e` (PostgreSQL 17 service as the backend
   job, setup-uv + `uv sync --locked`, setup-node, `npm ci`, `npx playwright install --with-deps chromium`, `npm run
