@@ -31,7 +31,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create `backend/src/graphora/api/questions.py` with a one-line module docstring referencing
+- [X] T001 Create `backend/src/graphora/api/questions.py` with a one-line module docstring referencing
   `specs/018-http-queries/contracts/http-api.md`, a frozen dataclass `Question` with the fields of data-model.md
   (`name: str`, `ask: Callable`, `target: str | None` — `"target"`, `"name"` or None —, `options: tuple[str, ...]`,
   `default_limit: int | None`), `QUESTIONS: tuple[Question, ...] = ()`, `DEFAULT_LIMIT, MAX_LIMIT = 50, 500`, and
