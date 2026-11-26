@@ -240,3 +240,24 @@ def test_client_gone_before_the_stream_starts(ask_app, monkeypatch):
     ask_app.client.post("/api/v1/ask", json=ask_app.body())
     wait(lambda: ask_app.service.running() == 0)
     assert script.calls == []
+
+
+def test_thread_that_cannot_start_frees_the_slot(ask_app, monkeypatch):
+    """The system refusing a new thread ends the stream with an error and frees the slot (013 review)."""
+    model, script, _ = gated_model()
+    ask_app.models.append(model)
+    real_start = threading.Thread.start
+
+    def refuse(self):
+        if self.name.startswith("graphora-ask"):
+            raise RuntimeError("can't start new thread")
+        real_start(self)
+
+    monkeypatch.setattr(threading.Thread, "start", refuse)
+    with ask_app.client.stream("POST", "/api/v1/ask", json=ask_app.body()) as r:
+        got = messages(read_stream(r.iter_lines()))
+    assert got == [("error", None, '{"message":"internal error"}')]
+    assert ask_app.service.running() == 0 and script.calls == []
+    monkeypatch.setattr(threading.Thread, "start", real_start)
+    ask_app.models.append(scripted("x", "y", ClaimsReply(claims=[]))[0])
+    assert ask_app.client.post("/api/v1/ask", json=ask_app.body()).status_code == 200

@@ -76,6 +76,7 @@ class AskRun:
         self.thread = threading.Thread(target=self._run, name=f"graphora-ask-{next(_numbers)}", daemon=True)
         self.state = "new"  # new → started (the thread owns cleanup) or new → closed (never started)
         self._state = threading.Lock()
+        self.start_failed = False
 
     def begin(self) -> bool:
         """Start the thread unless the run was stopped or abandoned first; False when it will not run."""
@@ -88,7 +89,15 @@ class AskRun:
         if not start:
             self.abandon()
             return False
-        self.thread.start()
+        try:
+            self.thread.start()
+        except RuntimeError as exc:  # e.g. the system refuses a new thread
+            log.error("cannot start an ask", exc_info=exc)
+            self.start_failed = True
+            with self._state:
+                self.state = "new"
+            self.abandon()
+            return False
         return True
 
     def abandon(self) -> None:
@@ -132,6 +141,8 @@ class AskRun:
         thread starts here, so a request dropped before the stream starts never runs the agents."""
         try:
             if not self.begin():
+                if self.start_failed:
+                    yield format_sse_event(event="error", data_str=_json({"message": "internal error"}))
                 return
             while True:
                 try:
