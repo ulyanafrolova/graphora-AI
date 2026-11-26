@@ -3,7 +3,8 @@ import { expect, test } from "vitest";
 
 import { App } from "@/App";
 
-test("renders", () => {
+test("opens on import when no snapshot was opened before", async () => {
+  localStorage.clear();
   render(<App />);
-  expect(screen.getByText("graphora")).toBeInTheDocument();
+  expect(await screen.findByText("import")).toBeInTheDocument();
 });
