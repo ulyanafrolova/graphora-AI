@@ -343,7 +343,7 @@ true and wrong hotspot claims with the verifier.
 
 ### Tests
 
-- [ ] T028 [P] [US3] Write `backend/tests/unit/test_verify_hotspots.py` on a synthetic document with a hand-made
+- [X] T028 [P] [US3] Write `backend/tests/unit/test_verify_hotspots.py` on a synthetic document with a hand-made
   history:
   - `rank` 1 of the top file is `verified`;
   - a wrong rank → `rank_mismatch`, hint `rank N`;
@@ -371,7 +371,7 @@ true and wrong hotspot claims with the verifier.
 
 ### Implementation
 
-- [ ] T030 [US3] In `backend/src/graphora/verify/claims.py`:
+- [X] T030 [US3] In `backend/src/graphora/verify/claims.py`:
   - add `"hotspots"` to `ALLOWED_OPTIONS` with `include_type_only`;
   - add the `Claim` fields `metric` and `value` (quoted from data-model.md: "`metric` (`commits` \| `authors` \|
     `score` \| `transitive_dependents` \| `direct_dependents`) and `value` (int ≥ 0). Both are optional, given
