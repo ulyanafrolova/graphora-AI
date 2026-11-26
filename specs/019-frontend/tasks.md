@@ -334,7 +334,7 @@ equals the API answer.
   one snapshot's runs; unavailable IndexedDB → in-memory fallback with `persistent: false`.
 - [X] T058 [US4] Implement `frontend/src/agents/history.ts` with `idb` (database `graphora`, store `answers`, key
   `[repository, snapshot, created]`). Check: T057 passes.
-- [ ] T059 [P] [US4] Write `frontend/tests/unit/ask.test.tsx`: question box and suggested questions; while streaming,
+- [X] T059 [P] [US4] Write `frontend/tests/unit/ask.test.tsx`: question box and suggested questions; while streaming,
   steps appear as they arrive with role colours (explorer purple, analyst blue, reviewer amber); the answer shows role
   chips, run stats (tool calls, seconds, model), facts with green checks and citations `path:line` + short commit,
   cycle warnings red, hypotheses amber "Hypothesis — … Not statically proven."; agent text rendered as text (added to
