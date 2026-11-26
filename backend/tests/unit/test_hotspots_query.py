@@ -102,7 +102,7 @@ def test_text():
 @pytest.mark.parametrize(
     ("changes", "line"),
     [
-        ({"status": "partial"}, "history: partial (time limit), 40 commits read back to 2025-02-01"),
+        ({"status": "partial", "merges_skipped": 0}, "history: partial (time limit), 40 commits read back to 2025-02-01"),
         ({"local_changes": True, "merges_skipped": 0},
          "history: 40 commits from 2025-02-01 to 2026-01-01 (window from 2025-01-01); uncommitted changes not counted"),
         ({"shallow_skipped": 2, "merges_skipped": 0},

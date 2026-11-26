@@ -134,7 +134,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
   - paths not in `paths` (for example `README.md`, `.venv/x.py`) are absent from `files`;
   - `newest`/`oldest`/`window_start` are `YYYY-MM-DDTHH:MM:SSZ` from commit times;
   - two reads give equal results.
-- [ ] T011 [P] [US1] Write `backend/tests/unit/test_hotspots_query.py` on synthetic `GraphDocument`s
+- [X] T011 [P] [US1] Write `backend/tests/unit/test_hotspots_query.py` on synthetic `GraphDocument`s
   (`tests/unit/synthetic.py` style) with a hand-made `History`:
   - `score = commits × transitive_dependents`, e.g. 5 × 3 = 15 (spec US1 scenario 1);
   - order by score, then commits, then transitive dependents, then path (scenario 2);
@@ -181,7 +181,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
   - the paths are the document's file node paths;
   - for a local source it calls `reader.read_history` and sets `local_changes` for a dirty snapshot;
   - it always closes the repository.
-- [ ] T015 [US1] Add `hotspots(ix, *, include_type_only=True, limit=10)` to
+- [X] T015 [US1] Add `hotspots(ix, *, include_type_only=True, limit=10)` to
   `backend/src/graphora/graph/queries.py` per research R8:
   1. call `key_files(..., limit=None)`;
   2. join by path with `ix.doc.history.files`;

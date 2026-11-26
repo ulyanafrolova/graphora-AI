@@ -3,6 +3,7 @@ specs/004-graph-queries research § R3–R10). API, MCP, agents and the verifier
 
 from __future__ import annotations
 
+import dataclasses
 from collections import Counter, defaultdict
 from typing import TypeVar
 
@@ -547,6 +548,22 @@ def key_files(ix: GraphIndex, *, include_type_only: bool = True, limit: int | No
         items.append(Item(node=f, kind="file", transitive_dependents=transitive, direct_dependents=direct))
     items.sort(key=lambda i: (-(i.transitive_dependents or 0), -(i.direct_dependents or 0), i.node))
     return _answer(ix, "key_files", None, {"include_type_only": include_type_only, "limit": limit}, items, limit)
+
+
+def hotspots(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = 10) -> Answer:
+    """Files changed often that many files depend on: score = commits × transitive dependents (014 research § R8)."""
+    _check_limit(limit)
+    history = ix.doc.history
+    changed = {f"file:{f.path}": f for f in history.files}
+    items = []
+    for i in key_files(ix, include_type_only=include_type_only, limit=None).items or ():
+        f = changed.get(i.node)
+        if f is not None:
+            score = f.commits * (i.transitive_dependents or 0)
+            items.append(dataclasses.replace(i, commits=f.commits, authors=f.authors, score=score))
+    items.sort(key=lambda i: (-(i.score or 0), -(i.commits or 0), -(i.transitive_dependents or 0), i.node))
+    options = {"include_type_only": include_type_only, "limit": limit}
+    return _answer(ix, "hotspots", None, options, items, limit, history=dataclasses.replace(history, files=()))
 
 
 def overview(ix: GraphIndex) -> Overview:
