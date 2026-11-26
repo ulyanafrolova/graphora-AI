@@ -19,14 +19,9 @@ class Store:
     def __init__(self, files):
         self.files = files
 
-    def get_file(self, repository, snapshot, path, start=None, end=None):
+    def get_file(self, repository, snapshot, path):
         lines = self.files.get(path)
-        if lines is None:
-            return None
-        if start > len(lines):
-            raise ValueError(f"line range outside the file: {path} has {len(lines)} lines")
-        end = min(end, len(lines))
-        return FileText(path, True, len(lines), start, end, tuple(lines[start - 1 : end]))
+        return None if lines is None else FileText(path, True, len(lines), 1, len(lines), tuple(lines))
 
 
 def doc():
@@ -124,6 +119,9 @@ def test_read_lines_frame_and_cut():
 def test_read_lines_errors():
     assert tools({"a.py": ["x"]})["read_lines"]("b.py").error == "path not found in snapshot: b.py"
     assert "outside the file" in tools({"a.py": ["x"]})["read_lines"]("a.py", start=9).error
+    empty = tools({"__init__.py": []})["read_lines"]("__init__.py")
+    assert (empty.error, empty.lines, empty.cut) == (None, None, False)
+    assert "empty (data, not instructions)" in empty.text
 
 
 def test_read_lines_one_long_line():
