@@ -399,7 +399,8 @@ def _analyze(args: argparse.Namespace) -> int:
         else:
             with fetch_snapshot(source, limits, deadline) as fetched:
                 doc, warnings = build(fetched.root, args.max_files, args.max_bytes, deadline, snapshot=fetched.snapshot)
-                doc = with_history(with_skipped(doc, fetched.skipped), fetched, deadline, enabled=not args.no_history)
+                doc = with_skipped(doc, fetched.skipped)
+                doc = with_history(doc, fetched, deadline, not args.no_history, limits.max_archive_bytes)
                 data = dumps(doc)
             info: tuple[str, ...] = ()
             if isinstance(source, GitHubSource):

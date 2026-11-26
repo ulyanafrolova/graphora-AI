@@ -33,6 +33,8 @@ class FetchedSnapshot:
     snapshot: str | None  # None: build() computes it
     skipped: tuple[Skipped, ...]
     kind: Literal["local", "github", "zip"] = "local"  # 014: where history can come from
+    source: Source | None = None
+    work: Path | None = None  # the temp folder around `root`, for fetched history
 
 
 def with_skipped(doc: GraphDocument, extra: tuple[Skipped, ...]) -> GraphDocument:
@@ -73,7 +75,7 @@ def fetch_snapshot(
                 root, skipped = extract_tar_gz(stream, Path(tmp), limits, deadline, expected_sha=sha)
             if not os.path.lexists(root / ".git"):
                 os.mkdir(root / ".git", 0o755)  # a clone has one: the walk reports it the same way (FR-016)
-            yield FetchedSnapshot(root, f"github.com/{source.owner}/{source.repo}", sha, skipped, "github")
+            yield FetchedSnapshot(root, f"github.com/{source.owner}/{source.repo}", sha, skipped, "github", source, Path(tmp))
     elif isinstance(source, ZipSource):
         name = source.path.name
         with tempfile.TemporaryDirectory(prefix="graphora-", dir=workdir) as tmp:

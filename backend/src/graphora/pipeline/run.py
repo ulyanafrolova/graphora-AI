@@ -74,7 +74,8 @@ def run_pipeline(
     with fetch_snapshot(source, limits.ingest(), deadline, sha=sha, workdir=workdir) as fetched:
         on_stage("analyzing")
         result = analyze(fetched.root, limits.max_files, limits.max_bytes, deadline, snapshot=fetched.snapshot)
-        result = dataclasses.replace(result, doc=with_history(with_skipped(result.doc, fetched.skipped), fetched, deadline))
+        doc = with_history(with_skipped(result.doc, fetched.skipped), fetched, deadline, True, limits.max_archive_bytes)
+        result = dataclasses.replace(result, doc=doc)
         on_stage("storing")
         stored_result = store.put(fetched.repository, result)
     info = None

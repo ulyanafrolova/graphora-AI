@@ -291,7 +291,7 @@ with an expired deadline, and a repository served by a local git server; check s
     counts bytes and stops over `max_archive_bytes` (`too_large`). It checks the deadline (`time_limit`).
     Record `new_shallow` in the shallow file.
   - **Errors**: any `HTTPError`, `GitProtocolError` or OS error → `fetch_failed`.
-- [ ] T023 [US2] Wire GitHub and ZIP into `collect_history` in `backend/src/graphora/history/__init__.py`:
+- [X] T023 [US2] Wire GitHub and ZIP into `collect_history` in `backend/src/graphora/history/__init__.py`:
   - `kind == "zip"` → `zip`;
   - `kind == "github"` → `fetch_history` into a sibling folder of the snapshot root inside the fetch temp
     folder, then `reader.read_history` on it;
