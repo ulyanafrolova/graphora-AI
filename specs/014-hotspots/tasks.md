@@ -318,7 +318,7 @@ with an expired deadline, and a repository served by a local git server; check s
 - [X] T026 [US2] In `backend/src/graphora/store/store.py` `put`, keep reusing an existing analysis, except when
   its stored history is retryable and the new document's history is final. Then replace it (FR-018, research R6). Read
   the stored graph's `history` with `history_final`.
-- [ ] T027 [US2] Add the jobs flag in `backend/src/graphora/api/jobs.py` and
+- [X] T027 [US2] Add the jobs flag in `backend/src/graphora/api/jobs.py` and
   `backend/src/graphora/pipeline/jobs.py`:
   - body key `history` (boolean, default true; anything else → 400 `history must be true or false`);
   - ZIP query parameter `history=true|false`;

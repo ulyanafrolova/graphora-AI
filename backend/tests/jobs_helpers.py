@@ -76,7 +76,7 @@ class Stub:
         self.started = []
         self.error = error
 
-    def __call__(self, source, limits, store, deadline, on_stage, workdir=None):
+    def __call__(self, source, limits, store, deadline, on_stage, workdir=None, history=True):
         self.started.append(source)
         for stage in self.stages:
             on_stage(stage)
