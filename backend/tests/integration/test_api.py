@@ -226,6 +226,8 @@ QUESTION_PATHS = [  # 018
     "/api/v1/overview",
     "/api/v1/projects",
     "/api/v1/components",
+    "/api/v1/files",  # 019
+    "/api/v1/info",
 ]
 
 

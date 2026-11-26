@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 def create_app(store: Store, runner: JobRunner | None = None, asks: AskService | None = None) -> FastAPI:
     app = FastAPI(title="Graphora", version="0.1.0", openapi_url="/api/v1/openapi.json", docs_url="/api/v1/docs", redoc_url=None)
     errors.install(app)
-    app.include_router(router(store))
+    app.include_router(router(store, runner, asks))
     app.include_router(questions.router(store))
     if runner is not None:
         app.include_router(jobs.router(runner))

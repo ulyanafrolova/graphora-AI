@@ -84,6 +84,9 @@ DESCRIPTIONS = {
 }
 
 
+TOOLS = {"graph_overview": OVERVIEW} | DESCRIPTIONS  # 019: every tool in store mode, for GET /api/v1/info
+
+
 def _result(value: Answer | Overview, extra: dict[str, Any] | None = None, heading: str = "") -> CallToolResult:
     """The answer document as structured content and `render_text` as text (research § R4)."""
     text = heading + render_text(value)

@@ -8,6 +8,8 @@ serializes access to its connection.
 from __future__ import annotations
 
 import re
+from importlib.metadata import version
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
@@ -17,7 +19,13 @@ from graphora.graph import queries
 from graphora.graph.load import loads
 from graphora.graph.results import dumps
 from graphora.graph.serialize import SCHEMA_VERSION
+from graphora.ingest.walk import EXCLUDED_DIRS
+from graphora.mcp.server import TOOLS
+from graphora.pipeline.jobs import JobRunner
 from graphora.store import Store
+
+if TYPE_CHECKING:
+    from graphora.api.ask import AskService
 
 _INT = re.compile(r"-?[0-9]{1,9}")
 
@@ -62,8 +70,34 @@ def stored_index(store: Store, repository: str, snapshot: str) -> queries.GraphI
     return queries.index(loads(stored.graph))
 
 
-def router(store: Store) -> APIRouter:
+def router(store: Store, runner: JobRunner | None = None, asks: AskService | None = None) -> APIRouter:
     api = APIRouter(prefix="/api/v1")
+
+    @api.get("/info")
+    def info(request: Request) -> Response:
+        _params(request, ())
+        limits = None if runner is None else runner.limits.as_dict() | {"skipped": sorted(EXCLUDED_DIRS)}
+        return json_response(
+            {
+                "version": version("graphora"),
+                "ask": {"enabled": asks is not None, "model": None if asks is None else asks.setting},
+                "jobs": {"enabled": runner is not None, "limits": limits},
+                "mcp_tools": [{"name": name, "description": TOOLS[name]} for name in sorted(TOOLS)],
+            }
+        )
+
+    @api.get("/files")
+    def files(request: Request) -> Response:
+        params = _params(request, ("repository", "snapshot"))
+        stored_index(store, params["repository"], params["snapshot"])
+        listed = store.list_files(params["repository"], params["snapshot"])
+        return json_response(
+            {
+                "repository": params["repository"],
+                "snapshot": params["snapshot"],
+                "files": [{"path": p, "has_text": t, "line_count": n} for p, t, n in listed],
+            }
+        )
 
     @api.get("/repositories")
     def repositories(request: Request) -> Response:

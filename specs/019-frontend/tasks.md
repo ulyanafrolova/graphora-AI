@@ -127,7 +127,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [X] T017 Add `Store.list_files(repository, snapshot) -> list[tuple[str, bool, int]]` (one `SELECT path, has_text,
   line_count FROM files WHERE repository = %s AND snapshot = %s ORDER BY path`) in
   `backend/src/graphora/store/store.py`, with a test in `backend/tests/golden/test_store_roundtrip.py`.
-- [ ] T018 Add `GET /api/v1/files` (uses `stored_index` for 404/409, then `list_files`) and `GET /api/v1/info` (no
+- [X] T018 Add `GET /api/v1/files` (uses `stored_index` for 404/409, then `list_files`) and `GET /api/v1/info` (no
   parameters; `version` = `importlib.metadata.version("graphora")`; `jobs.limits` from the `JobRunner`'s
   `PipelineLimits` and skipped folder names; tools (store mode, with `read_lines`) from a new constant `TOOL_NAMES` exported by
   `backend/src/graphora/mcp/server.py` with `DESCRIPTIONS`) in `backend/src/graphora/api/routes.py`; `router` takes the
