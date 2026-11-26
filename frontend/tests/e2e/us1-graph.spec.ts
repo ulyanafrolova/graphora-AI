@@ -48,7 +48,7 @@ test("file level shows externals, hide external removes them", async ({ page, re
   await page.goto(at("mixed-fullstack", snap, "graph", "level=file"));
   await graphReady(page);
   expect((await nodesWith(page, "external")).length).toBeGreaterThan(0);
-  await page.getByLabel("Hide external").check();
-  await graphReady(page);
-  expect(await nodesWith(page, "external")).toEqual([]);
+  await page.getByLabel("Hide external").click();
+  await expect(page.getByLabel("Hide external")).toBeChecked();
+  await expect.poll(() => nodesWith(page, "external")).toEqual([]);
 });
