@@ -12,7 +12,7 @@ from dulwich.objects import Blob, Commit, Tree
 from dulwich.repo import Repo
 
 DAY = 86400
-T0 = 1_750_000_000  # 2025-06-15
+T0 = 1_750_000_000  # 2025-06-15T15:06:40Z
 
 
 def _tree(repo: Repo, files: dict[str, bytes]) -> bytes:
