@@ -230,7 +230,7 @@ equals the API answer.
   `tokens.ts` (Shiki `codeToTokens` with `createJavaScriptRegexEngine()`, no WASM engine; languages python, typescript, tsx, javascript, csharp loaded lazily; tokens
   rendered as `<span>` text only; fall back to plain text on failure). Check: T039 passes; add these components to
   T031's table.
-- [ ] T041 [US1] Write `frontend/tests/e2e/us1-graph.spec.ts`: open `/`, pick `py-cycles`; System level shows the
+- [X] T041 [US1] Write `frontend/tests/e2e/us1-graph.spec.ts`: open `/`, pick `py-cycles`; System level shows the
   components of `/api/v1/components`; expand one; select `loop/a.py`; impact highlights exactly the `/api/v1/impact`
   nodes; open code; click line 1; provenance equals the edge of the graph document; reload the address → same view.
   Same flow on `mixed-fullstack` checks a heuristic link is dashed (has class `heuristic`).
