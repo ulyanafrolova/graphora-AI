@@ -200,7 +200,7 @@ reason and that no edge points to a backend file for it.
   every consumer (graph queries, store, HTTP API, MCP server, verifier, agents) MUST accept the new version in
   the same change.
 - **FR-012**: Graph questions (dependents, impact, neighbors, cycles) MUST include HTTP edges as heuristic links,
-  exactly like other heuristic edges, and MUST allow excluding them the same way.
+  exactly like other heuristic edges (there is no option to exclude heuristic edges today; none is added).
 - **FR-013**: The verifier MUST give a claim that relies on an HTTP edge the status `heuristic`, never
   `verified`.
 - **FR-014**: Output MUST stay deterministic: HTTP edges and unresolved calls sorted like other edges.
