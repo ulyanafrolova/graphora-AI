@@ -298,7 +298,7 @@ equals the API answer.
   your code", "Ask agents about this" prefilled "How do I break the <a> ⇄ <b> cycle?"; "no cycles" empty state.
 - [X] T049 [US3] Implement `frontend/src/insights/CyclesPage.tsx`, `CycleList.tsx`, `CycleDiagram.tsx` (small
   Cytoscape, preset positions), `CutCard.tsx`. Check: T048 passes.
-- [ ] T050 [P] [US3] Write `frontend/tests/unit/hotspots.test.tsx`: treemap tiles = hotspot items, area ∝ line count
+- [X] T050 [P] [US3] Write `frontend/tests/unit/hotspots.test.tsx`: treemap tiles = hotspot items, area ∝ line count
   from `/files` (minimum area for 0-line files), colour from score normalised to the answer's maximum (low green →
   amber → red), label path and score; "Top risks" table: file, commits, used by (`transitive_dependents`), bus factor
   (`authors`, red when 1, amber when 2) — no names; history base line from the answer's `history` (window start,
