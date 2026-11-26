@@ -43,7 +43,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   already ignored; do NOT ignore `node_modules/` globally, fixtures contain them on purpose).
 - [X] T002 [P] Configure TypeScript strict in `frontend/tsconfig.json` (+ `tsconfig.node.json`): `strict`,
   `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, path alias `@/` → `src/`.
-- [ ] T003 [P] Configure linting in `frontend/eslint.config.js` (flat config): typescript-eslint strict, react,
+- [X] T003 [P] Configure linting in `frontend/eslint.config.js` (flat config): typescript-eslint strict, react,
   react-hooks, import order; errors for `react/no-danger`, `no-eval`, `no-implied-eval`, `no-new-func`;
   `no-restricted-properties` banning Cytoscape traversal calls `bfs`, `dfs`, `dijkstra`, `aStar`, `floydWarshall`,
   `predecessors`, `successors`, `kruskal`, `pageRank`, `degreeCentrality*`, `closenessCentrality*`,
