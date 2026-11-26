@@ -132,6 +132,8 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
         out["skipped"] = doc["coverage"]["skipped"]
     if "snapshot_kind" in sections:
         out["snapshot_kind"] = _snapshot_kind(doc["snapshot"])
+    if "history" in sections:
+        out["history"] = doc["history"]
     return out
 
 

@@ -101,7 +101,7 @@ of the group. Push at the end of each phase.
 
 **Commit**: `graph schema v8 with history section`
 
-- [ ] T009 Add `"history"` to `project()` in `backend/tests/conftest.py` (copied as is) and to the sections of
+- [X] T009 Add `"history"` to `project()` in `backend/tests/conftest.py` (copied as is) and to the sections of
   `test_matches_expected` in `backend/tests/golden/test_fixtures.py`. No fixture has the section yet, so the new
   case is skipped and the suite stays green; the fixtures get it in T017.
 
