@@ -399,7 +399,7 @@ equals the API answer.
   version" and contain no digits.
 - [X] T071 [US6] Implement `frontend/src/integrations/McpPage.tsx` and `NotAvailable.tsx`; routes `pr-impact`,
   `security`, `mcp`. Check: T070 passes.
-- [ ] T072 [US6] Write `frontend/tests/e2e/us6-mcp.spec.ts`: MCP page lists the tools of `/api/v1/info`; PR impact and
+- [X] T072 [US6] Write `frontend/tests/e2e/us6-mcp.spec.ts`: MCP page lists the tools of `/api/v1/info`; PR impact and
   Security show the placeholder.
 
 ---
