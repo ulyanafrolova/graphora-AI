@@ -79,7 +79,7 @@ GET  /api/v1/jobs/{id}                   job stage, then the stored repository a
 GET  /api/v1/repositories                stored repositories and their snapshots                (005)
 GET  /api/v1/graph?repository=&snapshot= nodes and edges for Cytoscape.js                       (005)
 GET  /api/v1/file?repository=&snapshot=&path=[&start=&end=]  source file for the viewer        (005)
-POST /repos/{id}/ask                     question to agents, streamed (SSE): planned, feature 013
+POST /repos/{id}/ask                     question to agents, streamed (SSE): planned, feature 013 (agents and CLI `graphora ask`: 012)
 ```
 
 Long analysis runs as a background job with stages (`queued → resolving → fetching → analyzing → storing →

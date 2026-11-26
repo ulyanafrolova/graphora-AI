@@ -44,7 +44,8 @@ def model_from_setting(setting: str) -> BaseChatModel:
         raise ModelUnavailable(setting, "-", "expected provider:model, e.g. ollama:qwen3:8b")
     options: dict[str, object] = {}
     if provider == "ollama":
-        options = {"num_ctx": int(os.environ.get("GRAPHORA_MODEL_CTX") or DEFAULT_CTX), "temperature": 0}
+        ctx = int(os.environ.get("GRAPHORA_MODEL_CTX") or DEFAULT_CTX)
+        options = {"num_ctx": ctx, "temperature": 0, "reasoning": False}  # no separate thinking; inline <think> text is stripped
     try:
         return init_chat_model(name, model_provider=provider, **options)
     except ImportError as exc:

@@ -54,10 +54,11 @@ class _Recorder:
 
 
 def _text(message: BaseMessage) -> str:
+    """The reply text without reasoning that some models write inline before `</think>`."""
     content = message.content
-    if isinstance(content, str):
-        return content
-    return "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in content)
+    if not isinstance(content, str):
+        content = "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in content)
+    return content.rsplit("</think>", 1)[-1].strip()
 
 
 class _Agents:
@@ -175,7 +176,8 @@ class _Agents:
         self._tool_loop("analyst", messages, counters, MAX_TURN_MODEL_CALLS - 1)
         stated: list[Any] = []
         if not counters["failed"] and not self.rec.failed:
-            messages.append(HumanMessage(prompts.claims_task(open_ids)))
+            cited = citation_block(list(self.ids.claims), self.ids.claims, 4000)
+            messages.append(HumanMessage(prompts.claims_task(open_ids, cited)))
             reply = self._call(self.model.with_structured_output(ClaimsReply), messages, counters, parse=True)
             if reply is None and not counters["failed"]:
                 self.rec.emit("claim_invalid", "analyst", detail="the claims reply could not be read")

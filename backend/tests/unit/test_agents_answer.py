@@ -54,7 +54,7 @@ def test_every_kind_has_a_sentence_and_cite():
         "line 4 of `a.py` mentions `A`",
         "`c.py` is among the files in its impact of `a.py` at distance 2",
         "`a.py` is among the 3 most depended-on files",
-        "the snapshot has 1 import cycles",
+        "the snapshot has 1 import cycle",
     ]
     assert cite(claims[5]) == "key_files()@snap" and cite(claims[2]) == "a.py:3@snap"
 

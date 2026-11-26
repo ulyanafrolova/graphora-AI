@@ -27,7 +27,7 @@ def test_tool_budget_stops_at_15_and_claims_still_count():
     model, script = scripted(
         calls(*[DEP] * 4), calls(*[DEP] * 4), calls(*[DEP] * 4), calls(*[DEP] * 4),
         ClaimsReply(claims=[ClaimItem(statement="routes", cite="c1")]),
-        "summary of api/routes.py",
+        "<think>maybe web/login.ts</think>\nsummary of api/routes.py",
     )
     run = ask("what breaks?", served(store=False), model=model)
     tool_events = kinds(run, "tool_call")
@@ -36,6 +36,7 @@ def test_tool_budget_stops_at_15_and_claims_still_count():
     assert [k for k, _, _ in script.calls].count("structured") == 1 and not script.replies
     assert [i.cite.split("@")[0] for i in run.answer.facts] == ["api/routes.py:1"]
     assert run.answer.end == "budget_spent"
+    assert (run.answer.summary_source, run.answer.summary) == ("model", "summary of api/routes.py")
 
 
 def test_bad_calls_count_and_do_not_run(monkeypatch):

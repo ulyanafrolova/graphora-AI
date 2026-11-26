@@ -317,17 +317,18 @@ an unavailable model exits 9 with one error line.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T034 [P] Write `backend/tests/integration/test_agents_live.py` marked `llm` and `db`: skipped unless
+- [X] T034 [P] Write `backend/tests/integration/test_agents_live.py` marked `llm` and `db`: skipped unless
   `GRAPHORA_TEST_MODEL` is set; for this test only replaces `_no_network` with a guard that allows
   connections to the model address (host and port of `OLLAMA_HOST`, default `127.0.0.1:11434`) and fails on
   any other address, recording every address connected to (FR-018); runs `ask` on stored `mixed-fullstack` with the real
   model; asserts tool calls ≤ 15, revisions ≤ 2, every fact re-verifies `verified`, nothing rejected is a fact,
   and the only address connected to is the model's (FR-018, FR-023, SC-001, SC-002). Wording is not checked.
-- [ ] T035 [P] Update `CLAUDE.md` § Commands with `uv run graphora ask "<question>" --graph graph.json`
+- [X] T035 [P] Update `CLAUDE.md` § Commands with `uv run graphora ask "<question>" --graph graph.json`
   (and store mode), `GRAPHORA_MODEL` / `GRAPHORA_MODEL_CTX`, and `-m "not llm"`; mark `/ask` in
   `docs/product/project-context.md` §5 as using the 012 agents.
 - [ ] T036 Run `make check` (ruff and the full test suite with PostgreSQL, `-m "not llm"`); fix findings.
-- [ ] T037 Run the quickstart sections 1–3 (`specs/012-agents/quickstart.md`) and, with Ollama available,
+  (Lint and `-m "not db"` pass; the `db` variants wait for PostgreSQL.)
+- [X] T037 Run the quickstart sections 1–3 (`specs/012-agents/quickstart.md`) and, with Ollama available,
   section 4; note the measured time, the laptop and the model for SC-007 in the PR description.
 
 **Checkpoint**: commit `agents: live check, docs and cleanup` and push.

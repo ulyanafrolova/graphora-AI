@@ -105,7 +105,9 @@ later.
 
 **Decision**: one setting, `GRAPHORA_MODEL` (or `--model`), in `init_chat_model` form `provider:model`,
 default `ollama:qwen3:8b`. For the `ollama` provider the agents pass `num_ctx=16384` and `temperature=0`
-(overridable by `GRAPHORA_MODEL_CTX`); the Ollama address comes from the standard `OLLAMA_HOST`. Model
+(overridable by `GRAPHORA_MODEL_CTX`) and `reasoning=False`; the Ollama address comes from the standard
+`OLLAMA_HOST`. Some models (qwen3) still write their reasoning inline before `</think>`; the agents keep only
+the text after the last `</think>` (found in the live check). Model
 construction lives only in `agents/model.py`; tests pass a model object instead of a setting.
 
 Connection failures (`httpx.ConnectError`, `ConnectionError`, Ollama "model not found") at any model call

@@ -16,7 +16,7 @@ def test_default_setting(monkeypatch):
 def test_ollama_model_options(monkeypatch):
     monkeypatch.delenv("GRAPHORA_MODEL_CTX", raising=False)
     model = model_from_setting("ollama:qwen3:8b")
-    assert (model.model, model.num_ctx, model.temperature) == ("qwen3:8b", 16384, 0)
+    assert (model.model, model.num_ctx, model.temperature, model.reasoning) == ("qwen3:8b", 16384, 0, False)
     monkeypatch.setenv("GRAPHORA_MODEL_CTX", "8192")
     assert model_from_setting("ollama:qwen3:8b").num_ctx == 8192
 

@@ -62,7 +62,10 @@ CLAIMS = (
     "number of results) or member (a file in the result; distance for impact; rank for key_files);\n"
     "- path, line and target (and name if a name is imported): a dependency at an import line.\n"
     "Add revises: \"h1\" when a claim corrects the open hypothesis h1. Claim only what the tool results show; "
-    "every claim is checked by code against the graph, and unproven claims are reported as hypotheses."
+    "every claim is checked by code against the graph, and unproven claims are reported as hypotheses.\n"
+    "Example: {\"claims\": [{\"statement\": \"api.py imports models.py\", \"cite\": \"c1\"}, "
+    "{\"statement\": \"models.py has 1 direct dependent\", \"question\": \"dependents\", \"target\": \"app/models.py\", "
+    "\"count\": 1}]}"
 )
 
 SUMMARY = (
@@ -86,10 +89,9 @@ def analyst_task(question: str, task: str | None, notes: str, citations: str) ->
     return "\n\n".join(parts)
 
 
-def claims_task(open_ids: Sequence[str]) -> str:
-    if not open_ids:
-        return CLAIMS
-    return CLAIMS + f"\nOpen hypotheses: {', '.join(open_ids)}."
+def claims_task(open_ids: Sequence[str], citations: str) -> str:
+    text = CLAIMS + f"\n\nCitations you can cite:\n{citations or '(none)'}"
+    return text if not open_ids else text + f"\nOpen hypotheses: {', '.join(open_ids)}."
 
 
 def revision_task(hypotheses: Sequence[Hypothesis], revision: int) -> str:

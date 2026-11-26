@@ -22,6 +22,14 @@ _LABELS = {
     "cycles": "import cycles",
     "key_files": "key files",
 }
+_SINGULAR = {
+    "direct dependencies": "direct dependency",
+    "direct dependents": "direct dependent",
+    "files in its impact": "file in its impact",
+    "neighbors": "neighbor",
+    "import cycles": "import cycle",
+    "key files": "key file",
+}
 _EXTENSIONS = (
     "py|pyi|ts|tsx|js|jsx|mjs|cjs|mts|cts|cs|csproj|sln|props|targets|json|toml|cfg|ini|md|txt|yml|yaml|html|css|vue"
 )
@@ -50,6 +58,7 @@ def sentence(claim: Claim) -> str:
         return f"line {claim.line} of `{claim.path}` mentions `{claim.symbol}`"
     label = _LABELS.get(claim.question or "", claim.question or "results")
     if claim.count is not None:
+        label = _SINGULAR.get(label, label) if claim.count == 1 else label
         return f"`{claim.target}` has {claim.count} {label}" if claim.target else f"the snapshot has {claim.count} {label}"
     if claim.question == "key_files":
         return f"`{claim.member}` is among the {claim.rank} most depended-on files" if claim.rank else f"`{claim.member}` is a key file"
