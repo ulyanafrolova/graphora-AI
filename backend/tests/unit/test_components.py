@@ -70,15 +70,22 @@ def test_same_bytes_twice():
     assert dumps(queries.components(queries.index(d))) == dumps(queries.components(queries.index(d)))
 
 
-def test_isolated_files_grouped_by_top_folder():
-    d = doc([edge("a/1.py", "a/2.py")], files=["a/3.py", "tools/x.py", "tools/y.py", "z.py"])
+def test_isolated_files():
+    d = doc([edge("a/1.py", "a/2.py")], files=["a/__init__.py", "a/sub/3.py", "tools/x.py", "tools/y.py", "z.py"])
     assert short(answer(d)) == [
-        ("component:1", "a", ["a/1.py", "a/2.py"], False),
-        ("component:2", "a · 2", ["a/3.py"], False),
-        ("component:3", "tools", ["tools/x.py", "tools/y.py"], False),
-        ("component:4", ".", ["z.py"], False),
+        ("component:1", "a", ["a/1.py", "a/2.py", "a/__init__.py", "a/sub/3.py"], False),
+        ("component:2", "tools", ["tools/x.py", "tools/y.py"], False),
+        ("component:3", ".", ["z.py"], False),
     ]
     assert answer(d)["links"] == []
+
+
+def test_self_import_does_not_link():
+    d = doc([edge("a/1.py", "a/2.py"), edge("b/s.py", "b/s.py")])
+    assert short(answer(d)) == [
+        ("component:1", "a", ["a/1.py", "a/2.py"], False),
+        ("component:2", "b", ["b/s.py"], True),
+    ]
 
 
 def test_externals_and_unresolved_left_out():

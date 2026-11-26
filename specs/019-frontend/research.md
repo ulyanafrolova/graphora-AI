@@ -45,8 +45,10 @@ answer in < 0.5 s.
 - Graph: undirected, file nodes only, one edge per linked file pair, weight = number of import edges in both directions
   (resolved and heuristic links; unresolved and externals left out). Nodes and edges are added in sorted order.
 - Partition: `networkx.community.louvain_communities(g, weight="weight", resolution=1, seed=0)`; each community sorted
-  by path; communities ordered by their first path. Files with no links (singleton communities) are grouped into one
-  component per top-level folder, so a repository of unrelated scripts does not explode into one component per file.
+  by path; communities ordered by their first path. Links of a file to itself do not connect files. Files with no
+  links to other files (package `__init__.py`, unrelated scripts) join the linked component whose name is their folder
+  or a parent folder of it (the longest such name, ties by component order); the others are grouped into one component
+  per top-level folder (`.` for root files). A component keeps the name computed from its linked files.
 - Name (clarification Q5): longest common folder of the files; if none, the most frequent top-level folder (ties by
   path order; a root file counts as `.`); duplicate names get ` · 2`, ` · 3`, … in component order.
 - Id: `component:<n>`, 1-based in component order.
