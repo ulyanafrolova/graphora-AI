@@ -215,7 +215,16 @@ def test_internal_error_hides_details(client, monkeypatch):
     assert b"secret" not in response.content and b"/Users" not in response.content
 
 
-QUESTION_PATHS = ["/api/v1/dependencies", "/api/v1/dependents", "/api/v1/impact", "/api/v1/neighbors"]  # 018
+QUESTION_PATHS = [  # 018
+    "/api/v1/dependencies",
+    "/api/v1/dependents",
+    "/api/v1/impact",
+    "/api/v1/neighbors",
+    "/api/v1/cycles",
+    "/api/v1/key_files",
+    "/api/v1/overview",
+    "/api/v1/projects",
+]
 
 
 @pytest.mark.parametrize("method", ["post", "put", "delete", "patch"])

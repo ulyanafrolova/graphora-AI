@@ -142,7 +142,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   `include_type_only`; 10), `overview` (no target, no options, `default_limit=None`, ask `queries.overview`),
   `projects` (no target, no options, `default_limit=None`, ask `queries.projects`) in
   `backend/src/graphora/api/questions.py`. Check: T009, T010 pass.
-- [ ] T012 [US2] Add the four paths to `test_only_read_endpoints` and `test_only_get` in
+- [X] T012 [US2] Add the four paths to `test_only_read_endpoints` and `test_only_get` in
   `backend/tests/integration/test_api.py`.
 
 **Checkpoint**: the cycles screen and the header numbers can be served (spec US2).
