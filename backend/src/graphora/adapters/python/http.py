@@ -121,7 +121,7 @@ def _router(statement: Node) -> RouterFact | None:
     prefix: str | None = ""
     if keyword is not None:
         _, keywords = _arguments(right)
-        if keyword in keywords:
+        if keyword in keywords and keywords[keyword].type != "none":  # `prefix=None` is the default: no prefix
             prefix = literal(keywords[keyword])
     return RouterFact(_text(left), kind, prefix)
 
@@ -138,7 +138,7 @@ def _mount(position: Positions, call: Node) -> MountFact | None:
     target = positional[0] if positional else keywords.get(target_keyword)
     if target is None or target.type not in ("identifier", "attribute"):
         return None
-    given = keyword in keywords
+    given = keyword in keywords and keywords[keyword].type != "none"  # `url_prefix=None` means no override
     prefix = literal(keywords[keyword]) if given else ""
     return MountFact(_text(obj), _text(target), prefix, given, position(call)[0])
 

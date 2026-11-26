@@ -213,3 +213,11 @@ def test_url_given_as_a_constant():
     source = b'const U = "/api/items";\nconst G = "https://api.github.com/x";\nfetch(U);\nfetch(G);\nfetch(other);\n'
     edges, _ = bridge(facts, {"f.ts": js_extract("f.ts", source)}, SNAP)
     assert [(e.line, e.target, e.reason) for e in edges] == [(3, "file:m.py", "http_route"), (5, "unresolved:http:GET ?", "dynamic")]
+
+
+def test_explicit_none_prefix_is_no_prefix():
+    """`register_blueprint(bp, url_prefix=None)` keeps the blueprint's own prefix (013 review)."""
+    facts = py(m='from flask import Blueprint, Flask\nbp = Blueprint("b", __name__, url_prefix="/admin")\n@bp.route("/stats")\n'
+                 'def s(): pass\nc = Blueprint("c", __name__, url_prefix=None)\n@c.route("/c")\ndef c_(): pass\n'
+                 'app = Flask(__name__)\napp.register_blueprint(bp, url_prefix=None)\napp.register_blueprint(c)\n')
+    assert sorted(r.segments for r in routes(facts)) == [("admin", "stats"), ("c",)]
