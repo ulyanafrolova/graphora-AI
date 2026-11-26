@@ -2,17 +2,14 @@
 research § R5). A dulwich server on 127.0.0.1 stands in for github.com; it ignores `deepen-since`."""
 
 import json
-import threading
-from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 import pytest
 from dulwich.repo import Repo
-from dulwich.server import DictBackend
-from dulwich.web import make_wsgi_chain
 
 from archives import tar_of_dir
 from conftest import run_analyze
 from fake_github import FakeGitHub
+from git_server import allow_loopback, serve_repo
 from graphora.history import github as history_github
 from graphora.history.reader import read_history
 from graphora.ingest import github
@@ -28,37 +25,15 @@ COMMITS = [
 ]
 
 
-class _Quiet(WSGIRequestHandler):
-    def log_message(self, *args):
-        pass
-
-
-def _broken(app, status):
-    def wrapped(environ, start_response):
-        if status == 301:
-            start_response("301 Moved Permanently", [("Location", "https://example.com/o/r.git/info/refs")])
-        else:
-            start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
-        return [b""]
-
-    return wrapped if status else app
-
-
 @pytest.fixture
 def served(tmp_path, monkeypatch):
-    """Serves a built repository; `served.status = 500 | 301` makes the server fail."""
+    """A served built repository; `state["status"] = 500 | 301` makes the server fail."""
     origin = tmp_path / "origin"
     shas = make_repo(origin, COMMITS)
-    repo = Repo(str(origin))
-    state = {"status": None}
-    app = make_wsgi_chain(DictBackend({b"/o/r.git": repo}))
-    server = make_server("127.0.0.1", 0, lambda e, s: _broken(app, state["status"])(e, s), handler_class=_Quiet)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    monkeypatch.setattr(history_github, "_remote_url", lambda source: f"http://127.0.0.1:{server.server_port}/o/r.git")
-    yield origin, shas, state
-    server.shutdown()
-    repo.close()
+    allow_loopback(monkeypatch)
+    with serve_repo(origin) as (url, state):
+        monkeypatch.setattr(history_github, "_remote_url", lambda source: url)
+        yield origin, shas, state
 
 
 def fetch(tmp_path, sha, max_bytes=10**8, deadline=None):
@@ -107,6 +82,7 @@ def test_unknown_commit(served, tmp_path):
 
 
 def test_unreachable(tmp_path, monkeypatch):
+    allow_loopback(monkeypatch)
     monkeypatch.setattr(history_github, "_remote_url", lambda source: "http://127.0.0.1:9/o/r.git")
     assert fetch(tmp_path, "1" * 40) == "fetch_failed"
 
@@ -132,6 +108,7 @@ def test_link_has_history(served, tmp_path, monkeypatch):
 
 
 def test_link_without_server(tmp_path, monkeypatch):
+    """The suite denies the network, so the fetch from github.com fails like a network error."""
     origin = tmp_path / "origin"
     sha = make_repo(origin, COMMITS)[-1]
     fake = FakeGitHub()
