@@ -60,6 +60,17 @@ class Call:
 # --- routes --------------------------------------------------------------------------------------------------
 
 
+def _from_module(path: str, record: Any, index: py_resolve.ModuleIndex) -> str | None:
+    """The absolute dotted module of a `from` import, relative ones included (as `py_resolve.resolve` does)."""
+    if record.level == 0:
+        return record.module
+    package = py_resolve._package_parts(path, index)
+    drop = record.level - 1
+    if drop > len(package) or len(package) - drop == 0:
+        return None
+    return ".".join(package[: len(package) - drop] + ([record.module] if record.module else []))
+
+
 def _locals(path: str, facts: Any, index: py_resolve.ModuleIndex) -> dict[str, tuple[str, str | None]]:
     """Local names bound by imports: name → (file, imported name), imported name None for a module."""
     out: dict[str, tuple[str, str | None]] = {}
@@ -75,7 +86,8 @@ def _locals(path: str, facts: Any, index: py_resolve.ModuleIndex) -> dict[str, t
                 if local != name or "." not in name:
                     out[local] = (file, None)
             elif target.symbol is not None:
-                module = index.modules.get(f"{record.module}.{name}") if record.level == 0 and record.module else None
+                base = _from_module(path, record, index)
+                module = index.modules.get(f"{base}.{name}") if base else None
                 out[local] = (file, None) if module == file else (file, target.symbol)
     return out
 

@@ -157,3 +157,22 @@ def test_unknown_method_in_two_files_is_ambiguous():
     routes_ = [R("a.py", ("api", "items"), ("GET",)), R("b.py", ("api", "items"), ("POST",))]
     assert match(call(("api", "items"), None), routes_) == ("ambiguous", None)
     assert match(call(("api", "items"), None), routes_[:1]) == ("edge", routes_[0])
+
+
+ORDERS = """\
+from fastapi import APIRouter
+router = APIRouter(prefix="/orders")
+@router.get("/x")
+def x(): pass
+"""
+
+
+def test_relative_imports_of_a_router_module():
+    """`from .routers import orders` and `from . import orders` bind the module (013 review, FastAPI tutorial layout)."""
+    for main in ("from .routers import orders\n", "from . import routers\nfrom .routers import orders\n"):
+        facts = py(app____init__="", app__routers____init__="", app__routers__orders=ORDERS, app__main=(
+            "from fastapi import FastAPI\n" + main + 'app = FastAPI()\napp.include_router(orders.router, prefix="/v1")\n'))
+        assert [r.segments for r in routes(facts)] == [("v1", "orders", "x")]
+    facts = py(app____init__="", app__routers____init__="", app__routers__orders=ORDERS, app__routers__main=(
+        'from fastapi import FastAPI\nfrom . import orders\napp = FastAPI()\napp.include_router(orders.router, prefix="/v1")\n'))
+    assert [r.segments for r in routes(facts)] == [("v1", "orders", "x")]
