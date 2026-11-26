@@ -138,7 +138,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   `projects` on `ts-app` is 200 with an empty project list (not an error); `overview` and `projects` reject
   `limit` and `include_type_only` with 400; `cycles` on `py-cycles` with `include_type_only=false` equals the CLI
   `--no-type-only` bytes.
-- [ ] T011 [US2] Add the rows `cycles` (no target; `include_type_only`, `level`; 50), `key_files` (no target;
+- [X] T011 [US2] Add the rows `cycles` (no target; `include_type_only`, `level`; 50), `key_files` (no target;
   `include_type_only`; 10), `overview` (no target, no options, `default_limit=None`, ask `queries.overview`),
   `projects` (no target, no options, `default_limit=None`, ask `queries.projects`) in
   `backend/src/graphora/api/questions.py`. Check: T009, T010 pass.
