@@ -205,3 +205,11 @@ def test_plain_dotted_import_is_reached_by_its_full_name():
     wrong = py(**base, main='from fastapi import FastAPI\nimport app.routers.orders\napi = FastAPI()\n'
                            'api.include_router(app.router, prefix="/v3")\n')
     assert [r.segments for r in routes(wrong)] == [("orders", "x")]
+
+
+def test_url_given_as_a_constant():
+    """`fetch(U)` with a top-level string constant U (013 review)."""
+    facts = py(m='from fastapi import FastAPI\napp = FastAPI()\n@app.get("/api/items")\ndef i(): pass\n')
+    source = b'const U = "/api/items";\nconst G = "https://api.github.com/x";\nfetch(U);\nfetch(G);\nfetch(other);\n'
+    edges, _ = bridge(facts, {"f.ts": js_extract("f.ts", source)}, SNAP)
+    assert [(e.line, e.target, e.reason) for e in edges] == [(3, "file:m.py", "http_route"), (5, "unresolved:http:GET ?", "dynamic")]

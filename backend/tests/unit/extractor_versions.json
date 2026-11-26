@@ -10,7 +10,7 @@
   "dotnet-types@10.0.0": "34b613bf273fdc37",
   "http-bridge@0.1.0": "e9faf8427c442aea",
   "js-adapter@0.2.0": "304728d2dfb0086c",
-  "js-adapter@0.3.0": "149bdfc7ace3e3fb",
+  "js-adapter@0.3.0": "a046826277e80e6a",
   "js-resolver@0.2.0": "9649adb21d4b1e91",
   "node-builtins@26.0.0": "4df16d189277975c",
   "python-adapter@0.3.0": "caa8701ef965c23c",

@@ -114,7 +114,7 @@ fetch("//cdn.example/y");
         ("GET", (T("/users/"), X("id")), False, 1),
         ("GET", (T("/users/"), X("id"), T("/orders")), False, 2),
         ("GET", (T("/plain"),), False, 3),
-        ("GET", None, False, 4),
+        ("GET", (X("url"),), False, 4),  # a name: substituted if it is a top-level constant, else dynamic
         ("GET", None, False, 5),
         ("GET", (T("https://api.github.com/x"),), True, 6),
         ("GET", (T("//cdn.example/y"),), True, 7),

@@ -55,6 +55,8 @@ def _expr(node: Node) -> Part:
 
 
 def _parts(node: Node) -> list[Part] | None:
+    if node.type == "identifier":  # a top-level constant of the file is substituted later; any other name is dynamic
+        return [Part("expr", _text(node))]
     value = string_value(node)
     if value is not None:
         return [Part("text", value)]
