@@ -23,6 +23,7 @@ _QUESTIONS = {
     "neighbors": queries.neighbors,
     "key_files": queries.key_files,
     "projects": queries.projects,
+    "components": lambda ix, **options: queries.components(ix, **options),  # 019
 }
 
 
@@ -78,6 +79,9 @@ def project_answer(answer: dict) -> dict:
         out["cut"] = answer["cut"]
     if "projects" in answer:
         out["projects"] = answer["projects"]
+    if "components" in answer:
+        out["components"] = [{"name": c["name"], "files": c["files"], "has_cycle": c["has_cycle"]} for c in answer["components"]]
+        out["links"] = answer["links"]
     if "completeness" in answer:
         out["completeness"] = answer["completeness"]
     return out

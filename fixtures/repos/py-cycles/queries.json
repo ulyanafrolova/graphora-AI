@@ -185,5 +185,48 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "components",
+    "target": null,
+    "options": {},
+    "expected": {
+      "components": [
+        {
+          "name": "loop",
+          "files": [
+            "file:loop/__init__.py",
+            "file:loop/a.py",
+            "file:loop/b.py",
+            "file:loop/c.py",
+            "file:user.py"
+          ],
+          "has_cycle": true
+        },
+        {
+          "name": "pair",
+          "files": [
+            "file:pair/__init__.py",
+            "file:pair/x.py",
+            "file:pair/y.py"
+          ],
+          "has_cycle": true
+        },
+        {
+          "name": ".",
+          "files": [
+            "file:self_ref.py"
+          ],
+          "has_cycle": true
+        }
+      ],
+      "links": [],
+      "total": 3,
+      "completeness": {
+        "unresolved_imports": 1,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

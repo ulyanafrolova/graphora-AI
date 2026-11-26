@@ -85,7 +85,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `component:<n>` 1-based in order of first file path; `links` with `imports`, `heuristic`, `in_cycle`, sorted by
   (source, target); `has_cycle`; `include_type_only=False` drops type-only links; externals and unresolved imports
   never in components; the same input twice → same bytes; answer `total` = number of components, `truncated: false`.
-- [ ] T010 [P] Add hand-written `components` entries to `fixtures/repos/py-cycles/queries.json`,
+- [X] T010 [P] Add hand-written `components` entries to `fixtures/repos/py-cycles/queries.json`,
   `fixtures/repos/ts-app/queries.json` and `fixtures/repos/mixed-fullstack/queries.json` (question `components`, target
   `null`, options `{}`, expected projection: components as `{"name", "files", "has_cycle"}` and links as
   `{"source", "target", "imports", "heuristic", "in_cycle"}`), derived by reading the fixture sources; extend
