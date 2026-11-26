@@ -48,7 +48,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `no-restricted-properties` banning Cytoscape traversal calls `bfs`, `dfs`, `dijkstra`, `aStar`, `floydWarshall`,
   `predecessors`, `successors`, `kruskal`, `pageRank`, `degreeCentrality*`, `closenessCentrality*`,
   `betweennessCentrality` (research R2, R12); `frontend/.prettierrc` (printWidth 120).
-- [ ] T004 [P] Configure `frontend/vite.config.ts`: React plugin, alias `@`, dev server port 5173 with proxy
+- [X] T004 [P] Configure `frontend/vite.config.ts`: React plugin, alias `@`, dev server port 5173 with proxy
   `/api` → `http://127.0.0.1:8000` (no path rewrite, `changeOrigin: false`), build `outDir: dist`, Vitest
   `environment: jsdom`, `setupFiles: ./tests/setup.ts`; create `frontend/tests/setup.ts` (Testing Library jest-dom,
   MSW server start/reset/close).
