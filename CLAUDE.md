@@ -81,6 +81,15 @@ curl -X POST 'localhost:8000/api/v1/jobs/zip?name=app.zip' --data-binary @app.zi
 curl localhost:8000/api/v1/jobs/<id>
 ```
 
+Graph questions over HTTP (feature 018): `dependencies`, `dependents`, `impact`, `neighbors`, `cycles`, `key_files`,
+`definitions` (`name=`), `overview`, `projects` of a stored snapshot; each answer equals `graphora query … --format json`
+with the same options (default `limit` 50, at most 500; `key_files` 10). Parameters are listed at `/api/v1/docs`:
+
+```
+curl 'localhost:8000/api/v1/impact?repository=<name>&snapshot=<id>&target=<path>&limit=20'
+curl 'localhost:8000/api/v1/cycles?repository=<name>&snapshot=<id>'
+```
+
 Agents (feature 012): ask one snapshot a question; facts are verified by code, the rest is likely or a hypothesis.
 The model is one setting (`GRAPHORA_MODEL`, default `ollama:qwen3:8b`; `GRAPHORA_MODEL_CTX`, default 16384) and
 Ollama runs natively outside Graphora. Tests use a scripted model; the live test is marked `llm`:

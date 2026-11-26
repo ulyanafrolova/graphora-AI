@@ -205,7 +205,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   routes, `client.app.openapi()["paths"]` lists exactly the parameters of contracts/http-api.md with the right
   `required` flags, `limit` `minimum` 0 / `maximum` 500 and default, `level` enum; and `test_concurrent`: eight
   threads asking different questions of one snapshot get the same bytes as single requests.
-- [ ] T021 [P] Add to `CLAUDE.md`, after the `/hotspots` lines of the analysis store block, one paragraph "Graph
+- [X] T021 [P] Add to `CLAUDE.md`, after the `/hotspots` lines of the analysis store block, one paragraph "Graph
   questions over HTTP (feature 018)" with two `curl` examples (`/api/v1/impact?…&target=<path>` and
   `/api/v1/cycles?…`) and the note that each answer equals `graphora query … --format json`.
 - [ ] T022 Run the quickstart (`specs/018-http-queries/quickstart.md`) by hand against `graphora serve`, then the full
