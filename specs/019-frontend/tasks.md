@@ -164,7 +164,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `impact` and shows the note "selection cleared: not in this snapshot" when the node does not exist there.
 - [X] T025 Implement `frontend/src/routes.tsx` and `frontend/src/state/route.ts` (read/write helpers) with React Router;
   `/` redirects to the last opened snapshot (localStorage key `graphora.last`) or `/import`. Check: T024 passes.
-- [ ] T026 [P] Write `frontend/src/styles/tokens.css` and `frontend/src/styles/base.css` with the palette and type of
+- [X] T026 [P] Write `frontend/src/styles/tokens.css` and `frontend/src/styles/base.css` with the palette and type of
   the mockups (background `#0d1117`-like dark, panel, border, text, muted; accent blue; green resolved/verified; amber
   heuristic/hypothesis; red cycle; component palette of 14 distinct colours), monospace for paths and code.
 - [ ] T027 [P] Write `frontend/tests/unit/shell.test.tsx`: header shows `repository @ abcdef1` (7 chars, `content:`

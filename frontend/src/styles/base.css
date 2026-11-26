@@ -1,0 +1,112 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+code,
+.mono {
+  font-family: var(--mono);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border-strong);
+  background: var(--panel-raised);
+  border-radius: var(--radius);
+  padding: 6px 14px;
+}
+
+button.primary {
+  background: var(--action);
+  border-color: var(--action);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: var(--action-hover);
+}
+
+input,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pill {
+  display: inline-block;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  padding: 1px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pill.resolved,
+.pill.verified {
+  color: var(--resolved);
+  border-color: var(--resolved);
+  background: var(--resolved-bg);
+}
+
+.pill.heuristic,
+.pill.hypothesis {
+  color: var(--heuristic);
+  border-color: var(--heuristic);
+  background: var(--heuristic-bg);
+}
+
+.pill.cycle,
+.pill.rejected {
+  color: var(--cycle);
+  border-color: var(--cycle);
+  background: var(--cycle-bg);
+}
+
+.pill.accent {
+  color: var(--accent);
+  border-color: var(--accent);
+}
