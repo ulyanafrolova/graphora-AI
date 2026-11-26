@@ -200,7 +200,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
 
 **Commit**: `hotspots query and answer`
 
-- [ ] T016 [US1] Add a `FetchedSnapshot.kind` field (`"local" | "github" | "zip"`) in
+- [X] T016 [US1] Add a `FetchedSnapshot.kind` field (`"local" | "github" | "zip"`) in
   `backend/src/graphora/ingest/fetch.py` (set in each branch of `fetch_snapshot`). Add a shared helper
   `with_history(doc, fetched, deadline, enabled)` in `backend/src/graphora/history/__init__.py` that returns
   `dataclasses.replace(doc, history=collect_history(...))`.
