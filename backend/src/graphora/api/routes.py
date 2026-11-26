@@ -19,6 +19,7 @@ from graphora.graph import queries
 from graphora.graph.load import loads
 from graphora.graph.results import dumps
 from graphora.graph.serialize import SCHEMA_VERSION
+from graphora.agents.limits import MAX_REVISIONS, MAX_TOOL_CALLS
 from graphora.ingest.walk import EXCLUDED_DIRS
 from graphora.mcp.server import TOOLS
 from graphora.pipeline.jobs import JobRunner
@@ -80,7 +81,11 @@ def router(store: Store, runner: JobRunner | None = None, asks: AskService | Non
         return json_response(
             {
                 "version": version("graphora"),
-                "ask": {"enabled": asks is not None, "model": None if asks is None else asks.setting},
+                "ask": {
+                    "enabled": asks is not None,
+                    "model": None if asks is None else asks.setting,
+                    "limits": {"tool_calls": MAX_TOOL_CALLS, "revisions": MAX_REVISIONS},
+                },
                 "jobs": {"enabled": runner is not None, "limits": limits},
                 "mcp_tools": [{"name": name, "description": TOOLS[name]} for name in sorted(TOOLS)],
             }

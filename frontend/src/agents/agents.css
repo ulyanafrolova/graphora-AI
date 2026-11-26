@@ -76,3 +76,23 @@
 .role-reviewer strong {
   color: var(--role-reviewer);
 }
+.trace-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 20px;
+}
+.timeline {
+  margin: 0;
+  padding: 16px 16px 16px 36px;
+}
+.timeline li {
+  padding: 6px 0;
+}
+.revision {
+  color: var(--cycle);
+}
+.trace-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

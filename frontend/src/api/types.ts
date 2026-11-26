@@ -151,7 +151,7 @@ export interface Limits {
 
 export interface Info {
   version: string;
-  ask: { enabled: boolean; model: string | null };
+  ask: { enabled: boolean; model: string | null; limits?: { tool_calls: number; revisions: number } };
   jobs: { enabled: boolean; limits: Limits | null };
   mcp_tools: { name: string; description: string }[];
 }

@@ -348,7 +348,7 @@ equals the API answer.
   flow" Explorer → Analyst → Reviewer with the revision loop when revisions > 0; claims table with statuses
   (verified green, rejected red, hypothesis amber); budget bars "Tool calls n / limit" and "Revisions n / limit" from
   the trace; model, duration and tokens chips only when present; empty state links to Ask agents.
-- [ ] T062 [US4] Implement `frontend/src/agents/TracePage.tsx`, `Timeline.tsx`, `AgentFlow.tsx`, `ClaimsTable.tsx`,
+- [X] T062 [US4] Implement `frontend/src/agents/TracePage.tsx`, `Timeline.tsx`, `AgentFlow.tsx`, `ClaimsTable.tsx`,
   `Budget.tsx`. Check: T061 passes.
 - [ ] T063 [US4] Write `frontend/tests/e2e/us4-agents.spec.ts` (scripted model of `tests/e2e_server.py`): ask the
   scripted question on `py-cycles`, steps stream in, the answer shows its verified facts and hypothesis, reload keeps

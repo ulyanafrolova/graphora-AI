@@ -1,4 +1,5 @@
 import { AskPage } from "./agents/AskPage";
+import { TracePage } from "./agents/TracePage";
 import { CodePage } from "./code/CodePage";
 import { GraphPage } from "./graph/GraphPage";
 import { CyclesPage } from "./insights/CyclesPage";
@@ -28,6 +29,8 @@ function ScreenFor({ route }: { route: RouteState }) {
       return <HotspotsPage route={route} />;
     case "ask":
       return <AskPage key={`${route.repository}@${route.snapshot}`} route={route} />;
+    case "trace":
+      return <TracePage route={route} />;
     default:
       return <Soon name={route.screen} />;
   }

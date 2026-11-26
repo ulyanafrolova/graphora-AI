@@ -67,7 +67,7 @@ def test_files_errors(store, stored):
 
 def test_info_without_jobs_and_asks(store):
     body = TestClient(create_app(store)).get("/api/v1/info").json()
-    assert body["ask"] == {"enabled": False, "model": None}
+    assert body["ask"] == {"enabled": False, "model": None, "limits": {"tool_calls": 15, "revisions": 2}}
     assert body["jobs"] == {"enabled": False, "limits": None}
     assert [t["name"] for t in body["mcp_tools"]] == STORE_TOOLS
     assert all(t["description"] for t in body["mcp_tools"])
@@ -81,7 +81,7 @@ def test_info_with_jobs_and_asks(store, database_url, tmp_path):
     try:
         client = TestClient(create_app(store, runner, asks))
         body = client.get("/api/v1/info").json()
-        assert body["ask"] == {"enabled": True, "model": "ollama:qwen3:8b"}
+        assert body["ask"] == {"enabled": True, "model": "ollama:qwen3:8b", "limits": {"tool_calls": 15, "revisions": 2}}
         assert body["jobs"] == {"enabled": True, "limits": limits.as_dict() | {"skipped": sorted(EXCLUDED_DIRS)}}
         assert client.get("/api/v1/info", params={"x": "1"}).status_code == 400
     finally:
