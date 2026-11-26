@@ -303,7 +303,7 @@ with an expired deadline, and a repository served by a local git server; check s
 
 **Commit**: `github history fetch`
 
-- [ ] T024 [US2] Add the time limit to `backend/src/graphora/history/reader.py`:
+- [X] T024 [US2] Add the time limit to `backend/src/graphora/history/reader.py`:
   - check `deadline.remaining() <= 0` before each commit;
   - when time runs out, return `partial` with what was read, or `not_available` / `time_limit` when nothing was
     read;
