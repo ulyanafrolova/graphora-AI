@@ -412,7 +412,7 @@ true and wrong hotspot claims with the verifier.
 - [X] T034 [P] Add the new commands to `CLAUDE.md`: `uv run graphora analyze <source> --no-history` and `uv run
   graphora query graph.json hotspots`. Add a short history note under Commands: history is on by default; ZIP
   sources have none.
-- [ ] T035 Run `make check` (with `make db` and `GRAPHORA_TEST_DATABASE_URL`) and `make lint`. Walk through
+- [X] T035 Run `make check` (with `make db` and `GRAPHORA_TEST_DATABASE_URL`) and `make lint`. Walk through
   quickstart.md §§ 2–6 and fix what differs. SC-003a (GitHub fetch ≤ 60 s) has no automated test: measure it
   by hand in quickstart § 4 and write the time in the PR description. Mark tasks done in this file.
 

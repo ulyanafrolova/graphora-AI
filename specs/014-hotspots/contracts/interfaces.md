@@ -87,6 +87,8 @@ limit is capped by `MAX_LIMIT`. Description (fixed text):
 
 `GET /api/v1/hotspots?repository=<name>&snapshot=<id>[&limit=N][&include_type_only=true|false]`
 
+`limit` defaults to 10 and `include_type_only` to `true`, as in the CLI and MCP.
+
 | Case | Response |
 |---|---|
 | Found | `200` with the answer JSON above, bytes equal to `results.dumps` |
