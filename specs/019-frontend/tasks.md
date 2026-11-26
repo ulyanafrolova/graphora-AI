@@ -364,7 +364,7 @@ equals the API answer.
 
 **Independent Test**: e2e on a stored 5,000-file graph: overview < 5 s, expand and impact < 1 s.
 
-- [ ] T064 [P] [US5] Write `backend/tests/integration/test_components_performance.py` (`slow`): `components` on the
+- [X] T064 [P] [US5] Write `backend/tests/integration/test_components_performance.py` (`slow`): `components` on the
   5,000-file graph of `test_query_performance.py` in < 2 s and `cycles` with cuts in < 2 s.
 - [ ] T065 [US5] Optimise `components`/cut in `backend/src/graphora/graph/queries.py` only if T064 fails (cache the
   undirected graph on `GraphIndex` like `_runtime_links`).
