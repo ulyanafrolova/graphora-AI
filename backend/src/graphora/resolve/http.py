@@ -99,6 +99,7 @@ class _Routers:
         index = py_resolve.build_index(sorted(py_facts))
         self.declared: dict[tuple[str, str], Any] = {}
         self.locals: dict[str, dict[str, tuple[str, str | None]]] = {}
+        self.unknown: set[tuple[str, str]] = set()  # routers with a mount that could not be followed
         mounts: dict[tuple[str, str], list[tuple[tuple[str, str], Any]]] = defaultdict(list)
         for path, facts in sorted(py_facts.items()):
             if facts is None:
@@ -112,6 +113,8 @@ class _Routers:
                 parent = self._name(path, mount.app)
                 if target is not None and parent is not None:
                     mounts[target].append((parent, mount))
+                elif target is not None:  # mounted on something we cannot follow (e.g. an app made in a function)
+                    self.unknown.add(target)
         self.mounts = mounts
 
     def _name(self, path: str, text: str) -> tuple[str, str] | None:
@@ -128,7 +131,7 @@ class _Routers:
     def prefixes(self, key: tuple[str, str], seen: frozenset[tuple[str, str]] = frozenset()) -> list[str] | None:
         """Every full prefix the router is served under; None when any part is not a literal."""
         router = self.declared.get(key)
-        if router is None or router.prefix is None or key in seen:
+        if router is None or router.prefix is None or key in seen or key in self.unknown:
             return None
         if router.kind == "app":
             return [""]

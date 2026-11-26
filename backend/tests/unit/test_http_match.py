@@ -176,3 +176,18 @@ def test_relative_imports_of_a_router_module():
     facts = py(app____init__="", app__routers____init__="", app__routers__orders=ORDERS, app__routers__main=(
         'from fastapi import FastAPI\nfrom . import orders\napp = FastAPI()\napp.include_router(orders.router, prefix="/v1")\n'))
     assert [r.segments for r in routes(facts)] == [("v1", "orders", "x")]
+
+
+def test_a_mount_that_cannot_be_followed_makes_the_prefix_unknown():
+    """An app made in a factory function: its blueprint's served path is unknown, never its own prefix (013 review)."""
+    facts = py(
+        bp='from flask import Blueprint\nbp = Blueprint("b", __name__)\n@bp.route("/x")\ndef x(): pass\n',
+        app='from flask import Flask\nfrom bp import bp\ndef create_app():\n    app = Flask(__name__)\n    app.register_blueprint(bp, url_prefix="/api")\n',
+    )
+    assert routes(facts) == []
+
+
+def test_router_passed_by_keyword():
+    facts = py(m='from fastapi import APIRouter, FastAPI\napp = FastAPI()\nr = APIRouter()\n@r.get("/x")\ndef x(): pass\n'
+                 'app.include_router(router=r, prefix="/v1")\n')
+    assert [r.segments for r in routes(facts)] == [("v1", "x")]

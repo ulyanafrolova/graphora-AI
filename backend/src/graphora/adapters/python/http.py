@@ -11,7 +11,7 @@ from graphora.adapters.position import Positions
 
 VERBS = ("get", "post", "put", "patch", "delete", "head", "options")
 _CONSTRUCTORS = {"FastAPI": ("app", None), "Flask": ("app", None), "APIRouter": ("router", "prefix"), "Blueprint": ("blueprint", "url_prefix")}
-_MOUNTS = {"include_router": "prefix", "register_blueprint": "url_prefix"}
+_MOUNTS = {"include_router": ("prefix", "router"), "register_blueprint": ("url_prefix", "blueprint")}
 
 
 @dataclass(frozen=True)
@@ -134,12 +134,13 @@ def _mount(position: Positions, call: Node) -> MountFact | None:
     if obj is None or attr is None or obj.type != "identifier" or _text(attr) not in _MOUNTS:
         return None
     positional, keywords = _arguments(call)
-    if not positional or positional[0].type not in ("identifier", "attribute"):
+    keyword, target_keyword = _MOUNTS[_text(attr)]
+    target = positional[0] if positional else keywords.get(target_keyword)
+    if target is None or target.type not in ("identifier", "attribute"):
         return None
-    keyword = _MOUNTS[_text(attr)]
     given = keyword in keywords
     prefix = literal(keywords[keyword]) if given else ""
-    return MountFact(_text(obj), _text(positional[0]), prefix, given, position(call)[0])
+    return MountFact(_text(obj), _text(target), prefix, given, position(call)[0])
 
 
 def facts(
