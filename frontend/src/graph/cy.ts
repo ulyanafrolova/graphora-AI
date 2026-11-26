@@ -67,6 +67,7 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
     finish();
     return;
   }
+  cy.nodes().boundingBox(); // label sizes are measured lazily; fcose needs them to keep nodes apart
   const layout = cy.layout({
     name: "fcose",
     randomize: false,
