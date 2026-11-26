@@ -373,7 +373,7 @@ equals the API answer.
   cycles; "How it stays readable" and legend: node size = dependents, hotspot marker, red bundle = cycle) to
   `frontend/src/graph/OverviewPanel.tsx`, shown on System level; node size from component dependents (sum of incoming
   component link imports) and hotspot markers from `/hotspots` items.
-- [ ] T067 [US5] Implement File-level rendering for big snapshots in `frontend/src/graph/GraphView.tsx`: Cytoscape WebGL
+- [X] T067 [US5] Implement File-level rendering for big snapshots in `frontend/src/graph/GraphView.tsx`: Cytoscape WebGL
   renderer when more than 1,000 nodes, labels hidden below zoom 0.8, `haystack` edges; layout in
   `frontend/src/graph/layout.worker.ts` (fcose headless in a Web Worker) when more than 500 nodes, positions cached per
   (snapshot, level, component).

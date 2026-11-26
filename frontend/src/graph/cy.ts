@@ -5,8 +5,18 @@ import { STYLE } from "./style";
 
 cytoscape.use(fcose);
 
-export function createGraph(container: HTMLElement): Core {
-  const cy = cytoscape({ container, style: STYLE, minZoom: 0.05, maxZoom: 4 });
+export const WEBGL_FROM = 1000;
+export const WORKER_FROM = 500;
+
+export function createGraph(container: HTMLElement, webgl = false): Core {
+  const options = {
+    container,
+    style: STYLE,
+    minZoom: 0.05,
+    maxZoom: 4,
+    ...(webgl ? { renderer: { name: "canvas", webgl: true } } : {}),
+  };
+  const cy = cytoscape(options as cytoscape.CytoscapeOptions);
   (container as unknown as { cy: Core }).cy = cy;
   return cy;
 }
@@ -24,6 +34,33 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
     const angle = (2 * Math.PI * i) / Math.max(leaves.length, 1);
     n.position({ x: r * Math.cos(angle), y: r * Math.sin(angle) });
   });
+  const finish = () => {
+    cy.resize();
+    cy.style(STYLE); // a fresh stylesheet after the elements exist; the first one leaves edges undrawn
+    if (leaves.length > WEBGL_FROM) {
+      cy.edges().style({ "curve-style": "haystack", "target-arrow-shape": "none" });
+      cy.nodes().style({ "min-zoomed-font-size": 10 });
+    }
+    cy.fit(undefined, 40);
+    if (cy.zoom() > 1.5) {
+      cy.zoom(1.5);
+      cy.center();
+    }
+    onDone();
+  };
+  if (leaves.length > WORKER_FROM && typeof Worker !== "undefined") {
+    const worker = new Worker(new URL("./layout.worker.ts", import.meta.url), { type: "module" });
+    worker.onmessage = (event: MessageEvent<Record<string, { x: number; y: number }>>) => {
+      worker.terminate();
+      cy.nodes().forEach((n) => {
+        const p = event.data[n.id()];
+        if (p && n.isChildless()) n.position(p);
+      });
+      finish();
+    };
+    worker.postMessage({ elements: cy.elements().jsons() });
+    return;
+  }
   const layout = cy.layout({
     name: "fcose",
     randomize: false,
@@ -35,15 +72,6 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
     packComponents: true,
     nodeDimensionsIncludeLabels: true,
   } as LayoutOptions);
-  layout.one("layoutstop", () => {
-    cy.resize();
-    cy.style(STYLE); // a fresh stylesheet after the elements exist; the first one leaves edges undrawn
-    cy.fit(undefined, 40);
-    if (cy.zoom() > 1.5) {
-      cy.zoom(1.5);
-      cy.center();
-    }
-    onDone();
-  });
+  layout.one("layoutstop", finish);
   layout.run();
 }

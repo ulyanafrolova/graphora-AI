@@ -1,7 +1,7 @@
 import type { Core } from "cytoscape";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { createGraph, placeAndLayout } from "./cy";
+import { createGraph, placeAndLayout, WEBGL_FROM } from "./cy";
 import { toElements } from "./elements";
 
 import type { Answer, GraphDocument } from "@/api/types";
@@ -50,6 +50,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     [level, route.component, components, graph, route.hide, route.node, impact, cycles, hot],
   );
   const structure = useMemo(() => elements.map((e) => e.data.id).join("|"), [elements]);
+  const webgl = elements.length > WEBGL_FROM * 2;
   const handlers = useRef({ onChange, level });
   useLayoutEffect(() => {
     handlers.current = { onChange, level };
@@ -57,7 +58,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
 
   useEffect(() => {
     if (box.current === null) return;
-    const g = createGraph(box.current);
+    const g = createGraph(box.current, webgl);
     cy.current = g;
     const resize = new ResizeObserver(() => g.resize());
     resize.observe(box.current);
@@ -80,7 +81,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
       g.destroy();
       cy.current = null;
     };
-  }, []);
+  }, [webgl]);
 
   useEffect(() => {
     const g = cy.current;
