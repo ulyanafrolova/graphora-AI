@@ -29,9 +29,9 @@ phase. Messages short, lowercase, English.
 
 ## Phase 1: Setup
 
-- [ ] T001 Rename `_matches` to public `matches_symbol` in `backend/src/graphora/graph/queries.py` (update its
+- [X] T001 Rename `_matches` to public `matches_symbol` in `backend/src/graphora/graph/queries.py` (update its
   one caller in `dependents`; behaviour unchanged) and run `uv run pytest tests/unit/test_dependents.py`.
-- [ ] T002 Create the packages `backend/src/graphora/verify/__init__.py` and
+- [X] T002 Create the packages `backend/src/graphora/verify/__init__.py` and
   `backend/src/graphora/tools/__init__.py`, each with a one-line module docstring referencing
   `specs/011-claim-verifier`.
 
