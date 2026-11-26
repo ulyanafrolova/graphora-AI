@@ -52,7 +52,8 @@ supervisor node choosing the next role with the model — rejected: the order wo
   own dependency steps (`path`, `line`, `target`, optional `name`). A claim in a revision round may name the
   hypothesis it revises (`"revises": "h2"`).
 
-Every tool result shown to the model ends with a short citation list `[c7] api/routes.py:3@abc → auth/service.py`,
+Every tool result shown to the model (at most `MAX_TOOL_MESSAGE_CHARS = 5000` characters in total, see
+data-model.md § Limits) ends with a short citation list `[c7] api/routes.py:3@abc → auth/service.py`,
 with run-wide ids in order of appearance, so the model never retypes paths and lines.
 
 **Rationale**: at most 4 tools per role (constitution); a structured reply for claims keeps the tool lists
@@ -90,7 +91,9 @@ Explorer, which owns file and symbol search.
 **Decision**: `agents/limits.py` holds `MAX_TOOL_CALLS = 15`, `MAX_REVISIONS = 2`, `MAX_MODEL_CALLS = 30` per
 run and `MAX_TURN_MODEL_CALLS = 6` per role turn. Every requested tool call is counted before validation
 (invalid and unknown calls count, FR-007); calls past the budget are not run, get the message "tool budget
-spent", and end the turn. LangGraph's `recursion_limit` is set from these numbers as a backstop only.
+spent", and end the turn. Once the budget is spent, later tool loops are skipped, but the Analyst's claims
+call still runs while model calls remain, and the Reviewer reviews what was stated (FR-008). The Analyst's
+tool loop may use at most `MAX_TURN_MODEL_CALLS - 1` model calls, so the claims call always has one left. LangGraph's `recursion_limit` is set from these numbers as a backstop only.
 
 **Rationale**: FR-006/FR-007/SC-003; a per-turn model-call cap stops a model that loops without tools, the
 run-wide cap stops the whole graph.
@@ -121,8 +124,8 @@ constitution.
 fixed sentence template per claim kind (for example "`api/routes.py` imports `auth/service.py`
 (api/routes.py:3@abc)"; query claims: "`auth/service.py` has 3 direct dependents"). The model then gets these
 parts (as data) and the question and writes a summary of at most 5 sentences. The summary is accepted only if
-every path-like token (`[\w./-]+\.\w+`, node ids, `path:line` citations) it contains appears in the facts or
-likely parts and it contains no `path:line` that is not a fact citation; otherwise it is replaced by a code
+every path-like token (`[\w./-]+\.\w+`, node ids) it contains appears in the facts or likely parts and
+every `path:line` it contains is a fact citation (likely links may be named by file, not by line; FR-014); otherwise it is replaced by a code
 summary ("3 facts, 1 likely link, 1 hypothesis about `auth/service.py`"). `--no-summary` skips the model call.
 
 **Rationale**: FR-013/FR-014: facts never depend on the model; the check is plain code and catches the

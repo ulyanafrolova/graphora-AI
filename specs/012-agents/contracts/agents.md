@@ -21,7 +21,8 @@ class ModelUnavailable(Exception): setting, address, reason
 
 - `question` must be non-empty after stripping, else `ValueError` before any model call.
 - Read-only: only the 011 tools and `verify_served` touch the snapshot; nothing is written.
-- Every `answer.facts` item's claim verifies `verified` against `served` (re-checkable by the caller).
+- Every `answer.facts` item's claim verifies `verified` against `served` (re-checkable by the caller), and
+  every fact has a `cite`: `path:line@snapshot`, or `<question>(<target>)@<snapshot>` for a query claim.
 - `answer.likely` holds only `heuristic` verdicts; `answer.hypotheses` only `rejected` ones.
 - At most `MAX_TOOL_CALLS` tool calls, `MAX_REVISIONS` revisions, `MAX_MODEL_CALLS` model calls.
 - A `ModelUnavailable` or other model exception during the run does not escape `ask`: the run ends with
@@ -36,12 +37,14 @@ class ModelUnavailable(Exception): setting, address, reason
 | Role | Tools bound | Model calls | Output to state |
 |---|---|---|---|
 | explorer | `find_definitions`, `read_lines` (store only), `dependents` | ≤ 6 per turn | evidence, citations |
-| analyst | `dependents`, `impact`, `neighbors`, `cycles`; then claims phase with no tools | ≤ 6 per turn incl. claims | evidence, citations, claims |
+| analyst | `dependents`, `impact`, `neighbors`, `cycles`; then claims phase with no tools | tool loop ≤ 5, then 1 claims call (also when the tool budget is spent) | evidence, citations, claims |
 | reviewer | none (code) | 0 | verdicts, hypotheses, task, route |
 | answer | none | 0 or 1 (summary) | answer, end |
 
 Tool messages: `ToolResult.text`, then `citations:` and one line per citation `[cN] <cite> → <target or
-symbol>` (heuristic-capable lines keep the 011 `(likely)` mark). Invalid call → `error: <message>`;
+symbol>` (heuristic-capable lines keep the 011 `(likely)` mark). The whole message is at most
+`MAX_TOOL_MESSAGE_CHARS` (5,000): citation lines over 160 characters are shortened in the middle with `…`,
+and the list is cut by whole lines with `(… N more citations)`; cut citations keep their ids in the state. Invalid call → `error: <message>`;
 budget spent → `error: tool budget spent, write your result now`.
 
 Revision task (explorer, rounds ≥ 1), fixed format:

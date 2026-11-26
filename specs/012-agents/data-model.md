@@ -12,6 +12,7 @@ keys, as the 011 types. `Claim`, `Verdict`, `ToolResult` are the 011 types, unch
 | `MAX_MODEL_CALLS` | 30 | model calls in the run (tool loops, claims, summary) |
 | `MAX_TURN_MODEL_CALLS` | 6 | model calls in one role turn |
 | `MAX_SUMMARY_SENTENCES` | 5 | asked of the model; not enforced by code |
+| `MAX_TOOL_MESSAGE_CHARS` | 5000 | one tool message to the model: 011 text (≤ 4,000) plus the citation list; citation lines longer than 160 characters are shortened in the middle with `…`, and the list is cut by whole lines with `(… N more citations)` |
 
 ## AgentState (LangGraph state, a `TypedDict`)
 
@@ -89,8 +90,9 @@ counts as one model call and gives no claims.
 | `end` | EndReason | |
 | `counts` | dict | `tool_calls`, `model_calls`, `revisions` |
 
-`Item`: `text` (fixed template sentence per claim kind, R7), `cite` (`claim.cite()` or `None` for query
-claims), `claim` (Claim), `reason` and `hint` for hypotheses.
+`Item`: `text` (fixed template sentence per claim kind, R7), `cite` (`claim.cite()`; for query claims the
+question as `<question>(<target>)@<snapshot>`, e.g. `dependents(loop/a.py)@abc`, or `cycles()@abc` without a
+target), `claim` (Claim), `reason` and `hint` for hypotheses.
 
 `render_answer(answer) -> str`: plain text with headings `Facts`, `Likely`, `Hypotheses (not proven)`,
 `Summary`, and a last line `snapshot <id> · ended: <reason>`. Empty parts print `(none)`.

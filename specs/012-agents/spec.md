@@ -190,8 +190,8 @@ address; check the printed answer's parts and the error message and exit status.
   model that never calls a tool and never stops still ends the run.
 - **FR-007**: A tool call with invalid arguments or an unknown tool name MUST NOT be executed; the model gets
   the error message, and the call counts against the budget.
-- **FR-008**: When the budget runs out, the run MUST stop calling tools, review the claims made so far and
-  write the answer.
+- **FR-008**: When the budget runs out, the run MUST stop calling tools, still let the Analyst state claims
+  from the evidence collected (while model calls remain), review them and write the answer.
 
 **Claims and review**
 
@@ -207,12 +207,14 @@ address; check the printed answer's parts and the error message and exit status.
 **Answer**
 
 - **FR-013**: The answer MUST have three separate parts: **facts** (only `verified` claims, each with its
-  citation `path:line@snapshot`), **likely** (`heuristic` claims, labeled as likely) and **hypotheses**
+  citation: `path:line@snapshot`, or for a graph-question claim the question it answers, written like
+  `dependents(loop/a.py)@snapshot`), **likely** (`heuristic` claims, labeled as likely) and **hypotheses**
   (rejected claims, each with the reason it is not proven). The facts part MUST be built by code from the
   verdicts, not by the model.
 - **FR-014**: The answer MAY include a short summary written by the model from the verified and likely claims
-  only. Before it is returned, code MUST check that every path, citation and link the summary names is among
-  those claims; otherwise the summary is replaced by a summary built by code from the facts.
+  only. Before it is returned, code MUST check that every path the summary names belongs to those claims and
+  that every `path:line` it names is the citation of a fact (likely links are named by their files only);
+  otherwise the summary is replaced by a summary built by code from the facts.
 - **FR-015**: The answer MUST state the snapshot it is about and why the run ended (answered, budget spent,
   revisions spent, model failed).
 
@@ -272,8 +274,9 @@ address; check the printed answer's parts and the error message and exit status.
   that loop, call unknown tools or send broken arguments.
 - **SC-004**: The Reviewer example of the product context ends with "the frontend will break" as a hypothesis
   (or likely, with a heuristic link), never as a fact.
-- **SC-005**: For the question "what breaks if I change X" on each fixture with a hand-checked answer, the
-  scripted run finds all direct dependents listed in `expected.json` as facts.
+- **SC-005**: For the question "what breaks if I change X" on the scenario fixture (`py-cycles`), all direct
+  dependents listed in `expected.json` that the scripted replies cite end up as facts, none is lost or
+  changed on the way; with the live model, at least one direct dependent of X is found as a fact.
 - **SC-006**: Two runs with the same scripted replies give identical answers and traces.
 - **SC-007**: With the default local model on a developer laptop, an answer on a fixture repository arrives
   within 2 minutes and every fact in it verifies.
