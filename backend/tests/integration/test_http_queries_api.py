@@ -97,3 +97,30 @@ def test_project_level(client, put):
     response = get(client, "impact", "csharp-multiproject", snapshot, target="src/Core/Core.csproj", level="project")
     assert response.status_code == 200
     assert response.content == cli(graph, "impact", "src/Core/Core.csproj", "--level", "project", "--limit", "50")
+
+
+def test_key_files_default_limit(client, put):
+    snapshot, graph = put("ts-app")
+    response = get(client, "key_files", "ts-app", snapshot)
+    assert response.json()["options"]["limit"] == 10
+    assert response.content == cli(graph, "key-files")
+
+
+def test_projects_without_csharp(client, put):
+    snapshot, graph = put("ts-app")
+    response = get(client, "projects", "ts-app", snapshot)
+    assert response.status_code == 200
+    assert response.content == cli(graph, "projects")
+
+
+@pytest.mark.parametrize("question", ["overview", "projects"])
+@pytest.mark.parametrize("param", [{"limit": "1"}, {"include_type_only": "true"}])
+def test_no_options(client, put, question, param):
+    snapshot, _ = put("ts-app")
+    error(get(client, question, "ts-app", snapshot, **param), 400, "bad_request")
+
+
+def test_cycles_without_type_only(client, put):
+    snapshot, graph = put("py-cycles")
+    response = get(client, "cycles", "py-cycles", snapshot, include_type_only="false")
+    assert response.content == cli(graph, "cycles", "--no-type-only", "--limit", "50")
