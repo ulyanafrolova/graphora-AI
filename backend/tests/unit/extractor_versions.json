@@ -8,6 +8,7 @@
   "dotnet-implicit-usings@10.0.100": "54b3372ebaeef1c2",
   "dotnet-namespaces@10.0.0": "40b472df9cf289d3",
   "dotnet-types@10.0.0": "34b613bf273fdc37",
+  "history-reader@1.0.0": "7010783ae8937614",
   "js-adapter@0.2.0": "304728d2dfb0086c",
   "js-resolver@0.2.0": "9649adb21d4b1e91",
   "node-builtins@26.0.0": "4df16d189277975c",

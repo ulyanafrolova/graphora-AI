@@ -94,7 +94,7 @@ of the group. Push at the end of each phase.
   
   Update `backend/tests/contract/test_schema.py` so a v8 example with each status validates and a
   `not_available` history with files does not.
-- [ ] T008 Update the version-pinned tests to v8: `backend/tests/unit/test_overview.py`,
+- [X] T008 Update the version-pinned tests to v8: `backend/tests/unit/test_overview.py`,
   `backend/tests/integration/test_store.py`, `backend/tests/integration/test_query_cli.py` and
   `backend/tests/unit/extractor_versions.json` (add `history-reader`). Run `uv run pytest -m "not db and not
   slow"` and fix only version and expected-key fallout.
