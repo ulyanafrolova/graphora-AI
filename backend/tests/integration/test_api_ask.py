@@ -206,3 +206,13 @@ def test_unusable_model_setting(ask_app):
     ask_app.service.model_factory = ask_app.factory
     ask_app.models.append(scripted(*what_breaks())[0])
     assert post(ask_app)[0] == 200
+
+
+def test_bad_context_size_is_503(ask_app, monkeypatch):
+    monkeypatch.setenv("GRAPHORA_MODEL_CTX", "8k")
+    ask_app.service.model_factory = None
+    ask_app.service.setting = "ollama:qwen3:8b"
+    code, _, data = post(ask_app)
+    assert (code, data["error"]["kind"]) == (503, "model_unavailable")
+    assert "GRAPHORA_MODEL_CTX must be a positive integer" in data["error"]["message"]
+    assert ask_app.service.running() == 0

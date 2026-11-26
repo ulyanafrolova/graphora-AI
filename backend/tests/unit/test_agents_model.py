@@ -56,3 +56,12 @@ def test_failure_mapping(monkeypatch):
     except RuntimeError as outer:
         assert model_failure(outer, "ollama:qwen3:8b") is not None
     assert model_failure(KeyError("x"), "ollama:qwen3:8b") is None
+
+
+def test_bad_context_size(monkeypatch):
+    """An unusable GRAPHORA_MODEL_CTX is a model setting error, not a crash (013 review)."""
+    for value in ("8k", "0", "-1"):
+        monkeypatch.setenv("GRAPHORA_MODEL_CTX", value)
+        with pytest.raises(ModelUnavailable) as exc:
+            model_from_setting("ollama:qwen3:8b")
+        assert exc.value.reason == f"GRAPHORA_MODEL_CTX must be a positive integer, not {value!r}"
