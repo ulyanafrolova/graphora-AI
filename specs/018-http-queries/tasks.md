@@ -159,7 +159,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   have hand-written `definitions` in `expected.json` (the `DEFINED` list of the MCP golden test): for each short name
   found there, GET `/api/v1/definitions?name=<n>&limit=500` equals `run_query(graph, "definitions", n, "--limit",
   "500", "--format", "json")`.
-- [ ] T014 [P] [US3] In `backend/tests/integration/test_http_queries_api.py` add: an unknown name gives 200 with no
+- [X] T014 [P] [US3] In `backend/tests/integration/test_http_queries_api.py` add: an unknown name gives 200 with no
   items (not 404); `name` missing or empty → 400; `target=` instead of `name=` → 400 `unknown parameter: target`;
   `include_type_only` → 400.
 - [ ] T015 [US3] Add the row `definitions` (target parameter `name`; no options; 50) in

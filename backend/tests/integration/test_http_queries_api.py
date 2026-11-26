@@ -124,3 +124,25 @@ def test_cycles_without_type_only(client, put):
     snapshot, graph = put("py-cycles")
     response = get(client, "cycles", "py-cycles", snapshot, include_type_only="false")
     assert response.content == cli(graph, "cycles", "--no-type-only", "--limit", "50")
+
+
+def test_unknown_name(client, put):
+    snapshot, graph = put("ts-app")
+    response = get(client, "definitions", "ts-app", snapshot, name="NoSuchName")
+    assert response.status_code == 200
+    assert response.json()["total"] == 0
+    assert response.content == cli(graph, "definitions", "NoSuchName", "--limit", "50")
+
+
+@pytest.mark.parametrize(
+    ("params", "message"),
+    [
+        ({}, "missing parameter: name"),
+        ({"name": ""}, "missing parameter: name"),
+        ({"name": "x", "target": "x"}, "unknown parameter: target"),
+        ({"name": "x", "include_type_only": "true"}, "unknown parameter: include_type_only"),
+    ],
+)
+def test_definitions_parameters(client, put, params, message):
+    snapshot, _ = put("ts-app")
+    assert error(get(client, "definitions", "ts-app", snapshot, **params), 400, "bad_request") == message
