@@ -213,7 +213,7 @@ equals the API answer.
   is in, "Open code", impact toggle).
 - [X] T036 [US1] Implement `frontend/src/graph/SidePanel.tsx`, `ComponentPanel.tsx`, `FilePanel.tsx`. Check: T035
   passes.
-- [ ] T037 [P] [US1] Write `frontend/tests/unit/impact.test.tsx`: impact panel shows `total` from the answer, a bar per
+- [X] T037 [P] [US1] Write `frontend/tests/unit/impact.test.tsx`: impact panel shows `total` from the answer, a bar per
   component with the count of impact items whose file is in it, the heuristic part as "~N heuristic" (items with
   `confidence: "heuristic"`), "and N more" when `truncated`; highlighted node ids equal the answer's item nodes.
 - [ ] T038 [US1] Implement `frontend/src/graph/ImpactPanel.tsx` and impact highlighting in `GraphView.tsx` (`impact=on`
