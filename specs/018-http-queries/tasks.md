@@ -102,7 +102,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
     `_flags` helper as the MCP golden test (copy it);
   - assert status 200, `content-type` `application/json`, `response.content == as_json`, and a second request gives
     the same bytes (SC-001, SC-002).
-- [ ] T006 [P] [US1] Write `backend/tests/integration/test_http_queries_api.py` (`db`), US1 part, on the `ts-app` and
+- [X] T006 [P] [US1] Write `backend/tests/integration/test_http_queries_api.py` (`db`), US1 part, on the `ts-app` and
   `py-cycles` fixtures:
   - default limit 50 shows in `options.limit`; `limit=0` gives no items with the real `total` and
     `truncated: true`; `limit=1` on a file with ≥ 2 dependents gives one item and `truncated: true`;
