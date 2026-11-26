@@ -216,7 +216,7 @@ equals the API answer.
 - [X] T037 [P] [US1] Write `frontend/tests/unit/impact.test.tsx`: impact panel shows `total` from the answer, a bar per
   component with the count of impact items whose file is in it, the heuristic part as "~N heuristic" (items with
   `confidence: "heuristic"`), "and N more" when `truncated`; highlighted node ids equal the answer's item nodes.
-- [ ] T038 [US1] Implement `frontend/src/graph/ImpactPanel.tsx` and impact highlighting in `GraphView.tsx` (`impact=on`
+- [X] T038 [US1] Implement `frontend/src/graph/ImpactPanel.tsx` and impact highlighting in `GraphView.tsx` (`impact=on`
   in the address; request `/impact?target=<node>&limit=500`); collapsed component nodes show a badge with the number
   of impact items inside them, and only files of expanded components are highlighted one by one. Check: T037 passes
   (add the badge case to T037).

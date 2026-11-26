@@ -36,7 +36,12 @@ export function GraphPage({ route }: { route: RouteState }) {
         cycles={cycles.data}
         onChange={(next) => go({ ...route, ...next })}
       />
-      <SidePanel route={route} components={components.data} onChange={(next) => go({ ...route, ...next })} />
+      <SidePanel
+        route={route}
+        components={components.data}
+        impact={impact.data}
+        onChange={(next) => go({ ...route, ...next })}
+      />
     </div>
   );
 }

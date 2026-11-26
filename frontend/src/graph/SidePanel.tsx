@@ -2,21 +2,21 @@ import { useNavigate } from "react-router";
 
 import { ComponentPanel } from "./ComponentPanel";
 import { FilePanel } from "./FilePanel";
+import { ImpactPanel } from "./ImpactPanel";
 import { nodeName } from "./names";
 
 import { useCycles, useFiles, useHotspots, useKeyFiles, useNeighbors } from "@/api/queries";
 import type { Answer } from "@/api/types";
 import { toPath, type RouteState } from "@/state/route";
 
-export function SidePanel({
-  route,
-  components,
-  onChange,
-}: {
+export interface SidePanelProps {
   route: RouteState;
   components: Answer;
+  impact: Answer | undefined;
   onChange: (next: Partial<RouteState>) => void;
-}) {
+}
+
+export function SidePanel({ route, components, impact, onChange }: SidePanelProps) {
   const navigate = useNavigate();
   const snapshot = { repository: route.repository, snapshot: route.snapshot };
   const keyFiles = useKeyFiles(snapshot);
@@ -40,7 +40,9 @@ export function SidePanel({
         onToggleImpact={() => onChange({ impact: !route.impact })}
         onOpenCode={() => onChange({ screen: "code", path: nodeName(file), line: null })}
         onSelect={(id) => onChange({ node: id })}
-      />
+      >
+        {route.impact && impact !== undefined && <ImpactPanel answer={impact} components={components} />}
+      </FilePanel>
     );
   }
   const component = (components.components ?? []).find((c) => c.id === (route.node ?? route.component)) ?? null;

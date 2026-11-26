@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { nodeName } from "./names";
 
 import type { Answer, Files, Item } from "@/api/types";
@@ -13,6 +15,7 @@ export interface FilePanelProps {
   onToggleImpact: () => void;
   onOpenCode: () => void;
   onSelect: (id: string) => void;
+  children?: ReactNode;
 }
 
 function Links({ items, testId, onSelect }: { items: Item[]; testId: string; onSelect: (id: string) => void }) {
@@ -63,6 +66,7 @@ export function FilePanel(props: FilePanelProps) {
           Open code
         </button>
       </div>
+      {props.children}
       <div className="label">Imports · {neighbors?.outgoing?.length ?? 0}</div>
       <Links items={neighbors?.outgoing ?? []} testId="dependencies" onSelect={props.onSelect} />
       <div className="label">Imported by · {neighbors?.incoming?.length ?? 0}</div>

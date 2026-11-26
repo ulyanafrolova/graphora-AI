@@ -48,7 +48,7 @@ function filePairs(graph: GraphDocument): Pair[] {
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const label = (id: string) => id.slice(id.lastIndexOf("/") + 1).replace(/^(file|ext:[a-z]+):/, "");
 const caption = (c: Component, impacted?: number) =>
-  `${c.name}\n${c.file_count} ${c.file_count === 1 ? "file" : "files"}${impacted ? ` · ${impacted} affected` : ""}`;
+  `${c.name}\n${c.file_count} ${c.file_count === 1 ? "file" : "files"}${impacted ? `\n${impacted} affected` : ""}`;
 const classes = (...names: (string | false)[]) => names.filter(Boolean).join(" ");
 
 export function toElements(input: ElementsInput): ElementDefinition[] {
@@ -63,9 +63,9 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
   const shownFile = (id: string) => !(hideTests && isTest(id.replace(/^file:/, "")));
   const els: ElementDefinition[] = [];
 
-  const node = (id: string, data: Record<string, unknown>, cls: string) => {
-    const selected = input.selected === id;
-    const impacted = input.impact?.has(id) ?? false;
+  const node = (id: string, data: Record<string, unknown>, cls: string, holds: string[] = []) => {
+    const selected = input.selected === id || (input.selected !== null && holds.includes(input.selected));
+    const impacted = (input.impact?.has(id) ?? false) || holds.some((f) => input.impact?.has(f));
     els.push({
       data: { id, ...data },
       classes: classes(
@@ -98,6 +98,7 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
         ...impacted,
       },
       classes("component", c.has_cycle && "cycle", expanded && "expanded"),
+      expanded ? [] : c.files,
     );
   };
 
