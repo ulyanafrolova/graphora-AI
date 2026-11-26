@@ -52,7 +52,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `/api` → `http://127.0.0.1:8000` (no path rewrite, `changeOrigin: false`), build `outDir: dist`, Vitest
   `environment: jsdom`, `setupFiles: ./tests/setup.ts`; create `frontend/tests/setup.ts` (Testing Library jest-dom,
   MSW server start/reset/close).
-- [ ] T005 [P] Configure `frontend/playwright.config.ts`: Chromium only, `baseURL` `http://127.0.0.1:8765`,
+- [X] T005 [P] Configure `frontend/playwright.config.ts`: Chromium only, `baseURL` `http://127.0.0.1:8765`,
   `webServer` = `cd ../backend && uv run python tests/e2e_server.py --port 8765` (reuse when running), `testDir:
   tests/e2e`, traces on first retry.
 - [ ] T006 [P] Add to `Makefile`: `web` (`cd frontend && npm run dev`), `web-build` (`cd frontend && npm ci && npm run
