@@ -71,3 +71,15 @@ def with_history(
         work=fetched.work, max_bytes=max_bytes,
     )
     return dataclasses.replace(doc, history=history)
+
+
+def history_final(graph: bytes) -> bool:
+    """Whether a serialized graph's history cannot get better by analyzing again (research § R6)."""
+    import json
+
+    from graphora.graph.model import FINAL_HISTORY_REASONS
+
+    history = json.loads(graph).get("history") or {}
+    return history.get("status") == "available" or (
+        history.get("status") == "not_available" and history.get("reason") in FINAL_HISTORY_REASONS
+    )

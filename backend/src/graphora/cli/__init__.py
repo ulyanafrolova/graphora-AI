@@ -367,7 +367,7 @@ def _analyze_and_store(
             args.max_files, args.max_bytes, args.max_seconds, limits.max_archive_bytes, limits.max_extract_bytes,
             limits.max_entries,
         )
-        result = run_pipeline(source, pipeline_limits, store, deadline)
+        result = run_pipeline(source, pipeline_limits, store, deadline, history=not args.no_history)
         saved = result.analysis
         info = () if result.fetched is None else (result.fetched,)
         info += (f"{result.action} {saved.repository} {saved.snapshot}",)

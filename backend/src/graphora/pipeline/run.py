@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from graphora.graph.build import analyze
-from graphora.history import with_history
+from graphora.history import history_final, with_history
 from graphora.ingest import github
 from graphora.ingest.fetch import IngestLimits, fetch_snapshot, with_skipped
 from graphora.ingest.source import GitHubSource, Source, ZipSource
@@ -61,6 +61,7 @@ def run_pipeline(
     deadline: Deadline,
     on_stage: Callable[[Stage], None] = _no_stage,
     workdir: Path | None = None,
+    history: bool = True,
 ) -> PipelineResult:
     """Resolve (GitHub), reuse or fetch, analyze and store. Raises the ingest, limit and store errors as is."""
     sha = None
@@ -68,13 +69,13 @@ def run_pipeline(
         on_stage("resolving")
         sha = github.resolve_sha(source, deadline)
         stored = store.find_reusable(f"github.com/{source.owner}/{source.repo}", sha)
-        if stored is not None:  # nothing to download (005 FR-008)
+        if stored is not None and (not history or history_final(stored.graph)):  # nothing to download (005 FR-008)
             return PipelineResult(stored, "reused", None)
     on_stage("fetching")
     with fetch_snapshot(source, limits.ingest(), deadline, sha=sha, workdir=workdir) as fetched:
         on_stage("analyzing")
         result = analyze(fetched.root, limits.max_files, limits.max_bytes, deadline, snapshot=fetched.snapshot)
-        doc = with_history(with_skipped(result.doc, fetched.skipped), fetched, deadline, True, limits.max_archive_bytes)
+        doc = with_history(with_skipped(result.doc, fetched.skipped), fetched, deadline, history, limits.max_archive_bytes)
         result = dataclasses.replace(result, doc=doc)
         on_stage("storing")
         stored_result = store.put(fetched.repository, result)

@@ -83,7 +83,8 @@ def test_database_option(store, database_url, monkeypatch):
 
 @pytest.mark.db
 def test_github_reuse_skips_download(db, fake):
-    first = run_analyze(LINK, "--store")
+    """Without history: a stored history that is not final is fetched again (014 FR-018)."""
+    first = run_analyze(LINK, "--store", "--no-history")
     assert first[0] == 0, first[2]
     assert fake.urls("api.github.com") == [API]
     assert fake.urls("codeload.github.com") == [TARBALL]
@@ -91,7 +92,7 @@ def test_github_reuse_skips_download(db, fake):
     assert f"graphora: info: stored github.com/o/r {SHA}" in first[2]
 
     fake.requests.clear()
-    second = run_analyze(LINK, "--store")
+    second = run_analyze(LINK, "--store", "--no-history")
     assert second[0] == 0, second[2]
     assert fake.urls("api.github.com") == [API]
     assert fake.urls("codeload.github.com") == []

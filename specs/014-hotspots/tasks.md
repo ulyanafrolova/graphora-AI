@@ -310,7 +310,7 @@ with an expired deadline, and a repository served by a local git server; check s
   - never raise.
   
   Run `uv run pytest tests/unit/test_history_reader.py`.
-- [ ] T025 [US2] Add `--no-history` to `analyze` in `backend/src/graphora/cli/__init__.py`, passed to
+- [X] T025 [US2] Add `--no-history` to `analyze` in `backend/src/graphora/cli/__init__.py`, passed to
   `with_history(enabled=...)` and to `run_pipeline(..., history=...)` in
   `backend/src/graphora/pipeline/run.py`. In `run_pipeline`, reuse a stored analysis before fetching only if
   `not history` or its history is final. Read it from the stored graph JSON with a helper `history_final(graph:
