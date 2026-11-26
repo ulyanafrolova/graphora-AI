@@ -208,7 +208,9 @@ backend/app/api.py`: rejected `no_edge` twice, ends as a hypothesis, never a fac
 - [ ] T022 [P] [US2] Extend `backend/tests/unit/test_agents_review.py`: a rejected claim with revisions left
   becomes `h1` (reason, hint, `tries == 1`), `revisions` goes to 1, a `revision` event is recorded, `task`
   equals `prompts.revision_task(...)` with the reason and hint, route is `revise`; at `revisions == 2` or
-  `tool_calls >= 15` route is `answer` and end reason `revisions_spent` / `budget_spent`; a verified claim
+  `tool_calls >= 15` route is `answer` and end reason `revisions_spent` / `budget_spent`; `end_reason(state)`
+  follows the order of data-model.md § EndReason when several apply (e.g. revisions and tool budget both
+  spent → `budget_spent`; model failure plus anything → `model_failed`); a verified claim
   with `revises: "h1"` sets `h1.open = False`; a repeated rejected claim does not create a second hypothesis.
 - [ ] T023 [US2] Extend `backend/tests/golden/test_agents_fixtures.py`: (a) `mixed-fullstack` — analyst claims
   the frontend→backend dependency in every round; assert it is rejected with reason `no_edge`, the explorer's
@@ -255,7 +257,9 @@ replies and a model error all end within the limits with the right end reason.
   still gets its claims call; (e) a model raising `httpx.ConnectError` mid-run → `ask` returns,
   `end == "model_failed"`, facts verified before the failure are kept; (f) a `ClaimsReply` parse failure
   counts one model call and gives no claims; (g) an `on_event` callback that raises ends the run like a model
-  failure.
+  failure; (h) on this graph-file snapshot (no store) `read_lines` is not offered and a scripted definition
+  claim is rejected `text_unavailable` and ends as a hypothesis, while a dependency claim in the same run is
+  a fact.
 - [ ] T027 [P] [US3] Write `backend/tests/unit/test_agents_trace.py`: the trace of a scripted run lists in
   order `role_start`, `tool_call`, `claim`, `claim_invalid`, `verdict`, `revision`, `hypothesis`, `summary`,
   `end`, with `n` 1…N; `on_event` receives the same events in the same order; no event contains tool text,
@@ -314,16 +318,17 @@ an unavailable model exits 9 with one error line.
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T034 [P] Write `backend/tests/integration/test_agents_live.py` marked `llm` and `db`: skipped unless
-  `GRAPHORA_TEST_MODEL` is set; re-enables network for this test only (undo `_no_network` with
-  `monkeypatch.undo()` or a local fixture override); runs `ask` on stored `mixed-fullstack` with the real
-  model; asserts tool calls ≤ 15, revisions ≤ 2, every fact re-verifies `verified`, nothing rejected is a fact
-  (FR-023, SC-001, SC-002). Wording is not checked.
+  `GRAPHORA_TEST_MODEL` is set; for this test only replaces `_no_network` with a guard that allows
+  connections to the model address (host and port of `OLLAMA_HOST`, default `127.0.0.1:11434`) and fails on
+  any other address, recording every address connected to (FR-018); runs `ask` on stored `mixed-fullstack` with the real
+  model; asserts tool calls ≤ 15, revisions ≤ 2, every fact re-verifies `verified`, nothing rejected is a fact,
+  and the only address connected to is the model's (FR-018, FR-023, SC-001, SC-002). Wording is not checked.
 - [ ] T035 [P] Update `CLAUDE.md` § Commands with `uv run graphora ask "<question>" --graph graph.json`
   (and store mode), `GRAPHORA_MODEL` / `GRAPHORA_MODEL_CTX`, and `-m "not llm"`; mark `/ask` in
   `docs/product/project-context.md` §5 as using the 012 agents.
 - [ ] T036 Run `make check` (ruff and the full test suite with PostgreSQL, `-m "not llm"`); fix findings.
 - [ ] T037 Run the quickstart sections 1–3 (`specs/012-agents/quickstart.md`) and, with Ollama available,
-  section 4; note the measured time for SC-007 in the PR description.
+  section 4; note the measured time, the laptop and the model for SC-007 in the PR description.
 
 **Checkpoint**: commit `agents: live check, docs and cleanup` and push.
 

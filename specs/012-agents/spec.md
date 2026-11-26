@@ -107,7 +107,7 @@ still returns an answer built from what was verified.
    answer contains no facts and says that nothing could be verified.
 4. **Given** a finished run, **When** its trace is read, **Then** it lists, in order, every agent step, tool
    call (name, arguments, whether it was cut or failed), claim, verdict, revision and the end reason, and
-   contains no text from the analyzed repository outside clearly marked tool-result data.
+   contains no file content, tool result text or model text (paths appear only as arguments and citations).
 5. **Given** the same question, snapshot and scripted model replies, **When** the agents run twice, **Then**
    the answers and traces are identical.
 
@@ -215,8 +215,10 @@ address; check the printed answer's parts and the error message and exit status.
   only. Before it is returned, code MUST check that every path the summary names belongs to those claims and
   that every `path:line` it names is the citation of a fact (likely links are named by their files only);
   otherwise the summary is replaced by a summary built by code from the facts.
-- **FR-015**: The answer MUST state the snapshot it is about and why the run ended (answered, budget spent,
-  revisions spent, model failed).
+- **FR-015**: The answer MUST state the snapshot it is about and why the run ended: `answered`, `revisions_spent`,
+  `budget_spent` (tool calls), `model_budget_spent` (model calls), `model_failed` or `no_claims`. When
+  several apply, the first in this order wins: `model_failed`, `model_budget_spent`, `budget_spent`,
+  `revisions_spent`, `no_claims`, `answered`.
 
 **Model and safety**
 
@@ -230,10 +232,12 @@ address; check the printed answer's parts and the error message and exit status.
 
 **Trace and entry point**
 
-- **FR-019**: Every run MUST produce an ordered trace of events: role started, tool call (name, arguments,
-  error or cut), claim, verdict, revision, hypothesis, answer, end reason. Each event is recorded as it
-  happens so that a later feature (013) can stream it. Repository text appears in the trace only inside
-  marked tool-result data.
+- **FR-019**: Every run MUST produce an ordered trace of events: role started (`role_start`), tool call
+  (`tool_call`: name, arguments, citation ids, error or cut), claim (`claim`), invalid claim
+  (`claim_invalid`), verdict (`verdict`), revision (`revision`), hypothesis (`hypothesis`), summary
+  (`summary`) and end reason (`end`). Each event is recorded as it happens so that a later feature (013) can
+  stream it. The trace contains no file content, tool result text or model text; repository paths appear
+  only as tool arguments and citations.
 - **FR-020**: The agents MUST be callable from code with a question and a snapshot, and from the command line
   with a question and a graph file or a stored repository and snapshot, printing the answer and optionally
   the trace. An unreachable model MUST give a short error and a non-zero exit status.
@@ -279,7 +283,8 @@ address; check the printed answer's parts and the error message and exit status.
   changed on the way; with the live model, at least one direct dependent of X is found as a fact.
 - **SC-006**: Two runs with the same scripted replies give identical answers and traces.
 - **SC-007**: With the default local model on a developer laptop, an answer on a fixture repository arrives
-  within 2 minutes and every fact in it verifies.
+  within 2 minutes and every fact in it verifies. Measured by hand (it depends on the hardware) and recorded
+  in the pull request; the verification part is checked by the live test.
 
 ## Assumptions
 
