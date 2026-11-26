@@ -243,11 +243,11 @@ waiting and step ids stay consecutive.
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T025 [P] Update `CLAUDE.md` § Commands with `serve --asks/--model` and the `curl -N -X POST
+- [X] T025 [P] Update `CLAUDE.md` § Commands with `serve --asks/--model` and the `curl -N -X POST
   localhost:8000/api/v1/ask …` example; in `docs/product/project-context.md` §5 replace `POST
   /repos/{id}/ask … planned, feature 013` with `POST /api/v1/ask  question to agents, streamed (SSE): 013`.
-- [ ] T026 Run `make db` and `make check` (ruff and the full suite with PostgreSQL); fix findings.
-- [ ] T027 Run quickstart sections 2–3 (`specs/013-ask-sse/quickstart.md`) against a live Ollama model; note
+- [X] T026 Run `make db` and `make check` (ruff and the full suite with PostgreSQL); fix findings.
+- [X] T027 Run quickstart sections 2–3 (`specs/013-ask-sse/quickstart.md`) against a live Ollama model; note
   the time to the first `step` and to the `answer`, and the busy/disconnect behaviour, in the PR description.
 
 **Checkpoint**: commit `ask: docs and checks` and push.
