@@ -171,7 +171,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   ids shortened to `content:` + 8), one badge per `overview.languages` entry with status analyzed/detected only from
   the overview file counts, model badge `qwen3:8b · local` for `ollama:qwen3:8b`, `agents off` when `ask.enabled` is
   false; sidebar sections and items exactly as FR-001 with the active item marked; footer text.
-- [ ] T028 Implement `frontend/src/shell/Header.tsx`, `SnapshotPicker.tsx`, `Sidebar.tsx`, `Layout.tsx` and wire them in
+- [X] T028 Implement `frontend/src/shell/Header.tsx`, `SnapshotPicker.tsx`, `Sidebar.tsx`, `Layout.tsx` and wire them in
   `frontend/src/App.tsx`. Check: T027 passes.
 - [ ] T029 [P] Write `frontend/tests/unit/errors.test.tsx`: `ErrorState` renders each row of contracts/ui.md § Error and
   empty states with its message and action; `Legend` renders the shared visual language rows.

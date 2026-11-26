@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject } from "react-router";
 
+import { Layout } from "./shell/Layout";
 import { DEFAULT, lastSnapshot, toPath } from "./state/route";
 import { useRoute } from "./state/useRoute";
 
@@ -10,12 +11,17 @@ function Home() {
 
 function Placeholder({ name }: { name?: string }) {
   const route = useRoute();
-  return <main>{name ?? route?.screen ?? "not found"}</main>;
+  return <h1>{name ?? route?.screen ?? "not found"}</h1>;
 }
 
 export const routes: RouteObject[] = [
   { path: "/", element: <Home /> },
-  { path: "/import", element: <Placeholder name="import" /> },
-  { path: "/r/:repo/:snap/:screen", element: <Placeholder /> },
-  { path: "*", element: <Placeholder name="not found" /> },
+  {
+    element: <Layout />,
+    children: [
+      { path: "/import", element: <Placeholder name="import" /> },
+      { path: "/r/:repo/:snap/:screen", element: <Placeholder /> },
+      { path: "*", element: <Placeholder name="not found" /> },
+    ],
+  },
 ];

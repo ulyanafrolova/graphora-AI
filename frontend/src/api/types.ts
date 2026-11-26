@@ -163,7 +163,15 @@ export interface Job {
   stage: Stage;
   source: { kind: "github" | "zip"; repository: string; ref?: string | null; name?: string };
   limits: Omit<Limits, "skipped">;
-  result: { action: string; repository: string; snapshot: string; files: number; edges: number; unresolved: number; warnings: string[] } | null;
+  result: {
+    action: string;
+    repository: string;
+    snapshot: string;
+    files: number;
+    edges: number;
+    unresolved: number;
+    warnings: string[];
+  } | null;
   error: { kind: string; message: string } | null;
 }
 

@@ -5,7 +5,6 @@ import { server } from "../setup";
 
 import { ApiError, apiGet, apiPost, apiUpload } from "@/api/client";
 
-
 test("get builds the address and parses json", async () => {
   let seen = "";
   server.use(
@@ -14,7 +13,12 @@ test("get builds the address and parses json", async () => {
       return HttpResponse.json({ total: 1 });
     }),
   );
-  const body = await apiGet<{ total: number }>("impact", { repository: "a/b", snapshot: "content:1", target: "x y.py", limit: 5 });
+  const body = await apiGet<{ total: number }>("impact", {
+    repository: "a/b",
+    snapshot: "content:1",
+    target: "x y.py",
+    limit: 5,
+  });
   expect(body.total).toBe(1);
   expect(seen).toBe("?repository=a%2Fb&snapshot=content%3A1&target=x%20y.py&limit=5");
 });
@@ -45,7 +49,10 @@ test("error bodies become ApiError", async () => {
 test("retry-after is read", async () => {
   server.use(
     http.post("*/api/v1/ask", () =>
-      HttpResponse.json({ error: { kind: "busy", message: "busy" } }, { status: 429, headers: { "Retry-After": "30" } }),
+      HttpResponse.json(
+        { error: { kind: "busy", message: "busy" } },
+        { status: 429, headers: { "Retry-After": "30" } },
+      ),
     ),
   );
   const error = await apiPost("ask", { question: "q" }).catch((e: unknown) => e);

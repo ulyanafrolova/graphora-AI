@@ -78,10 +78,7 @@
       "args": {
         "target": "loop/a.py"
       },
-      "citation_ids": [
-        "c1",
-        "c2"
-      ],
+      "citation_ids": ["c1", "c2"],
       "cut": false,
       "kind": "tool_call",
       "n": 2,

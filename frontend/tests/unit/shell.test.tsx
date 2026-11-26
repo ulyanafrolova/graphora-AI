@@ -51,7 +51,9 @@ test("header", () => {
       ask={{ enabled: true, model: "ollama:qwen3:8b" }}
     />,
   );
-  expect(screen.getByText("graphora")).toBeInTheDocument();
+  expect(
+    screen.getByText((_, el) => el?.classList.contains("brand") === true && el.textContent === "graphora"),
+  ).toBeInTheDocument();
   expect(screen.getByText("acme/shop")).toBeInTheDocument();
   expect(screen.getByText("3f1c2b4")).toBeInTheDocument();
   expect(screen.getByText("Python · analyzed")).toHaveClass("analyzed");

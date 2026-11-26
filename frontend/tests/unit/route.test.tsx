@@ -45,7 +45,17 @@ test("unknown screens and other paths are not snapshot routes", () => {
 });
 
 test("every screen parses", () => {
-  for (const screen of ["graph", "code", "ask", "trace", "cycles", "hotspots", "pr-impact", "security", "mcp"] as const) {
+  for (const screen of [
+    "graph",
+    "code",
+    "ask",
+    "trace",
+    "cycles",
+    "hotspots",
+    "pr-impact",
+    "security",
+    "mcp",
+  ] as const) {
     expect(parseRoute(`/r/r/s/${screen}`, "")?.screen).toBe(screen);
   }
 });
@@ -53,7 +63,13 @@ test("every screen parses", () => {
 test("switching snapshot keeps a node that exists and clears the rest", () => {
   const kept = switchSnapshot(full, "github.com/o/r", "content:def", () => true);
   expect(kept.note).toBeNull();
-  expect(kept.state).toMatchObject({ snapshot: "content:def", node: "file:src/a b.py", component: null, impact: false, level: "system" });
+  expect(kept.state).toMatchObject({
+    snapshot: "content:def",
+    node: "file:src/a b.py",
+    component: null,
+    impact: false,
+    level: "system",
+  });
   const cleared = switchSnapshot(full, "github.com/o/r", "content:def", () => false);
   expect(cleared.note).toBe("selection cleared: not in this snapshot");
   expect(cleared.state.node).toBeNull();

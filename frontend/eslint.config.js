@@ -36,7 +36,7 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
-    settings: { react: { version: "detect" } },
+    settings: { react: { version: "detect" }, "import/internal-regex": "^@/" },
     plugins: { react, "react-hooks": reactHooks, import: importPlugin },
     rules: {
       ...react.configs.recommended.rules,
@@ -49,7 +49,10 @@ export default tseslint.config(
       "no-new-func": "error",
       "no-restricted-properties": [
         "error",
-        ...TRAVERSAL.map((property) => ({ property, message: "graph facts come from the Graphora service (research R2)" })),
+        ...TRAVERSAL.map((property) => ({
+          property,
+          message: "graph facts come from the Graphora service (research R2)",
+        })),
       ],
       "no-restricted-syntax": [
         "error",

@@ -100,7 +100,17 @@ export function switchSnapshot(
 ): { state: RouteState; note: string | null } {
   const keep = state.node !== null && hasNode(state.node);
   return {
-    state: { ...state, repository, snapshot, level: "system", component: null, impact: false, node: keep ? state.node : null, group: null, run: null },
+    state: {
+      ...state,
+      repository,
+      snapshot,
+      level: "system",
+      component: null,
+      impact: false,
+      node: keep ? state.node : null,
+      group: null,
+      run: null,
+    },
     note: state.node !== null && !keep ? "selection cleared: not in this snapshot" : null,
   };
 }
