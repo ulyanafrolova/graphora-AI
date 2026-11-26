@@ -53,7 +53,8 @@ export const STYLE: StylesheetJson = [
       shape: "ellipse",
       width: "mapData(count, 1, 500, 46, 140)",
       height: "mapData(count, 1, 500, 46, 140)",
-      label: "data(label)",
+      label: "data(caption)",
+      "text-wrap": "wrap",
       "font-size": 15,
       "font-weight": "bold",
       "font-family": "-apple-system, Inter, sans-serif",
@@ -119,15 +120,8 @@ for (let i = 1; i <= PALETTE.length; i++) {
   STYLE.push({ selector: `node[color = ${i}]`, style: { "border-color": paletteColor(i) } });
   STYLE.push({
     selector: `node.component[color = ${i}]`,
-    style: { "background-color": `${paletteColor(i)}22`, "border-color": paletteColor(i) },
+    style: { "background-color": paletteColor(i), "background-opacity": 0.12, "border-color": paletteColor(i) },
   });
 }
 STYLE.push({ selector: "node.selected", style: { "border-color": COLOR.selected, "border-width": 4 } });
 STYLE.push({ selector: "node.impacted", style: { "border-color": COLOR.impact, "border-width": 3 } });
-STYLE.push({
-  selector: "node[impacted > 0]",
-  style: {
-    label: (n: { data: (k: string) => unknown }) =>
-      `${String(n.data("label"))} · ${String(n.data("impacted"))} affected`,
-  },
-});

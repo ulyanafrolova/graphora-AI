@@ -12,6 +12,7 @@ export interface ElementsInput {
   hide: Hidden[];
   selected: string | null;
   impact: Set<string> | null;
+  cycles?: Answer;
 }
 
 const TEST = /(^|\/)(tests?|__tests__)\/|(_test|\.test|\.spec)\./;
@@ -46,12 +47,17 @@ function filePairs(graph: GraphDocument): Pair[] {
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const label = (id: string) => id.slice(id.lastIndexOf("/") + 1).replace(/^(file|ext:[a-z]+):/, "");
+const caption = (c: Component, impacted?: number) =>
+  `${c.name}\n${c.file_count} ${c.file_count === 1 ? "file" : "files"}${impacted ? ` · ${impacted} affected` : ""}`;
 const classes = (...names: (string | false)[]) => names.filter(Boolean).join(" ");
 
 export function toElements(input: ElementsInput): ElementDefinition[] {
   const comps = input.components.components ?? [];
   const where = new Map<string, number>();
   comps.forEach((c, i) => c.files.forEach((f) => where.set(f, i)));
+  const loop = new Map<string, number>();
+  (input.cycles?.groups ?? []).forEach((g, i) => g.files.forEach((f) => loop.set(f, i)));
+  const inLoop = (a: string, b: string) => loop.has(a) && loop.get(a) === loop.get(b);
   const hideTests = input.hide.includes("tests");
   const hideExternal = input.hide.includes("external");
   const shownFile = (id: string) => !(hideTests && isTest(id.replace(/^file:/, "")));
@@ -83,7 +89,14 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
       input.impact === null || expanded ? {} : { impacted: c.files.filter((f) => input.impact?.has(f)).length };
     node(
       c.id,
-      { label: c.name, count: c.file_count, color: i + 1, kind: "component", ...impacted },
+      {
+        label: c.name,
+        caption: caption(c, impacted.impacted),
+        count: c.file_count,
+        color: i + 1,
+        kind: "component",
+        ...impacted,
+      },
       classes("component", c.has_cycle && "cycle", expanded && "expanded"),
     );
   };
@@ -119,7 +132,7 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
           p.source,
           p.target,
           { imports: p.imports },
-          classes("link", !p.resolved && "heuristic", p.typeOnly && "type-only"),
+          classes("link", !p.resolved && "heuristic", p.typeOnly && "type-only", inLoop(p.source, p.target) && "cycle"),
         );
         continue;
       }
@@ -165,7 +178,13 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
       p.source,
       p.target,
       { imports: p.imports },
-      classes("link", !p.resolved && "heuristic", p.typeOnly && "type-only", p.target.startsWith("ext:") && "external"),
+      classes(
+        "link",
+        !p.resolved && "heuristic",
+        p.typeOnly && "type-only",
+        p.target.startsWith("ext:") && "external",
+        inLoop(p.source, p.target) && "cycle",
+      ),
     );
   }
   return els;

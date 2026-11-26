@@ -175,3 +175,15 @@ test("no links and one file", () => {
     expect(ids(els, "nodes").length).toBeGreaterThan(0);
   }
 });
+
+test("links inside a cycle group are marked", () => {
+  const cycles = {
+    groups: [{ files: ["file:a/x.py", "file:a/y.py"], cycle: [], type_only: false, confidence: "resolved" }],
+  } as unknown as Answer;
+  const els = toElements({ ...base, level: "file", cycles });
+  const cls = (id: string) => els.find((e) => e.data.id === id)?.classes ?? "";
+  expect(cls("file:a/x.py->file:a/y.py")).toBe("link cycle");
+  expect(cls("file:a/x.py->file:b/z.py")).toBe("link");
+  const inside = toElements({ ...base, level: "component", component: "component:1", cycles });
+  expect(inside.find((e) => e.data.id === "file:a/y.py->file:a/x.py")?.classes).toBe("link cycle");
+});

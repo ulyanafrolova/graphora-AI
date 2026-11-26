@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject } from "react-router";
 
+import { Screen } from "./screens";
 import { Layout } from "./shell/Layout";
 import { DEFAULT, lastSnapshot, toPath } from "./state/route";
 import { useRoute } from "./state/useRoute";
@@ -20,7 +21,7 @@ export const routes: RouteObject[] = [
     element: <Layout />,
     children: [
       { path: "/import", element: <Placeholder name="import" /> },
-      { path: "/r/:repo/:snap/:screen", element: <Placeholder /> },
+      { path: "/r/:repo/:snap/:screen", element: <Screen /> },
       { path: "*", element: <Placeholder name="not found" /> },
     ],
   },
