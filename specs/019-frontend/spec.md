@@ -13,6 +13,24 @@ deterministic cycle cut suggestion, and per-file line counts. § 10 PR impact an
 available in this version". The mockups in `docs/demo/*.png` are the reference for layout and visual language; their
 numbers and file names are illustrative.
 
+## Clarifications
+
+### Session 2026-11-26
+
+- Q: By which rule does Graphora pick the link(s) to suggest removing in a cycle? → A: A minimum feedback arc set
+  (the fewest links whose removal leaves no cycle in the group), computed exactly for groups of up to 20 files; larger
+  groups use the greedy rule (the link that breaks the most cycles, then the fewest imported names, then path order,
+  repeated until no cycle is left). The answer says which method was used.
+- Q: From what snapshot size does the graph open with collapsed components? → A: Always: every snapshot opens at the
+  System level (components collapsed), whatever its size; the user expands components or switches to File level.
+- Q: How do users open the UI? → A: A development server for UI work, and `graphora serve` also serves the built UI
+  from the same address as the API when a build is present, so a demo needs one command and one address.
+- Q: Are agent answers and traces kept after a page reload? → A: Yes, in the user's browser only: the last 20 answers
+  with their traces per snapshot, with a "clear history" action; nothing is stored on the server.
+- Q: How is a component named when its files share no folder, or two components get the same name? → A: The longest
+  common folder; if none, the most frequent top-level folder among its files (ties by path order); equal names get
+  ` · 2`, ` · 3`, … in the order of each component's first file path.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Explore a stored snapshot: graph, impact and code (Priority: P1)
@@ -83,8 +101,8 @@ fails a limit and check the failure is shown with its reason.
 ### User Story 3 - Insights: cycles, hotspots, key files and search (Priority: P2)
 
 From the sidebar the developer opens Cycles (§ 8, `06-cycles.png`): every group of files that import each other in
-a loop, with the number of links, an example cycle of import lines, and the suggested link to remove — the one that
-breaks the loop with the fewest imported names, with its line — shown as "recommendation only; Graphora never
+a loop, with the number of links, an example cycle of import lines, and the suggested links to remove — the fewest
+links whose removal ends every loop of the group, with their lines — shown as "recommendation only; Graphora never
 modifies your code". Hotspots (§ 9, `07-hotspots.png`) shows a risk map where tile size is lines of code and colour
 is the risk score, and a table of top risks with commits, transitive dependents ("used by") and bus factor, with the
 history base (window, commits read) or "history not available" with the reason. A search box finds files by path and
@@ -99,8 +117,8 @@ the hotspot table and the search results with the API answers.
 **Acceptance Scenarios**:
 
 1. **Given** a snapshot with cycles, **When** Cycles is opened, **Then** each group is listed with its files, link
-   count and example cycle, and a selected group shows the suggested link to remove with its file, line and the line
-   text, labelled as a recommendation.
+   count and example cycle, and a selected group shows the suggested links to remove with file, line and line text,
+   the method (exact or greedy), labelled as a recommendation.
 2. **Given** a type-only cycle, **When** it is listed, **Then** it is marked as not failing at run time.
 3. **Given** a snapshot with history, **When** Hotspots is opened, **Then** tiles are sized by lines of code and
    coloured by score, and the table lists commits, used by and bus factor as numbers only (no names or e-mails).
@@ -137,6 +155,8 @@ final facts and hypotheses, the citations and the trace equal the streamed event
    **Then** they see that message and can retry; the page does not hang.
 4. **Given** a finished answer, **When** Agent trace is opened, **Then** the steps, claim statuses and budget of that
    run are shown.
+5. **Given** finished answers, **When** the page is reloaded, **Then** the last 20 answers of the snapshot and their
+   traces are still listed; "clear history" removes them.
 
 ---
 
@@ -156,8 +176,8 @@ stays responsive.
 
 **Acceptance Scenarios**:
 
-1. **Given** a snapshot with more files than can be drawn at once, **When** it is opened, **Then** components are
-   collapsed by default and the counts in the panel equal the API answers.
+1. **Given** any snapshot, **When** its graph is opened, **Then** components are collapsed (System level) and the
+   counts in the panel equal the API answers.
 2. **Given** a collapsed component, **When** it is clicked, **Then** its files appear and its links to other
    components stay bundled.
 3. **Given** a selected file in an expanded component, **When** impact mode is on, **Then** affected files in
@@ -203,6 +223,12 @@ placeholder pages contain no numbers.
 - Two browser tabs on different snapshots: each shows its own snapshot.
 - The model badge when no model is configured: "agents off" instead of a model name; Ask agents explains how to
   enable it.
+- A cycle group larger than 20 files: the suggestion uses the greedy rule and is labelled as such; it may remove more
+  links than strictly necessary.
+- A browser that refuses to store the history (private mode, storage full): answers still work, and the UI says the
+  history will not be kept.
+- Files at the repository root (no folder): they count as the top-level folder `.` for naming, so a component of
+  root files is named `.`.
 - Hotspot history `partial` or with uncommitted local changes: the notes of the answer are shown next to the map.
 
 ## Requirements *(mandatory)*
@@ -239,7 +265,8 @@ placeholder pages contain no numbers.
 - **FR-010**: The code view MUST show a file tree of the snapshot, the stored lines of the selected file with line
   numbers, markers for lines that carry links, and for a selected link its provenance (source file and line, commit,
   type, imported name, confidence, extractor and version, snippet hash) and the file's outgoing and incoming links.
-- **FR-011**: For large snapshots the overview MUST show components collapsed by default, sized by dependents, with
+- **FR-011**: Every snapshot, whatever its size, MUST open in the graph at the System level with components
+  collapsed. The overview MUST show components sized by dependents, with
   bundled links between components, cycle links in red and hotspots marked; a component MUST expand on click and a
   minimap MUST show the position in the whole graph. The current view MUST be exportable as an image.
 
@@ -253,7 +280,8 @@ placeholder pages contain no numbers.
 **Insights (US3)**
 
 - **FR-014**: Cycles MUST list every cycle group with files, link count, type-only mark and an example cycle, and for
-  the selected group the suggested link to remove with its file, line and line text, labelled "recommendation only".
+  the selected group the suggested links to remove with file, line, line text and method, labelled "recommendation
+  only".
 - **FR-015**: Hotspots MUST show a map with tile size = lines of code and colour = score, a top-risk table (file,
   commits, transitive dependents, bus factor), the history base, and "history not available" with the reason when
   there is no history. No author names or e-mails are shown.
@@ -265,8 +293,12 @@ placeholder pages contain no numbers.
   with verified facts and their citations, cycle warnings and hypotheses in distinct styles, run statistics (tool
   calls, time, model) and a small graph of the cited files linked to the main graph; suggested questions MAY be
   offered as fixed text.
-- **FR-018**: Agent trace MUST show, for the last answer of the session, each step with role, tool, arguments,
+- **FR-018**: Agent trace MUST show, for the selected answer of the history, each step with role, tool, arguments,
   result summary and duration, the revisions, the claims with their status, and the budget used out of the limit.
+- **FR-018a**: The UI MUST keep the last 20 finished answers with their traces per snapshot in the user's browser, so
+  they survive a page reload; older ones are dropped first, a "clear history" action removes them, and nothing is
+  sent to or stored on the server. Kept answers are shown exactly like fresh ones (as text, facts and hypotheses
+  distinct).
 
 **Integrations and placeholders (US6)**
 
@@ -279,27 +311,35 @@ placeholder pages contain no numbers.
 
 - **FR-021**: The graph query layer MUST provide components of a snapshot: a partition of its files by community
   detection with a fixed seed and stable tie-break (constitution II), each component named after the longest common
-  folder of its files (made unique deterministically), with its files, file count, lines of code, links between
-  components with their import counts and confidence, and whether they contain a cycle. It MUST be available through
+  folder of its files, or, when they share none, the most frequent top-level folder among them (ties by path order);
+  equal names are made unique with ` · 2`, ` · 3`, … in the order of each component's first file path. Each
+  component has its files, file count, lines of code, links to other components with their import counts and
+  confidence, and whether it contains a cycle. It MUST be available through
   the command line, the MCP server and the HTTP API, with byte-identical answers.
-- **FR-022**: The cycles answer MUST include, for each cycle group, a suggested link to remove chosen
-  deterministically (the link whose removal breaks the most cycles of the group, then the fewest imported names, then
-  path order), with its import line(s), available through all interfaces like FR-021.
+- **FR-022**: The cycles answer MUST include, for each cycle group, the suggested links to remove: a minimum
+  feedback arc set (the fewest links whose removal leaves the group without cycles), computed exactly for groups of
+  up to 20 files, with ties broken by the fewest imported names in total and then by path order; for larger groups the
+  greedy rule (repeatedly the link that breaks the most remaining cycles, then the fewest imported names, then path
+  order). Each suggested link carries its import line(s), and the answer states the method (`exact` or `greedy`). It
+  MUST be available through all interfaces like FR-021.
 - **FR-023**: The service MUST provide per-file line counts of a stored snapshot in one request, so that the hotspot
   map and component sizes do not need one request per file.
 - **FR-024**: The service MUST tell the UI which model answers questions and whether asking is enabled, so the header
   badge and Ask agents can show it.
+- **FR-025**: When a built UI is present, the Graphora service MUST serve it from the same address as the API, so that
+  starting the service and opening its address shows the UI; without a build the API works as before. The built UI is
+  static files only: serving it runs no code from analyzed repositories and adds no write endpoints.
 
 ### Key Entities
 
 - **Snapshot view**: repository, snapshot (commit), current screen, view level, selected file or component, filters.
 - **Component**: a named group of files of one snapshot, with file count, lines of code, links to other components
   and a cycle mark.
-- **Cycle group**: files that import each other in a loop, an example cycle, a type-only mark and a suggested link to
-  remove.
+- **Cycle group**: files that import each other in a loop, an example cycle, a type-only mark, and the suggested links
+  to remove with the method used (`exact` for groups of up to 20 files, `greedy` above).
 - **Import job**: source (GitHub URL and ref, or ZIP), stage, pinned commit, result snapshot or failure reason.
 - **Agent run**: question, streamed steps, final answer (facts with citations, hypotheses), claims with statuses,
-  budget used.
+  budget used; the last 20 finished runs per snapshot are kept in the browser.
 
 ## Success Criteria *(mandatory)*
 
@@ -320,12 +360,14 @@ placeholder pages contain no numbers.
 - **SC-007**: Component and cut-suggestion answers are byte-identical across two runs and across the command line,
   MCP and HTTP for every fixture.
 - **SC-008**: All tests that existed before this feature pass unchanged.
+- **SC-009**: With a built UI present, starting the service with one command and opening its address shows the
+  working UI with no other process running.
 
 ## Assumptions
 
 - One user at a time on a local machine (`graphora serve` on localhost); no accounts, authentication, sharing or
-  deployment in this feature. The UI is served in development by its own dev server that forwards API calls, so no
-  cross-origin setup is needed.
+  deployment in this feature. During UI development a dev server forwards API calls to the service; otherwise the
+  service itself serves the built UI (FR-025). Both use one address, so no cross-origin setup is needed.
 - Dark theme only, as in the mockups; English interface; current desktop Chrome, Firefox and Safari; no mobile
   layout.
 - The mockups set layout, colours, typography and interaction style; the numbers, file names, "named by agent"
