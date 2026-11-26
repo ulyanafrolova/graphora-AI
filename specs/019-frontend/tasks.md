@@ -324,7 +324,7 @@ equals the API answer.
 
 **Independent Test**: e2e with the scripted model: ask, watch steps, see facts/hypotheses, reload, open the trace.
 
-- [ ] T055 [P] [US4] Write `frontend/tests/unit/sse.test.ts`: the parser handles `event:`/`id:`/`data:` lines,
+- [X] T055 [P] [US4] Write `frontend/tests/unit/sse.test.ts`: the parser handles `event:`/`id:`/`data:` lines,
   multi-line `data`, `\r\n`, chunks split mid-line and mid-UTF-8 character, comments (`:`), and yields `{event, id,
   data}`; `streamAsk` posts `{"repository", "snapshot", "question"}`, yields `step` events, resolves on `answer`, rejects
   on `error` events and on 429/503 bodies (`ApiError`), and stops on abort.
