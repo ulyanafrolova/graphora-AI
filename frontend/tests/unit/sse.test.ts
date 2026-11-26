@@ -23,7 +23,7 @@ test("events across chunks, multi-line data, CRLF, comments and split UTF-8", ()
 });
 
 test("streamAsk yields steps and resolves with the answer", async () => {
-  const body = readFileSync(new URL("../fixtures/ask.sse", import.meta.url));
+  const body = readFileSync("tests/fixtures/ask.sse");
   let sent: unknown = null;
   server.use(
     http.post("*/api/v1/ask", async ({ request }) => {

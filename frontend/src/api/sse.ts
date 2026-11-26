@@ -20,6 +20,7 @@ export class EventParser {
     const out: ServerEvent[] = [];
     let end: number;
     while ((end = this.buffer.search(/\r\n|\r|\n/)) >= 0) {
+      if (this.buffer[end] === "\r" && end === this.buffer.length - 1) break; // a "\r\n" split across chunks
       const line = this.buffer.slice(0, end);
       this.buffer = this.buffer.slice(end + (this.buffer.startsWith("\r\n", end) ? 2 : 1));
       if (line === "") {
