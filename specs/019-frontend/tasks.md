@@ -245,7 +245,7 @@ equals the API answer.
 
 **Independent Test**: e2e uploads a fixture ZIP and opens its graph; a failing job shows its reason.
 
-- [ ] T042 [P] [US2] Write `frontend/tests/unit/import.test.tsx` (MSW): GitHub URL + optional ref → `POST /jobs`
+- [X] T042 [P] [US2] Write `frontend/tests/unit/import.test.tsx` (MSW): GitHub URL + optional ref → `POST /jobs`
   `{"github", "ref"}`; ZIP drop/choose → `POST /jobs/zip?name=<file name>` with the bytes; polling `GET /jobs/{id}`
   every 1 s shows stages in order (`queued`, `resolving`, `fetching`, `analyzing`, `storing`, `done`) with the current
   one active; `done` shows the pinned commit, coverage table (language, files, share bar, depth full / detected only /
