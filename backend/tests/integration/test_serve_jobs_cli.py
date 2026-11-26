@@ -7,7 +7,7 @@ from graphora.pipeline import PipelineLimits
 from graphora.pipeline.jobs import JobRunner
 
 
-@pytest.mark.parametrize("option", ["--workers", "--queue", "--max-files", "--max-seconds", "--max-entries"])
+@pytest.mark.parametrize("option", ["--workers", "--queue", "--asks", "--max-files", "--max-seconds", "--max-entries"])
 def test_values_below_one_are_usage_errors(option, capsys):
     assert cli.main(["serve", option, "0"]) == 2
     assert f"{option} must be at least 1" in capsys.readouterr().err
@@ -41,7 +41,7 @@ def test_runner_gets_the_options(db, monkeypatch, tmp_path):
     work = tmp_path / "w"
     assert cli.main(["serve", "--workers", "2", "--queue", "5", "--work-dir", str(work), "--max-files", "10"]) == 0
     assert started == [(2, 5, work, PipelineLimits(max_files=10))]
-    assert seen == [{"host": "127.0.0.1", "port": 8000}]
+    assert seen == [{"host": "127.0.0.1", "port": 8000, "timeout_graceful_shutdown": 5}]
     assert [p.name for p in work.iterdir()] == [".lock"]
 
 
@@ -65,3 +65,55 @@ def test_work_folder_cannot_be_created(db, tmp_path, capsys):
     blocker.write_bytes(b"x")
     assert cli.main(["serve", "--work-dir", str(blocker / "w")]) == 2
     assert "cannot create work folder" in capsys.readouterr().err
+
+
+@pytest.mark.db
+def test_ask_service_gets_the_options(db, monkeypatch, tmp_path):
+    """013: `--asks` and `--model` reach the ask service; it is stopped before the job runner."""
+    import uvicorn
+
+    from graphora.api.ask import AskService
+
+    services, order = [], []
+
+    def run(app, **kwargs):
+        assert "/api/v1/ask" in app.openapi()["paths"]
+
+    monkeypatch.setattr(uvicorn, "run", run)
+    real_init, real_stop, real_runner_stop = AskService.__init__, AskService.stop, JobRunner.stop
+
+    def init(self, *args, **kwargs):
+        real_init(self, *args, **kwargs)
+        services.append(self)
+
+    monkeypatch.setattr(AskService, "__init__", init)
+    monkeypatch.setattr(AskService, "stop", lambda self, timeout=120.0: order.append("asks") or real_stop(self, timeout))
+    monkeypatch.setattr(JobRunner, "stop", lambda self: order.append("jobs") or real_runner_stop(self))
+    monkeypatch.delenv("GRAPHORA_MODEL", raising=False)
+    assert cli.main(["serve", "--asks", "2", "--model", "ollama:qwen3:4b", "--work-dir", str(tmp_path / "w")]) == 0
+    assert [(s.limit, s.setting) for s in services] == [(2, "ollama:qwen3:4b")]
+    assert order == ["asks", "jobs"]
+    monkeypatch.setenv("GRAPHORA_MODEL", "ollama:llama3.1:8b")
+    assert cli.main(["serve", "--work-dir", str(tmp_path / "w2")]) == 0
+    assert (services[-1].limit, services[-1].setting) == (1, "ollama:llama3.1:8b")
+
+
+@pytest.mark.db
+def test_job_runner_stops_even_if_stopping_asks_fails(db, monkeypatch, tmp_path):
+    """A second Ctrl-C while `asks.stop()` waits must not leave jobs running (013 review)."""
+    import uvicorn
+
+    from graphora.api.ask import AskService
+
+    stopped = []
+    real_runner_stop = JobRunner.stop
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: None)
+
+    def interrupted(self, timeout=120.0):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(AskService, "stop", interrupted)
+    monkeypatch.setattr(JobRunner, "stop", lambda self: stopped.append(True) or real_runner_stop(self))
+    with pytest.raises(KeyboardInterrupt):
+        cli.main(["serve", "--work-dir", str(tmp_path / "w")])
+    assert stopped == [True]

@@ -81,6 +81,8 @@ def _parser() -> argparse.ArgumentParser:
     serve.add_argument("--port", type=int, default=8000)
     serve.add_argument("--workers", type=int, default=1, help="jobs running at the same time")
     serve.add_argument("--queue", type=int, default=20, help="jobs that may wait")
+    serve.add_argument("--asks", type=int, default=1, help="questions answered at the same time (POST /api/v1/ask)")
+    serve.add_argument("--model", help="the agents' model, provider:model (default: $GRAPHORA_MODEL or ollama:qwen3:8b)")
     serve.add_argument("--work-dir", help="folder for uploads and extracted snapshots (default: <temp>/graphora-jobs)")
     serve.add_argument("--max-files", type=int, default=5000)
     serve.add_argument("--max-bytes", type=int, default=50 * 1024 * 1024)
@@ -358,7 +360,7 @@ def _serve(args: argparse.Namespace) -> int:
     from graphora.pipeline import LIMIT_KEYS, PipelineLimits
     from graphora.store import Store, StoreUnavailable
 
-    for name in ("workers", "queue", *LIMIT_KEYS):
+    for name in ("workers", "queue", "asks", *LIMIT_KEYS):
         if getattr(args, name) < 1:
             _log("error", f"--{name.replace('_', '-')} must be at least 1")
             return EXIT_USAGE
@@ -373,7 +375,9 @@ def _serve(args: argparse.Namespace) -> int:
     try:
         import uvicorn
 
+        from graphora.agents import setting_from_env
         from graphora.api import create_app
+        from graphora.api.ask import AskService
         from graphora.pipeline.jobs import JobRunner, WorkDirInUse
 
         limits = PipelineLimits(**{key: getattr(args, key) for key in LIMIT_KEYS})
@@ -387,10 +391,15 @@ def _serve(args: argparse.Namespace) -> int:
         except OSError as exc:
             _log("error", f"cannot create work folder: {exc.strerror or exc}")
             return EXIT_USAGE
+        asks = AskService(store, url, args.model or setting_from_env(), limit=args.asks)
         try:
-            uvicorn.run(create_app(store, runner), host=args.host, port=args.port)
+            # open streams are cancelled 5 s after Ctrl-C; their runs stop at the next step (013 research R5)
+            uvicorn.run(create_app(store, runner, asks), host=args.host, port=args.port, timeout_graceful_shutdown=5)
         finally:
-            runner.stop()
+            try:
+                asks.stop()
+            finally:
+                runner.stop()
     finally:
         store.close()
     return EXIT_OK

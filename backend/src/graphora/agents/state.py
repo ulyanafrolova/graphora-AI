@@ -10,8 +10,12 @@ from typing import Annotated, Any, Literal, TypedDict
 from graphora.verify import Claim, Verdict
 
 Role = Literal["explorer", "analyst", "reviewer", "answer"]
-EndReason = Literal["answered", "revisions_spent", "budget_spent", "model_budget_spent", "model_failed", "no_claims"]
-END_REASONS: tuple[str, ...] = ("answered", "revisions_spent", "budget_spent", "model_budget_spent", "model_failed", "no_claims")
+EndReason = Literal[
+    "answered", "revisions_spent", "budget_spent", "model_budget_spent", "model_failed", "no_claims", "stopped"
+]
+END_REASONS: tuple[str, ...] = (
+    "answered", "revisions_spent", "budget_spent", "model_budget_spent", "model_failed", "no_claims", "stopped"
+)
 EventKind = Literal[
     "role_start", "tool_call", "claim", "claim_invalid", "verdict", "revision", "hypothesis", "summary", "end"
 ]

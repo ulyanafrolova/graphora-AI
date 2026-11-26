@@ -33,6 +33,14 @@ def not_found(message: str) -> ApiError:
     return ApiError("not_found", 404, message)
 
 
+def busy() -> ApiError:
+    return ApiError("busy", 429, "another question is being answered; try again later")
+
+
+def model_unavailable(message: str) -> ApiError:
+    return ApiError("model_unavailable", 503, message)
+
+
 def json_bytes(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
@@ -47,7 +55,10 @@ def _error(kind: str, status: int, message: str) -> Response:
 
 async def _api_error(request: Request, exc: Exception) -> Response:
     assert isinstance(exc, ApiError)
-    return _error(exc.kind, exc.status, exc.message)
+    response = _error(exc.kind, exc.status, exc.message)
+    if exc.kind == "busy":
+        response.headers["Retry-After"] = "30"
+    return response
 
 
 async def _validation_error(request: Request, exc: Exception) -> Response:

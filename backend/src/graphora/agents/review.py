@@ -74,10 +74,10 @@ def review(state: AgentState, served: Served, emit: Emit) -> dict[str, Any]:
 
 
 def end_reason(state: AgentState) -> str:
-    """The first that applies: model_failed, model_budget_spent, budget_spent, revisions_spent, no_claims,
-    answered (data-model.md § EndReason)."""
+    """The first that applies: stopped, model_failed, model_budget_spent, budget_spent, revisions_spent,
+    no_claims, answered (data-model.md § EndReason)."""
     failed = state.get("failed")
-    if failed in ("model_failed", "model_budget_spent"):
+    if failed in ("stopped", "model_failed", "model_budget_spent"):
         return failed
     if state.get("tool_calls", 0) >= MAX_TOOL_CALLS:
         return "budget_spent"

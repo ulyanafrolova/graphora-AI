@@ -11,6 +11,7 @@ ask(
     setting: str | None = None,           # None → $GRAPHORA_MODEL or "ollama:qwen3:8b"
     summary: bool = True,
     on_event: Callable[[TraceEvent], None] | None = None,
+    stop: Callable[[], bool] | None = None,   # 013: checked before every model and tool call
 ) -> Run                                  # Run(answer, trace: tuple[TraceEvent, ...], error: str | None)
 
 model_from_setting(setting: str) -> BaseChatModel     # agents/model.py; raises ModelUnavailable
@@ -30,6 +31,8 @@ class ModelUnavailable(Exception): setting, address, reason
   connection and missing-model failures). `model_from_setting` raises it for an unknown provider or
   a missing integration package, before the run.
 - Same `question`, `served` and model replies → equal `Run` (and identical `to_dict` JSON).
+- `stop` (013): once it returns true the run makes no new model or tool call and ends `stopped`, keeping the
+  parts built so far; without it behaviour is unchanged.
 - `on_event` is called once per trace event, in order, before `ask` returns; an exception in it ends the run
   like a model failure.
 

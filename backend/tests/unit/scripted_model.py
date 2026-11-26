@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from langchain_core.language_models import BaseChatModel
@@ -9,6 +10,16 @@ from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.runnables import RunnableLambda
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class Gated:
+    """A reply held back until `gate` is set; `reached` is set when the model starts waiting for it."""
+
+    def __init__(self, reply: Any, timeout: float = 10.0) -> None:
+        self.reply = reply
+        self.gate = threading.Event()
+        self.reached = threading.Event()
+        self.timeout = timeout
 
 
 class Script:
@@ -23,6 +34,11 @@ class Script:
         if not self.replies:
             raise AssertionError("script exhausted")
         reply = self.replies.pop(0)
+        if isinstance(reply, Gated):
+            reply.reached.set()
+            if not reply.gate.wait(reply.timeout):
+                raise AssertionError("gate never opened")
+            reply = reply.reply
         if isinstance(reply, BaseException):
             raise reply
         return reply
