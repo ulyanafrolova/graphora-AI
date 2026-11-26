@@ -267,16 +267,16 @@ and same-file base constants applied when literal; never guessed otherwise.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T036 [P] Write `fixtures/repos/http-bridge/repo/README.md` final version listing each file → spec scenario,
+- [X] T036 [P] Write `fixtures/repos/http-bridge/repo/README.md` final version listing each file → spec scenario,
   and check `expected.json` once more against the source by hand (every call and route line). Say in the module
   docstring of `backend/src/graphora/resolve/http.py` that calls are recognized by their form only (a local
   function named `fetch` is not told apart), which is why every HTTP edge is heuristic.
-- [ ] T037 [P] Update `docs/product/project-context.md` §9 (bridge implemented for FastAPI/Flask and
+- [X] T037 [P] Update `docs/product/project-context.md` §9 (bridge implemented for FastAPI/Flask and
   fetch/axios, heuristic) and `CLAUDE.md` § Repository layout or commands only if a command changed (none
   expected).
-- [ ] T038 Run `uv run pytest tests/integration/test_performance.py` on `main` and on this branch; the analysis
+- [X] T038 Run `uv run pytest tests/integration/test_performance.py` on `main` and on this branch; the analysis
   time grows by less than 10% (SC-004); note both numbers in the PR description.
-- [ ] T039 Run `make db` and `make check` (ruff and the full suite with PostgreSQL); fix findings; stop the
+- [X] T039 Run `make db` and `make check` (ruff and the full suite with PostgreSQL); fix findings; stop the
   database afterwards.
 
 **Checkpoint**: commit `http bridge: fixtures, docs and checks` and push.
