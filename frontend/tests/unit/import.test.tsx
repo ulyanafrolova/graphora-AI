@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router";
@@ -135,4 +135,21 @@ test("too many jobs and no job runner", async () => {
   show();
   expect(await screen.findByText("Analysis jobs are off in this service.")).toBeInTheDocument();
   expect(screen.queryByText("5 000")).toBeNull();
+});
+
+test("a stage passed between two polls is shown as done", async () => {
+  let polls = 0;
+  server.use(
+    http.get("*/api/v1/info", () => HttpResponse.json(info)),
+    http.post("*/api/v1/jobs", () => HttpResponse.json(job("queued"), { status: 202 })),
+    // the second poll is never answered, so the page stays on "analyzing"
+    http.get("*/api/v1/jobs/j1", () => (polls++ === 0 ? HttpResponse.json(job("analyzing")) : new Promise(() => {}))),
+  );
+  show();
+  await userEvent.type(await screen.findByLabelText("GitHub URL"), "https://github.com/o/r");
+  await userEvent.click(screen.getByRole("button", { name: "Analyze" }));
+  await waitFor(() => expect(screen.getByText("Detect, parse and resolve")).toHaveClass("active"));
+  for (const label of ["Queued", "Snapshot commit", "Fetch source"])
+    expect(screen.getByText(label)).toHaveClass("done");
+  expect(screen.getByText("Build graph and store")).toHaveClass("todo");
 });

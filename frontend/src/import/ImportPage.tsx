@@ -134,6 +134,8 @@ export function ImportPage({ poll = 1000 }: { poll?: number }) {
     setSeen([]);
     setError(null);
   };
+  // the service only moves a job forward, so every stage before the latest one seen has passed (a poll can miss one)
+  const reached = Math.max(-1, ...seen.map((s) => STAGES.findIndex(([stage]) => stage === s)));
   const done = job?.stage === "done" && job.result ? job.result : null;
   const progressing = job !== null && !(job.stage === "done" && seen.length <= 1);
 
@@ -203,9 +205,13 @@ export function ImportPage({ poll = 1000 }: { poll?: number }) {
             <section className="panel">
               <div className="label">Analysis progress</div>
               <ol className="stages" data-testid="stages">
-                {STAGES.map(([stage, label]) => {
+                {STAGES.map(([stage, label], i) => {
                   const state =
-                    job.stage === stage ? "active" : seen.includes(stage) || job.stage === "done" ? "done" : "todo";
+                    job.stage === stage
+                      ? "active"
+                      : i < reached || seen.includes(stage) || job.stage === "done"
+                        ? "done"
+                        : "todo";
                   return (
                     <li key={stage} className={state}>
                       {label}
