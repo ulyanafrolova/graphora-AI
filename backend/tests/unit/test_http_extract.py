@@ -179,3 +179,7 @@ axios("/a", config);
 axios.request(config);
 """
     assert [c[0] for c in calls(source)] == [None, None, None, "PUT", "GET", None, None]
+
+
+def test_empty_method_strings_make_no_route():
+    assert routes('@app.route("/x", methods=[""])\ndef x(): pass\n') == []

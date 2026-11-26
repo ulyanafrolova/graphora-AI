@@ -76,7 +76,8 @@ def _methods(node: Node | None) -> tuple[str, ...] | None:
     values = [literal(c) for c in node.named_children]
     if not values or any(v is None for v in values):
         return None
-    return tuple(sorted({v.upper() for v in values if v}))
+    methods = tuple(sorted({v.upper() for v in values if v}))
+    return methods or None  # only empty strings: not a usable route
 
 
 def _route(position: Positions, decorator: Node) -> RouteFact | None:
