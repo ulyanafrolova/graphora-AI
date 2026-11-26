@@ -45,7 +45,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 **Purpose**: everything a row of `QUESTIONS` needs to become a working route (research R2–R5, R7).
 
-- [ ] T002 In `backend/src/graphora/api/routes.py` add `stored_index(store, repository, snapshot) -> GraphIndex`
+- [X] T002 In `backend/src/graphora/api/routes.py` add `stored_index(store, repository, snapshot) -> GraphIndex`
   (research R4): `store.get_analysis`; `None` → `raise _missing(store, repository, snapshot)`; `schema_version !=
   SCHEMA_VERSION` → `ApiError("stale", 409, "<repository> <snapshot> was analyzed with graph schema <n>; analyze
   it again")` (the exact message `/hotspots` gives today); otherwise `queries.index(loads(stored.graph))`. Change

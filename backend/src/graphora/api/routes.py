@@ -51,6 +51,17 @@ def _missing(store: Store, repository: str, snapshot: str) -> Exception:
     return not_found(f"snapshot not found: {repository} {snapshot}")
 
 
+def stored_index(store: Store, repository: str, snapshot: str) -> queries.GraphIndex:
+    """The index of a stored analysis; 404 when it is not stored, 409 when its graph schema is old."""
+    stored = store.get_analysis(repository, snapshot)
+    if stored is None:
+        raise _missing(store, repository, snapshot)
+    if stored.schema_version != SCHEMA_VERSION:
+        message = f"{stored.repository} {stored.snapshot} was analyzed with graph schema {stored.schema_version}"
+        raise ApiError("stale", 409, message + "; analyze it again")
+    return queries.index(loads(stored.graph))
+
+
 def router(store: Store) -> APIRouter:
     api = APIRouter(prefix="/api/v1")
 
@@ -75,14 +86,9 @@ def router(store: Store) -> APIRouter:
         flag = params.get("include_type_only", "true")
         if flag not in ("true", "false"):
             raise bad_request("include_type_only must be true or false")
-        stored = store.get_analysis(params["repository"], params["snapshot"])
-        if stored is None:
-            raise _missing(store, params["repository"], params["snapshot"])
-        if stored.schema_version != SCHEMA_VERSION:
-            message = f"{stored.repository} {stored.snapshot} was analyzed with graph schema {stored.schema_version}"
-            raise ApiError("stale", 409, message + "; analyze it again")
+        ix = stored_index(store, params["repository"], params["snapshot"])
         try:
-            answer = queries.hotspots(queries.index(loads(stored.graph)), include_type_only=flag == "true", limit=limit)
+            answer = queries.hotspots(ix, include_type_only=flag == "true", limit=limit)
         except ValueError as exc:
             raise bad_request(str(exc)) from None
         return Response(dumps(answer), media_type="application/json")
