@@ -9,7 +9,7 @@ import { useGraph, useInfo } from "@/api/queries";
 import type { Job, Limits, Stage } from "@/api/types";
 import { ErrorState } from "@/shell/ErrorState";
 import { languageName, shortSnapshot } from "@/shell/Header";
-import { DEFAULT, toPath } from "@/state/route";
+import { DEFAULT, rememberSnapshot, toPath } from "@/state/route";
 
 const STAGES: [Stage, string][] = [
   ["queued", "Queued"],
@@ -137,6 +137,9 @@ export function ImportPage({ poll = 1000 }: { poll?: number }) {
   // the service only moves a job forward, so every stage before the latest one seen has passed (a poll can miss one)
   const reached = Math.max(-1, ...seen.map((s) => STAGES.findIndex(([stage]) => stage === s)));
   const done = job?.stage === "done" && job.result ? job.result : null;
+  useEffect(() => {
+    if (done !== null) rememberSnapshot(done.repository, done.snapshot);
+  }, [done]);
   const progressing = job !== null && !(job.stage === "done" && seen.length <= 1);
 
   return (

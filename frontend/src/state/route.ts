@@ -118,14 +118,29 @@ export function switchSnapshot(
 export function rememberSnapshot(repository: string, snapshot: string): void {
   try {
     localStorage.setItem(LAST, JSON.stringify({ repository, snapshot }));
+    window.dispatchEvent(new Event(LAST));
   } catch {
     // storage unavailable
   }
 }
 
-export function lastSnapshot(): { repository: string; snapshot: string } | null {
+/** The stored text of the last snapshot, for useSyncExternalStore. */
+export function lastSnapshotText(): string | null {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(LAST) ?? "null");
+    return localStorage.getItem(LAST);
+  } catch {
+    return null;
+  }
+}
+
+export function onLastSnapshot(changed: () => void): () => void {
+  window.addEventListener(LAST, changed);
+  return () => window.removeEventListener(LAST, changed);
+}
+
+export function parseLastSnapshot(text: string | null): { repository: string; snapshot: string } | null {
+  try {
+    const value: unknown = JSON.parse(text ?? "null");
     const v = value as { repository?: unknown; snapshot?: unknown } | null;
     return v && typeof v.repository === "string" && typeof v.snapshot === "string"
       ? { repository: v.repository, snapshot: v.snapshot }
@@ -133,4 +148,8 @@ export function lastSnapshot(): { repository: string; snapshot: string } | null 
   } catch {
     return null;
   }
+}
+
+export function lastSnapshot(): { repository: string; snapshot: string } | null {
+  return parseLastSnapshot(lastSnapshotText());
 }

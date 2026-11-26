@@ -30,7 +30,7 @@ const SECTIONS: { title: string; items: { label: string; screen: Screen | "impor
   { title: "Integrations", items: [{ label: "MCP for agents", screen: "mcp" }] },
 ];
 
-export function Sidebar({ route }: { route: RouteState | null }) {
+export function Sidebar({ route, current }: { route: RouteState | null; current: Screen | null }) {
   return (
     <aside className="sidebar">
       <nav>
@@ -54,7 +54,7 @@ export function Sidebar({ route }: { route: RouteState | null }) {
               }
               const to = toPath({ ...DEFAULT, repository: route.repository, snapshot: route.snapshot, screen });
               return (
-                <Link key={label} to={to} className="item" aria-current={route.screen === screen ? "page" : undefined}>
+                <Link key={label} to={to} className="item" aria-current={current === screen ? "page" : undefined}>
                   {label}
                 </Link>
               );

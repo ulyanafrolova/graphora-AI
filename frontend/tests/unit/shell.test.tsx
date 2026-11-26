@@ -65,7 +65,7 @@ test("sidebar sections, items and active item", () => {
   const route = { ...DEFAULT, repository: "r", snapshot: "s", screen: "cycles" as const };
   render(
     <MemoryRouter>
-      <Sidebar route={route} />
+      <Sidebar route={route} current={route.screen} />
     </MemoryRouter>,
   );
   const sections = screen.getAllByRole("navigation")[0] as HTMLElement;
@@ -97,7 +97,7 @@ test("sidebar sections, items and active item", () => {
 test("without a snapshot only import is a link", () => {
   render(
     <MemoryRouter>
-      <Sidebar route={null} />
+      <Sidebar route={null} current={null} />
     </MemoryRouter>,
   );
   expect(screen.getByText("Import").closest("a")).toHaveAttribute("href", "/import");
