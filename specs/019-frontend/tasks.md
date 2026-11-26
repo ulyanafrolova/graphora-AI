@@ -253,7 +253,7 @@ equals the API answer.
   `too_many_jobs` message; safety limits panel shows `/info` `jobs.limits` (size, files, time, skipped folders) and
   "never — static analysis only", and no limit numbers when `jobs.limits` is `null`; a job answered at once with `done`
   (reused analysis, FR-013) shows "Open graph" without a progress phase.
-- [ ] T043 [US2] Implement `frontend/src/import/ImportPage.tsx`, `SourceForm.tsx`, `ZipDrop.tsx`, `JobProgress.tsx`,
+- [X] T043 [US2] Implement `frontend/src/import/ImportPage.tsx`, `SourceForm.tsx`, `ZipDrop.tsx`, `JobProgress.tsx`,
   `Coverage.tsx`, `Limits.tsx`. Check: T042 passes.
 - [ ] T044 [US2] Write `frontend/tests/e2e/us2-import.spec.ts`: upload `fixtures` ZIP built in the test from
   `fixtures/repos/py-flat/repo` (Playwright `setInputFiles` with a buffer zipped by a small helper), follow to `done`,
