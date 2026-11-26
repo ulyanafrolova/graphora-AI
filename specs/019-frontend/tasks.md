@@ -154,7 +154,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `suggested_cut`, Component, ComponentLink, Overview, Hotspot fields, Definitions, Job status (stages `queued`,
   `resolving`, `fetching`, `analyzing`, `storing`, `done`, `failed`), Ask step/answer events, Info, Files) per
   contracts of 004/005/010/013/014/018/019. Check: T021 passes.
-- [ ] T023 Implement `frontend/src/api/queries.ts`: TanStack Query hooks keyed by `[repository, snapshot, question,
+- [X] T023 Implement `frontend/src/api/queries.ts`: TanStack Query hooks keyed by `[repository, snapshot, question,
   params]` for repositories, graph, overview, components, key_files (limit 500), cycles (limit 500), hotspots (limit
   500), files, info, impact, neighbors, dependencies, dependents, definitions, file lines; `staleTime: Infinity` for
   snapshot data (immutable), retry only on `network`/`store_unavailable`.
