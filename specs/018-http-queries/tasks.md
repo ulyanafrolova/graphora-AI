@@ -112,7 +112,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
     `target=/etc/passwd`, `target=a\\b` → 400 `bad_request`;
   - `dependents` with `symbol`, `impact` with `max_depth=1` and `follow_barrels=true`, and `level=project` on
     `csharp-multiproject` equal the CLI bytes.
-- [ ] T007 [US1] Add the four rows to `QUESTIONS` in `backend/src/graphora/api/questions.py`:
+- [X] T007 [US1] Add the four rows to `QUESTIONS` in `backend/src/graphora/api/questions.py`:
   `dependencies` (target `target`, options `include_type_only`, `level`, default 50), `dependents` (`target`;
   `symbol`, `include_type_only`, `follow_barrels`, `level`; 50), `impact` (`target`; `max_depth`,
   `include_type_only`, `follow_barrels`, `level`; 50), `neighbors` (`target`; `include_type_only`; 50). Check: T005,

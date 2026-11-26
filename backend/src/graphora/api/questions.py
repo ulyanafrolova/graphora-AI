@@ -29,7 +29,12 @@ class Question:
     default_limit: int | None
 
 
-QUESTIONS: tuple[Question, ...] = ()
+QUESTIONS: tuple[Question, ...] = (
+    Question("dependencies", queries.dependencies, "target", ("include_type_only", "level"), DEFAULT_LIMIT),
+    Question("dependents", queries.dependents, "target", ("symbol", "include_type_only", "follow_barrels", "level"), DEFAULT_LIMIT),
+    Question("impact", queries.impact, "target", ("max_depth", "include_type_only", "follow_barrels", "level"), DEFAULT_LIMIT),
+    Question("neighbors", queries.neighbors, "target", ("include_type_only",), DEFAULT_LIMIT),
+)
 
 
 def _allowed(row: Question) -> tuple[tuple[str, ...], tuple[str, ...]]:
