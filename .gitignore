@@ -5,6 +5,10 @@ __pycache__/
 .venv/
 *.egg-info/
 .pytest_cache/
+.idea/
+.vscode/
+dist/
+*.swp
 
 # Fixture repos must keep their skipped folders: they are test input.
 !fixtures/repos/*/repo/.venv/
