@@ -52,7 +52,13 @@ uv run pytest -m "not slow"                         # skip the performance test
 uv run graphora analyze <dir> --out graph.json      # build a graph
 uv run graphora analyze https://github.com/<owner>/<repo> [--ref <ref>] --out graph.json
 uv run graphora analyze <file.zip> --out graph.json
+uv run graphora analyze <source> --no-history        # skip the git history (no hotspots)
+uv run graphora query graph.json hotspots            # files changed often × transitive dependents (from 014)
 ```
+
+History (feature 014) is read by default: a local git folder from its `.git`, a GitHub link by fetching commits
+and trees of the year before the commit (no file contents, no git binary). ZIP sources and folders without `.git`
+have none; hotspots then say "history not available" with the reason.
 
 Analysis store and HTTP API (from feature 005). Store tests are marked `db` and need PostgreSQL:
 

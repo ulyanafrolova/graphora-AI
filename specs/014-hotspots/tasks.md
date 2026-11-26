@@ -409,7 +409,7 @@ true and wrong hotspot claims with the verifier.
 - [X] T033 [P] Write `backend/tests/integration/test_history_performance.py` (marked `slow`): build a repository
   of 5,000 files in nested folders and 10,000 commits touching 1–5 files each, all within the window. Reading
   its history takes ≤ 30 s (SC-003).
-- [ ] T034 [P] Add the new commands to `CLAUDE.md`: `uv run graphora analyze <source> --no-history` and `uv run
+- [X] T034 [P] Add the new commands to `CLAUDE.md`: `uv run graphora analyze <source> --no-history` and `uv run
   graphora query graph.json hotspots`. Add a short history note under Commands: history is on by default; ZIP
   sources have none.
 - [ ] T035 Run `make check` (with `make db` and `GRAPHORA_TEST_DATABASE_URL`) and `make lint`. Walk through
