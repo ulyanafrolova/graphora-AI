@@ -17,7 +17,13 @@ const item = (node: string, more: Partial<Item> = {}): Item => ({
 
 const COMPONENTS = {
   components: [
-    { id: "component:1", name: "auth", files: ["file:auth/service.py", "file:auth/tokens.py"], file_count: 2, has_cycle: true },
+    {
+      id: "component:1",
+      name: "auth",
+      files: ["file:auth/service.py", "file:auth/tokens.py"],
+      file_count: 2,
+      has_cycle: true,
+    },
     { id: "component:2", name: "users", files: ["file:users/models.py"], file_count: 1, has_cycle: false },
     { id: "component:3", name: "api", files: ["file:api/routes.py"], file_count: 1, has_cycle: false },
   ],
@@ -36,7 +42,12 @@ const KEY_FILES = {
 } as unknown as Answer;
 const CYCLES = {
   groups: [
-    { files: ["file:auth/service.py", "file:users/models.py"], cycle: [{}, {}], type_only: false, confidence: "resolved" },
+    {
+      files: ["file:auth/service.py", "file:users/models.py"],
+      cycle: [{}, {}],
+      type_only: false,
+      confidence: "resolved",
+    },
   ],
 } as unknown as Answer;
 const FILES: Files = {

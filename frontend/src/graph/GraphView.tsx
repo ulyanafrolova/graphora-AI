@@ -65,7 +65,7 @@ export function GraphView({ route, graph, components, impact, cycles, onChange, 
       const { onChange: change, level: current } = handlers.current;
       if (kind === "component") {
         if (current === "component" && event.target.isParent()) return;
-        change({ level: "component", component: id, node: null });
+        change(current === "system" ? { node: id } : { level: "component", component: id, node: null });
       } else {
         change({ node: id });
       }

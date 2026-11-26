@@ -72,7 +72,7 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
         cls,
         selected && "selected",
         impacted && "impacted",
-        input.impact !== null && !selected && !impacted && "dimmed",
+        input.impact !== null && !selected && !impacted && !cls.includes("expanded") && "dimmed",
       ),
     });
   };

@@ -211,7 +211,7 @@ equals the API answer.
   key_files order, key files list, issues from cycles groups intersecting it, "Expand component", "Ask about <name>");
   file panel (path, lines, hotspot rank if present, dependencies and dependents lists with confidence badges, cycles it
   is in, "Open code", impact toggle).
-- [ ] T036 [US1] Implement `frontend/src/graph/SidePanel.tsx`, `ComponentPanel.tsx`, `FilePanel.tsx`. Check: T035
+- [X] T036 [US1] Implement `frontend/src/graph/SidePanel.tsx`, `ComponentPanel.tsx`, `FilePanel.tsx`. Check: T035
   passes.
 - [ ] T037 [P] [US1] Write `frontend/tests/unit/impact.test.tsx`: impact panel shows `total` from the answer, a bar per
   component with the count of impact items whose file is in it, the heuristic part as "~N heuristic" (items with

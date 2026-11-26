@@ -154,6 +154,7 @@ test("collapsed components show their impact count", () => {
     impact: new Set(["file:b/z.py", "file:b/tests/test_z.py"]),
   });
   expect(els.find((e) => e.data.id === "component:2")?.data.impacted).toBe(2);
+  expect(els.find((e) => e.data.id === "component:1")?.classes).not.toContain("dimmed");
 });
 
 test("is test", () => {

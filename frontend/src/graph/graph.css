@@ -81,3 +81,70 @@ button.link {
 .accent {
   color: var(--role-explorer);
 }
+
+.side-panel {
+  width: 360px;
+  flex-shrink: 0;
+  overflow: auto;
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
+}
+
+.side-panel h2 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+}
+
+.side-panel .label {
+  margin-top: 20px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.stat strong {
+  font-size: 26px;
+}
+
+.rows {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.issue {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--cycle);
+  border-radius: var(--radius);
+  background: var(--cycle-bg);
+  color: var(--cycle);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}

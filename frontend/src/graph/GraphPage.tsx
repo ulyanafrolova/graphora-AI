@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { GraphView } from "./GraphView";
+import { SidePanel } from "./SidePanel";
 import "./graph.css";
 
 import { useComponents, useCycles, useGraph, useImpact } from "@/api/queries";
@@ -35,6 +36,7 @@ export function GraphPage({ route }: { route: RouteState }) {
         cycles={cycles.data}
         onChange={(next) => go({ ...route, ...next })}
       />
+      <SidePanel route={route} components={components.data} onChange={(next) => go({ ...route, ...next })} />
     </div>
   );
 }
