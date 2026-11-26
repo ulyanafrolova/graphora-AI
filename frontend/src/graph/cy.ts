@@ -52,7 +52,14 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
   const finish = () => {
     cy.resize();
     cy.style(big ? BIG_STYLE : STYLE); // a fresh stylesheet after the elements exist; the first one leaves edges undrawn
-    fitLeaves(cy, leaves);
+    if (leaves.length > GRID_FROM) fitLeaves(cy, leaves);
+    else {
+      cy.fit(undefined, 40);
+      if (cy.zoom() > 1.5) {
+        cy.zoom(1.5);
+        cy.center();
+      }
+    }
     onDone();
   };
   if (leaves.length > GRID_FROM) {
