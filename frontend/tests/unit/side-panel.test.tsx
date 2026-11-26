@@ -146,4 +146,7 @@ test("impact button shows its state", () => {
   );
   expect(screen.getByRole("button", { name: "Impact mode" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByText("412 LOC · key file #2")).toBeInTheDocument();
+  expect(screen.getAllByText("loading…")).toHaveLength(2);
+  expect(screen.queryByText("none")).toBeNull();
+  expect(screen.getByText("Imports")).toBeInTheDocument();
 });

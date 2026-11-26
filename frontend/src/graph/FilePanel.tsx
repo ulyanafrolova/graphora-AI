@@ -18,7 +18,17 @@ export interface FilePanelProps {
   children?: ReactNode;
 }
 
-function Links({ items, testId, onSelect }: { items: Item[]; testId: string; onSelect: (id: string) => void }) {
+function Links({
+  items,
+  testId,
+  onSelect,
+}: {
+  items: Item[] | undefined;
+  testId: string;
+  onSelect: (id: string) => void;
+}) {
+  // while the answer is on its way nothing is claimed, not even "none"
+  if (items === undefined) return <p className="muted">loading…</p>;
   return (
     <ul className="rows" data-testid={testId}>
       {items.map((i) => (
@@ -67,10 +77,10 @@ export function FilePanel(props: FilePanelProps) {
         </button>
       </div>
       {props.children}
-      <div className="label">Imports · {neighbors?.outgoing?.length ?? 0}</div>
-      <Links items={neighbors?.outgoing ?? []} testId="dependencies" onSelect={props.onSelect} />
-      <div className="label">Imported by · {neighbors?.incoming?.length ?? 0}</div>
-      <Links items={neighbors?.incoming ?? []} testId="dependents" onSelect={props.onSelect} />
+      <div className="label">Imports{neighbors && ` · ${neighbors.outgoing?.length ?? 0}`}</div>
+      <Links items={neighbors && (neighbors.outgoing ?? [])} testId="dependencies" onSelect={props.onSelect} />
+      <div className="label">Imported by{neighbors && ` · ${neighbors.incoming?.length ?? 0}`}</div>
+      <Links items={neighbors && (neighbors.incoming ?? [])} testId="dependents" onSelect={props.onSelect} />
       {loops.map((g) => (
         <p key={g.files.join("|")} className="issue">
           Cycle: {g.files.map(nodeName).join(g.files.length === 2 ? " ⇄ " : " → ")}
