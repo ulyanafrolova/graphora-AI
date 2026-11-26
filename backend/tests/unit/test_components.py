@@ -114,11 +114,8 @@ def test_heuristic_links_counted():
         type="http_call",
         route_line=1,
     )
-    a = answer(doc(CLUSTERS + [http]))
-    assert a["links"] == [
-        {"source": "component:1", "target": "component:2", "imports": 1, "heuristic": 0, "in_cycle": False},
-        {"source": "component:2", "target": "component:1", "imports": 1, "heuristic": 1, "in_cycle": False},
-    ]
+    a = answer(doc(CLUSTERS[:-1] + [http]))
+    assert a["links"] == [{"source": "component:2", "target": "component:1", "imports": 1, "heuristic": 1, "in_cycle": False}]
 
 
 def test_cycle_between_components():

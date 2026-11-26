@@ -25,6 +25,8 @@ from graphora.graph.project_view import ProjectLink, ProjectView
 from graphora.graph.results import (
     Answer,
     Completeness,
+    Component,
+    ComponentLink,
     CycleGroup,
     DefinitionMatch,
     Item,
@@ -564,6 +566,112 @@ def hotspots(ix: GraphIndex, *, include_type_only: bool = True, limit: int | Non
     items.sort(key=lambda i: (-(i.score or 0), -(i.commits or 0), -(i.transitive_dependents or 0), i.node))
     options = {"include_type_only": include_type_only, "limit": limit}
     return _answer(ix, "hotspots", None, options, items, limit, history=dataclasses.replace(history, files=()))
+
+
+
+def _folder(path: str) -> tuple[str, ...]:
+    return tuple(path.split("/")[:-1])
+
+
+def _base_name(paths: list[str]) -> str:
+    """The longest common folder, else the most frequent top-level folder (ties by path order; root files are `.`)."""
+    common = _folder(paths[0])
+    for path in paths[1:]:
+        folder = _folder(path)
+        n = 0
+        while n < min(len(common), len(folder)) and common[n] == folder[n]:
+            n += 1
+        common = common[:n]
+    if common:
+        return "/".join(common)
+    tops = [_folder(p)[0] if _folder(p) else "." for p in paths]
+    counts = Counter(tops)
+    best = max(counts.values())
+    return next(top for top in tops if counts[top] == best)
+
+
+def _unique(names: list[str]) -> list[str]:
+    seen: Counter[str] = Counter()
+    out = []
+    for name in names:
+        seen[name] += 1
+        out.append(name if seen[name] == 1 else f"{name} · {seen[name]}")
+    return out
+
+
+def _component_names(groups: list[list[str]]) -> list[str]:
+    return _unique([_base_name(g) for g in groups])
+
+
+def components(ix: GraphIndex, *, include_type_only: bool = True) -> Answer:
+    """Files grouped by Louvain community detection with a fixed seed (specs/019-frontend research § R3)."""
+    g = _links(ix, include_type_only)
+    files = sorted(n for n in ix.nodes if n.startswith("file:"))
+    weights: Counter[tuple[str, str]] = Counter()
+    for source, target, data in g.edges(data=True):
+        if source != target and source.startswith("file:") and target.startswith("file:"):
+            weights[tuple(sorted((source, target)))] += len(data["edges"])  # type: ignore[index]
+    undirected = nx.Graph()
+    undirected.add_nodes_from(sorted({n for pair in weights for n in pair}))
+    for (a, b) in sorted(weights):
+        undirected.add_edge(a, b, weight=weights[(a, b)])
+    linked = sorted(
+        (sorted(c) for c in nx.community.louvain_communities(undirected, weight="weight", resolution=1, seed=0)),
+        key=lambda c: c[0],
+    )
+    paths = lambda ids: [i.removeprefix("file:") for i in ids]  # noqa: E731
+    bases = [_base_name(paths(c)) for c in linked]
+    groups: list[list[str]] = [list(c) for c in linked]
+    leftovers: dict[str, list[str]] = defaultdict(list)
+    for node in files:
+        if node in undirected:
+            continue
+        folder = "/".join(_folder(node.removeprefix("file:"))) or "."
+        homes = [i for i, b in enumerate(bases) if b == "." or folder == b or folder.startswith(b + "/")]
+        if homes:
+            groups[max(homes, key=lambda i: (len(bases[i]) if bases[i] != "." else 0, -i))].append(node)
+        else:
+            parts = _folder(node.removeprefix("file:"))
+            leftovers[parts[0] if parts else "."].append(node)
+    named = [(sorted(c), b) for c, b in zip(groups, bases, strict=True)]
+    named += [(sorted(c), _base_name(paths(c))) for c in leftovers.values()]
+    named.sort(key=lambda pair: pair[0][0])
+    names = _unique([b for _, b in named])
+    where = {f: i for i, (c, _) in enumerate(named) for f in c}
+    loops = [set(group.files) for group in cycles(ix, include_type_only=include_type_only).groups or ()]
+    comps = tuple(
+        Component(f"component:{i + 1}", names[i], tuple(c), any(loop <= set(c) for loop in loops))
+        for i, (c, _) in enumerate(named)
+    )
+    imports: Counter[tuple[int, int]] = Counter()
+    heuristic: Counter[tuple[int, int]] = Counter()
+    for source, target in g.edges():
+        if source in where and target in where and where[source] != where[target]:
+            pair = (where[source], where[target])
+            imports[pair] += 1
+            if ix.link(source, target, include_type_only).confidence == "heuristic":
+                heuristic[pair] += 1
+    links = tuple(
+        ComponentLink(
+            f"component:{a + 1}",
+            f"component:{b + 1}",
+            imports[(a, b)],
+            heuristic[(a, b)],
+            any(any(where[f] == a for f in loop) and any(where[f] == b for f in loop) for loop in loops),
+        )
+        for a, b in sorted(imports)
+    )
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="components",
+        target=None,
+        options={"include_type_only": include_type_only},
+        total=len(comps),
+        truncated=False,
+        completeness=ix.completeness,
+        components=comps,
+        links=links,
+    )
 
 
 def overview(ix: GraphIndex) -> Overview:

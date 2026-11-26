@@ -95,7 +95,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `components` and `links` fields on `Answer` (left out of JSON when `None`), `"components"` in `Question`, and text
   lines in `render_text` (`<name>  files <n>  [cycle]`, then `links:` lines `<source name> → <target name>  imports <n>
   [heuristic <h>] [cycle]`).
-- [ ] T012 Implement `components(ix, *, include_type_only=True) -> Answer` in `backend/src/graphora/graph/queries.py`
+- [X] T012 Implement `components(ix, *, include_type_only=True) -> Answer` in `backend/src/graphora/graph/queries.py`
   per research R3: undirected weighted file graph from `_links(ix, include_type_only)` file-to-file pairs (weight = edge
   count, both directions summed), nodes and edges added in sorted order, `nx.community.louvain_communities(g,
   weight="weight", resolution=1, seed=0)`, singletons without links regrouped per top-level folder, naming and ids as
