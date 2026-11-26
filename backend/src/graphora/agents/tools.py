@@ -11,6 +11,7 @@ from langchain_core.tools import StructuredTool
 from pydantic import ValidationError
 
 from graphora.agents.claims import claim_key
+from graphora.agents.prompts import shown
 from graphora.agents.limits import MAX_CITATION_LINE, MAX_TOOL_MESSAGE_CHARS
 from graphora.agents.state import Evidence
 from graphora.tools import TOOLS, ToolResult, tools_for
@@ -60,7 +61,7 @@ def role_tools(role: str, served: Served) -> RoleTools:
 
 def citation_line(cid: str, claim: Claim) -> str:
     if claim.steps:
-        line = f"[{cid}] {claim.cite()} → {' → '.join(s.target for s in claim.steps)}"
+        line = f"[{cid}] {claim.cite()} → {' → '.join(shown(s.target) for s in claim.steps)}"
     elif claim.kind == "definition":
         line = f"[{cid}] {claim.cite()} defines {claim.symbol}"
     else:

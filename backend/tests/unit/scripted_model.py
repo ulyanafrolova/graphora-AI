@@ -63,9 +63,9 @@ class ScriptedModel(BaseChatModel):
 _ids = iter(range(1, 1_000_000))
 
 
-def call(name: str, **args: Any) -> AIMessage:
+def call(tool: str, /, **args: Any) -> AIMessage:
     """A reply with one tool call."""
-    return calls((name, args))
+    return calls((tool, args))
 
 
 def calls(*items: tuple[str, dict[str, Any]]) -> AIMessage:

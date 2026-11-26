@@ -103,11 +103,16 @@ def revision_task(hypotheses: Sequence[Hypothesis], revision: int) -> str:
     return "\n".join(lines)
 
 
+def shown(target: str) -> str:
+    """A target as people write it: `file:` node ids become paths; other ids stay."""
+    return target.removeprefix("file:")
+
+
 def describe(claim) -> str:
     """A short fixed-format description of a claim, from its fields only (never its statement)."""
     if claim.steps:
         first = claim.steps[0]
-        targets = " → ".join(s.target for s in claim.steps)
+        targets = " → ".join(shown(s.target) for s in claim.steps)
         return f"{claim.kind} {first.path}:{first.line} → {targets}"
     if claim.path is not None:
         return f"{claim.kind} {claim.path}:{claim.line} {claim.symbol}"

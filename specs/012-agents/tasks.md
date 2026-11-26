@@ -144,7 +144,7 @@ with `verify_served`, the run is within budget.
 
 ### Tests
 
-- [ ] T015 [P] [US1] Write `backend/tests/unit/test_agents_answer.py` (plain code, no model): `build_answer`
+- [X] T015 [P] [US1] Write `backend/tests/unit/test_agents_answer.py` (plain code, no model): `build_answer`
   puts `verified` claims in `facts`, `heuristic` in `likely`, open hypotheses in `hypotheses`, in
   first-stated order and by id; fact text uses the fixed template per kind (dependency "`a` imports `b`",
   chain, definition, mention, query count/member/rank) and `cite` = `claim.cite()`, or for a query claim
@@ -154,11 +154,11 @@ with `verify_served`, the run is within budget.
   a likely link's `path:line`, or a hypothesis path, and the
   answer then has the code summary and `summary_source == "code"`; `render_answer` prints `Facts`, `Likely`,
   `Hypotheses (not proven)`, `Summary` and `snapshot <id> · ended: <reason>`, `(none)` for empty parts.
-- [ ] T016 [P] [US1] Write `backend/tests/unit/test_agents_review.py` (plain code): `review(state, served)`
+- [X] T016 [P] [US1] Write `backend/tests/unit/test_agents_review.py` (plain code): `review(state, served)`
   verifies new claims with one `verify_served` call, reuses verdicts for repeated keys (FR-012), records
   `verdict` events; with no rejected claims routes to `answer`; heuristic verdicts are never routed to
   revision (FR-011).
-- [ ] T017 [US1] Write `backend/tests/golden/test_agents_fixtures.py` (marked `db`): scripted run on stored
+- [X] T017 [US1] Write `backend/tests/golden/test_agents_fixtures.py` (marked `db`): scripted run on stored
   `py-cycles` — explorer calls `find_definitions` and `dependents`, analyst calls `dependents` and `impact`,
   then claims by `cite` ids for every dependent plus a query count claim; assert the facts cover all direct
   dependents of `loop/a.py` from `expected.json` (SC-005; the script cites each of them), every fact re-verifies `verified`, `likely` holds only
@@ -168,17 +168,17 @@ with `verify_served`, the run is within budget.
 
 ### Implementation
 
-- [ ] T018 [US1] Implement `backend/src/graphora/agents/answer.py`: fact templates and cites (query facts
+- [X] T018 [US1] Implement `backend/src/graphora/agents/answer.py`: fact templates and cites (query facts
   cite `<question>(<target>)@<snapshot>`), `build_answer(state, served)`, `code_summary(answer)` (counts and
   the main target; "<target> was not found in the snapshot" when the tools only returned target errors and
   no claims; "I can only answer questions about the analyzed snapshot; nothing could be verified." when no
   tool was called and no claim was made), `check_summary(text, answer)` (path-like tokens `[\w./-]+\.\w+`
   and node ids must belong to facts/likely; every `path:line` must be a fact cite),
   `render_answer(answer)` (data-model.md § Answer, research R7).
-- [ ] T019 [US1] Implement `backend/src/graphora/agents/review.py`: `review(state, served)` and
+- [X] T019 [US1] Implement `backend/src/graphora/agents/review.py`: `review(state, served)` and
   `route(state) -> "revise" | "answer"` (for now: `answer` unless rejected claims and revisions and budget
   remain; revision bookkeeping is completed in T024).
-- [ ] T020 [US1] Implement `backend/src/graphora/agents/graph.py`: node `explorer` and `analyst` as bounded
+- [X] T020 [US1] Implement `backend/src/graphora/agents/graph.py`: node `explorer` and `analyst` as bounded
   tool loops (bind role tools; model call → for each tool call `run_tool_call` → repeat until no tool calls or
   the turn cap: `MAX_TURN_MODEL_CALLS` for the explorer, `MAX_TURN_MODEL_CALLS - 1` for the analyst so its
   claims call always has one left); analyst claims phase via `model.with_structured_output(ClaimsReply)` with no tools
@@ -188,7 +188,7 @@ with `verify_served`, the run is within budget.
   `ValueError` before any model call); `recursion_limit` set from the limits as a backstop. Export `ask`,
   `Run`, `Answer`, `TraceEvent`, `ModelUnavailable`, `model_from_setting` from
   `backend/src/graphora/agents/__init__.py`.
-- [ ] T021 [US1] Run `uv run pytest tests/unit/test_agents_answer.py tests/unit/test_agents_review.py
+- [X] T021 [US1] Run `uv run pytest tests/unit/test_agents_answer.py tests/unit/test_agents_review.py
   tests/golden/test_agents_fixtures.py` until green.
 
 **Checkpoint**: US1 works alone: a scripted question on a fixture returns only verified facts.
@@ -205,14 +205,14 @@ backend/app/api.py`: rejected `no_edge` twice, ends as a hypothesis, never a fac
 
 ### Tests
 
-- [ ] T022 [P] [US2] Extend `backend/tests/unit/test_agents_review.py`: a rejected claim with revisions left
+- [X] T022 [P] [US2] Extend `backend/tests/unit/test_agents_review.py`: a rejected claim with revisions left
   becomes `h1` (reason, hint, `tries == 1`), `revisions` goes to 1, a `revision` event is recorded, `task`
   equals `prompts.revision_task(...)` with the reason and hint, route is `revise`; at `revisions == 2` or
   `tool_calls >= 15` route is `answer` and end reason `revisions_spent` / `budget_spent`; `end_reason(state)`
   follows the order of data-model.md § EndReason when several apply (e.g. revisions and tool budget both
   spent → `budget_spent`; model failure plus anything → `model_failed`); a verified claim
   with `revises: "h1"` sets `h1.open = False`; a repeated rejected claim does not create a second hypothesis.
-- [ ] T023 [US2] Extend `backend/tests/golden/test_agents_fixtures.py`: (a) `mixed-fullstack` — analyst claims
+- [X] T023 [US2] Extend `backend/tests/golden/test_agents_fixtures.py`: (a) `mixed-fullstack` — analyst claims
   the frontend→backend dependency in every round; assert it is rejected with reason `no_edge`, the explorer's
   messages in rounds 1 and 2 contain the revision task with `no_edge`, the answer has it in `hypotheses`
   with `tries == 2` and not in `facts` or `likely`, `end == "revisions_spent"` (SC-004); (b) `py-flat` — the
@@ -222,11 +222,11 @@ backend/app/api.py`: rejected `no_edge` twice, ends as a hypothesis, never a fac
 
 ### Implementation
 
-- [ ] T024 [US2] Complete `backend/src/graphora/agents/review.py`: hypothesis creation and `tries`, `revises`
+- [X] T024 [US2] Complete `backend/src/graphora/agents/review.py`: hypothesis creation and `tries`, `revises`
   closing, `task` from `prompts.revision_task`, end reasons; and in `backend/src/graphora/agents/graph.py`
   give the explorer the `task` as its user message in rounds ≥ 1 and the analyst the open hypothesis ids
   (research R4).
-- [ ] T025 [US2] Run `uv run pytest tests/unit/test_agents_review.py tests/golden/test_agents_fixtures.py`
+- [X] T025 [US2] Run `uv run pytest tests/unit/test_agents_review.py tests/golden/test_agents_fixtures.py`
   until green.
 
 **Checkpoint**: commit `agents: explorer, analyst, reviewer and answer` and push.
