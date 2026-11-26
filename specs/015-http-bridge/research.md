@@ -155,5 +155,14 @@ hand-written `expected.json`. `mixed-fullstack/expected.json` gets its `GET /api
 
 ## R8. Performance
 
-**Decision**: routes are indexed by (segment count, method); each call compares only against that bucket. The
+**Decision**: routes are kept in a tree by path segment (`RouteTree`): a literal call segment follows its own branch
+and the parameter branch, a parameter follows every branch, so a call meets only routes it can fit. Route and call
+facts are collected in the adapters' existing single walk (decorators and call nodes handed over), not a second
+walk.
+
+**Found while implementing**: the first version compared each call with every route of the same length, and a
+second walk of every syntax tree collected the facts. On a generated repository with 2,500 routes and 2,500 calls
+analysis took 3.4 s instead of 0.4 s on `main`. After the tree and the single walk: 0.23 s vs 0.16 s (in-process,
+median of 7), the rest being the real work of 5,000 extra facts and 2,500 extra edges. The repositories SC-004 names
+(fixtures, the 1,000-file Python and TS performance repos) stay within noise: 0.095 vs 0.097 s and 0.110 vs 0.119 s. The
 performance test (`tests/integration/test_performance.py`) runs unchanged and must stay within 10% (SC-004).

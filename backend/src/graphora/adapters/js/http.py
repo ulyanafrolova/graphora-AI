@@ -144,16 +144,9 @@ def _call(position: Positions, node: Node) -> HttpCallFact | None:
     return HttpCallFact(method, merged, absolute, line, column, _text(node))
 
 
-def calls(position: Positions, root: Node) -> tuple[HttpCallFact, ...]:
-    out: list[HttpCallFact] = []
-    stack = [root]
-    while stack:
-        node = stack.pop()
-        if node.type == "call_expression":
-            fact = _call(position, node)
-            if fact is not None:
-                out.append(fact)
-        stack.extend(reversed(node.children))
+def calls(position: Positions, call_nodes: list[Node]) -> tuple[HttpCallFact, ...]:
+    """From the call expressions the extractor's single walk collected (no second walk)."""
+    out = [f for f in (_call(position, n) for n in call_nodes) if f is not None]
     return tuple(sorted(out, key=lambda f: (f.line, f.column)))
 
 

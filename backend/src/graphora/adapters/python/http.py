@@ -142,24 +142,11 @@ def _mount(position: Positions, call: Node) -> MountFact | None:
     return MountFact(_text(obj), _text(positional[0]), prefix, given, position(call)[0])
 
 
-def facts(position: Positions, root: Node) -> tuple[tuple[RouteFact, ...], tuple[RouterFact, ...], tuple[MountFact, ...]]:
-    routes: list[RouteFact] = []
-    routers: list[RouterFact] = []
-    mounts: list[MountFact] = []
-    stack = [root]
-    while stack:
-        node = stack.pop()
-        if node.type == "decorator":
-            route = _route(position, node)
-            if route is not None:
-                routes.append(route)
-        elif node.type == "expression_statement" and node.parent is not None and node.parent.type == "module":
-            router = _router(node)
-            if router is not None:
-                routers.append(router)
-        elif node.type == "call":
-            mount = _mount(position, node)
-            if mount is not None:
-                mounts.append(mount)
-        stack.extend(reversed(node.children))
+def facts(
+    position: Positions, root: Node, decorators: list[Node], calls: list[Node]
+) -> tuple[tuple[RouteFact, ...], tuple[RouterFact, ...], tuple[MountFact, ...]]:
+    """From the decorators and calls the extractor's single walk collected, in source order (no second walk)."""
+    routes = [r for r in (_route(position, d) for d in decorators) if r is not None]
+    routers = [r for r in (_router(c) for c in root.named_children if c.type == "expression_statement") if r is not None]
+    mounts = [m for m in (_mount(position, c) for c in calls) if m is not None]
     return tuple(routes), tuple(routers), tuple(mounts)

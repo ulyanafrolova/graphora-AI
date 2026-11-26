@@ -200,6 +200,7 @@ def extract(source: bytes, check: Callable[[], None] = lambda: None) -> FileFact
     position = Positions(source)
     statements: list[ImportRecord] = []
     calls: list[Node] = []
+    decorators: list[Node] = []
     stack = [root]
     visited = 0
     while stack:
@@ -215,10 +216,12 @@ def extract(source: bytes, check: Callable[[], None] = lambda: None) -> FileFact
             continue
         if node.type == "call":
             calls.append(node)
+        elif node.type == "decorator":
+            decorators.append(node)
         stack.extend(reversed(node.children))
 
     importlib_names, import_module_names = _importlib_aliases(statements)
     dynamic = [r for r in (_dynamic_call(position, c, importlib_names, import_module_names) for c in calls) if r is not None]
     imports = sorted(statements + dynamic, key=lambda r: (r.line, r.column, r.module_text))
-    routes, routers, mounts = http.facts(Positions(source), root)
+    routes, routers, mounts = http.facts(Positions(source), root, decorators, calls)
     return FileFacts(tuple(imports), tuple(_definitions(root)), root.has_error, routes, routers, mounts)

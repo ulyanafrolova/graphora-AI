@@ -204,6 +204,33 @@ def match(call: Call, candidates: list[Route]) -> tuple[str, Route | None]:
     return "edge", winners[0]
 
 
+class RouteTree:
+    """Routes by path segments, so a call meets only the routes its path can fit (research R8): a literal call
+    segment follows its own branch and the parameter branch, a parameter follows every branch."""
+
+    def __init__(self, routes: list[Route]) -> None:
+        self.root: dict = {}
+        for route in routes:
+            node = self.root
+            for segment in route.segments:
+                node = node.setdefault(segment, {})
+            node.setdefault(None, []).append(route)
+
+    def candidates(self, segments: tuple[str, ...]) -> list[Route]:
+        nodes = [self.root]
+        for segment in segments:
+            following = []
+            for node in nodes:
+                if segment == PARAM:
+                    following.extend(child for key, child in node.items() if key is not None)
+                else:
+                    following.extend(node[key] for key in (segment, PARAM) if key in node)
+            nodes = following
+            if not nodes:
+                return []
+        return [route for node in nodes for route in node.get(None, ())]
+
+
 def bridge(py_facts: dict[str, Any], js_facts: dict[str, Any], snapshot: str) -> tuple[list[Edge], list[UnresolvedNode]]:
     """HTTP edges and the unresolved nodes they point to."""
     calls = []
@@ -214,13 +241,11 @@ def bridge(py_facts: dict[str, Any], js_facts: dict[str, Any], snapshot: str) ->
             calls.append(Call(path, fact.method, call_segments(fact, facts.constants), fact.line, fact.column, fact.text))
     if not calls:
         return [], []
-    by_length: dict[int, list[Route]] = defaultdict(list)
-    for route in routes(py_facts):
-        by_length[len(route.segments)].append(route)
+    tree = RouteTree(routes(py_facts))
     edges: list[Edge] = []
     nodes: dict[str, UnresolvedNode] = {}
     for call in calls:
-        kind, route = match(call, by_length.get(len(call.segments), []) if call.segments is not None else [])
+        kind, route = match(call, tree.candidates(call.segments) if call.segments is not None else [])
         method = call.method or "?"
         symbol = f"{method} {display(call.segments) if call.segments is not None else '?'}"
         common = dict(symbol=symbol, line=call.line, column=call.column, snapshot=snapshot, extractor=EXTRACTOR,
