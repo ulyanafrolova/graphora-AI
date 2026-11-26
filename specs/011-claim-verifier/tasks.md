@@ -162,7 +162,7 @@ every `expected.json` definition verifies and its mutations are rejected.
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Write `backend/tests/unit/test_verify_text.py` with a fake `TextSource` (a dict of
+- [X] T011 [P] [US2] Write `backend/tests/unit/test_verify_text.py` with a fake `TextSource` (a dict of
   path → `store.FileText`) over a synthetic graph: mention of a whole name → `verified`, proof = `Line`;
   `hash_password` on a line with `hash_password_v2(pw)` → `symbol_not_on_line`; `$el` matched in JS text;
   case differs → rejected; qualified `Logger.write` / `App.Models.User` matched by last part; line 51 of a
@@ -172,7 +172,7 @@ every `expected.json` definition verifies and its mutations are rejected.
   hint `defined on line 12`; name not defined in the file → `definition_not_in_graph`; mention not on the
   line but on line 14 → hint `found on line 14` (nearest line, lower line wins a tie); the text source is
   read once per file within one `verify` call.
-- [ ] T012 [P] [US2] Write `backend/tests/golden/test_verify_store.py` marked `db`: store every fixture
+- [X] T012 [P] [US2] Write `backend/tests/golden/test_verify_store.py` marked `db`: store every fixture
   (`store.put(name, analyze_fixture(name))`), `from_store(database_url, name, snapshot)`, then for every
   definition in `expected.json` a definition claim (`symbol` = definition name) → `verified`; line + 1 →
   `symbol_not_on_line` unless the name also appears there; symbol `NoSuchName` → `definition_not_in_graph`;
@@ -182,14 +182,14 @@ every `expected.json` definition verifies and its mutations are rejected.
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Implement `backend/src/graphora/verify/text_checks.py` (research R6): `TextSource`
+- [X] T013 [US2] Implement `backend/src/graphora/verify/text_checks.py` (research R6): `TextSource`
   protocol `get(path) -> FileText | None`; `store_text(store, repository, snapshot)` reading whole files with
   `Store.get_file` and caching per instance; `_has_name(line, name)` with
   `re.search(rf"(?<![\w$]){re.escape(last)}(?![\w$])", line)` where `last` is the part after the final `.`;
   `check_mention` and `check_definition` with checks `file`, `text`, `range`, `definition`, `symbol` and the
   reasons and hints listed in T011; definitions looked up in the `FileNode` by full name or last part (as
   `queries.definitions`).
-- [ ] T014 [US2] Wire definition and mention claims into `verify` in
+- [X] T014 [US2] Wire definition and mention claims into `verify` in
   `backend/src/graphora/verify/__init__.py`, wrap the given source so each file is read once per call, add
   `verify_served(claims, served)` (uses `store_text` when `served.store` is set, else no text) and export
   `store_text`, `TextSource`. Run `uv run pytest tests/unit/test_verify_text.py` and, with the database,
