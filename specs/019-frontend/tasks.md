@@ -369,7 +369,7 @@ equals the API answer.
 - [X] T065 [US5] Optimise `components`/cut in `backend/src/graphora/graph/queries.py` only if T064 fails (cache the
   undirected graph on `GraphIndex` like `_runtime_links`).
   Not needed: T064 measured components 0.56 s and cycles with cuts well under 2 s.
-- [ ] T066 [US5] Add the large-repository panel (files, edges, components, cycles counts from overview / components /
+- [X] T066 [US5] Add the large-repository panel (files, edges, components, cycles counts from overview / components /
   cycles; "How it stays readable" and legend: node size = dependents, hotspot marker, red bundle = cycle) to
   `frontend/src/graph/OverviewPanel.tsx`, shown on System level; node size from component dependents (sum of incoming
   component link imports) and hotspot markers from `/hotspots` items.

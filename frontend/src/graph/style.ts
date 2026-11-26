@@ -51,8 +51,8 @@ export const STYLE: StylesheetJson = [
     selector: "node.component",
     style: {
       shape: "ellipse",
-      width: "mapData(count, 1, 500, 46, 140)",
-      height: "mapData(count, 1, 500, 46, 140)",
+      width: "mapData(deps, 0, 400, 46, 150)",
+      height: "mapData(deps, 0, 400, 46, 150)",
       label: "data(caption)",
       "text-wrap": "wrap",
       "font-size": 15,
@@ -123,5 +123,14 @@ for (let i = 1; i <= PALETTE.length; i++) {
     style: { "background-color": paletteColor(i), "background-opacity": 0.12, "border-color": paletteColor(i) },
   });
 }
+STYLE.push({
+  selector: "node.hotspot",
+  style: {
+    "underlay-color": COLOR.cycle,
+    "underlay-opacity": 0.35,
+    "underlay-padding": 8,
+    "underlay-shape": "ellipse",
+  },
+});
 STYLE.push({ selector: "node.selected", style: { "border-color": COLOR.selected, "border-width": 4 } });
 STYLE.push({ selector: "node.impacted", style: { "border-color": COLOR.impact, "border-width": 3 } });

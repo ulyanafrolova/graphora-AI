@@ -13,6 +13,7 @@ export interface ElementsInput {
   selected: string | null;
   impact: Set<string> | null;
   cycles?: Answer;
+  hot?: Set<string>;
 }
 
 const TEST = /(^|\/)(tests?|__tests__)\/|(_test|\.test|\.spec)\./;
@@ -95,9 +96,15 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
         count: c.file_count,
         color: i + 1,
         kind: "component",
+        deps: (input.components.links ?? []).filter((l) => l.target === c.id).reduce((n, l) => n + l.imports, 0),
         ...impacted,
       },
-      classes("component", c.has_cycle && "cycle", expanded && "expanded"),
+      classes(
+        "component",
+        c.has_cycle && "cycle",
+        expanded && "expanded",
+        c.files.some((f) => input.hot?.has(f)) && "hotspot",
+      ),
       expanded ? [] : c.files,
     );
   };
@@ -171,7 +178,12 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
   const pairs = filePairs(input.graph).filter(
     (p) => shown.has(p.source) && (shown.has(p.target) || (p.target.startsWith("ext:") && !hideExternal)),
   );
-  for (const f of files) node(f, { label: label(f), color: (where.get(f) ?? -1) + 1, kind: "file" }, "file");
+  for (const f of files)
+    node(
+      f,
+      { label: label(f), color: (where.get(f) ?? -1) + 1, kind: "file" },
+      classes("file", input.hot?.has(f) === true && "hotspot"),
+    );
   const externals = [...new Set(pairs.filter((p) => p.target.startsWith("ext:")).map((p) => p.target))].sort(cmp);
   for (const x of externals) node(x, { label: label(x), kind: "external" }, "external");
   for (const p of pairs) {

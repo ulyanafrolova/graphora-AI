@@ -209,3 +209,23 @@ button.link {
   background: none;
   text-align: left;
 }
+
+.stats.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+.plain {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+.cycle-text {
+  color: var(--cycle);
+}
+.hot-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cycle);
+  box-shadow: 0 0 6px var(--cycle);
+}

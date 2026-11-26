@@ -5,7 +5,7 @@ import { Search } from "./Search";
 import { SidePanel } from "./SidePanel";
 import "./graph.css";
 
-import { useComponents, useCycles, useGraph, useImpact } from "@/api/queries";
+import { useComponents, useCycles, useGraph, useHotspots, useImpact } from "@/api/queries";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
 import type { RouteState } from "@/state/route";
@@ -17,6 +17,8 @@ export function GraphPage({ route }: { route: RouteState }) {
   const graph = useGraph(snapshot);
   const components = useComponents(snapshot);
   const cycles = useCycles(snapshot);
+  const hotspots = useHotspots(snapshot);
+  const hot = useMemo(() => new Set((hotspots.data?.items ?? []).slice(0, 10).map((i) => i.node)), [hotspots.data]);
   const impact = useImpact(snapshot, route.impact ? route.node : null);
   const impacted = useMemo(
     () => (route.impact && impact.data ? new Set((impact.data.items ?? []).map((i) => i.node)) : null),
@@ -35,6 +37,7 @@ export function GraphPage({ route }: { route: RouteState }) {
         components={components.data}
         impact={impacted}
         cycles={cycles.data}
+        hot={hot}
         onChange={(next) => go({ ...route, ...next })}
         search={
           <Search

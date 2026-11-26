@@ -14,6 +14,7 @@ export interface GraphViewProps {
   components: Answer;
   impact: Set<string> | null;
   cycles?: Answer | undefined;
+  hot?: Set<string>;
   onChange: (next: Partial<RouteState>) => void;
   search?: React.ReactNode;
 }
@@ -24,7 +25,7 @@ const LEVEL_LABELS: [Level, string][] = [
   ["file", "File"],
 ];
 
-export function GraphView({ route, graph, components, impact, cycles, onChange, search }: GraphViewProps) {
+export function GraphView({ route, graph, components, impact, cycles, hot, onChange, search }: GraphViewProps) {
   const box = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
   const [ready, setReady] = useState(false);
@@ -44,8 +45,9 @@ export function GraphView({ route, graph, components, impact, cycles, onChange, 
         selected: route.node,
         impact,
         ...(cycles ? { cycles } : {}),
+        ...(hot ? { hot } : {}),
       }),
-    [level, route.component, components, graph, route.hide, route.node, impact, cycles],
+    [level, route.component, components, graph, route.hide, route.node, impact, cycles, hot],
   );
   const structure = useMemo(() => elements.map((e) => e.data.id).join("|"), [elements]);
   const handlers = useRef({ onChange, level });

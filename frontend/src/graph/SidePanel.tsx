@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { ComponentPanel } from "./ComponentPanel";
 import { FilePanel } from "./FilePanel";
 import { ImpactPanel } from "./ImpactPanel";
+import { OverviewPanel } from "./OverviewPanel";
 import { nodeName } from "./names";
 
 import { useCycles, useFiles, useHotspots, useKeyFiles, useNeighbors } from "@/api/queries";
@@ -45,6 +46,7 @@ export function SidePanel({ route, components, impact, onChange }: SidePanelProp
       </FilePanel>
     );
   }
+  if (route.node === null && route.level !== "component") return <OverviewPanel snapshot={snapshot} />;
   const component = (components.components ?? []).find((c) => c.id === (route.node ?? route.component)) ?? null;
   return (
     <ComponentPanel
