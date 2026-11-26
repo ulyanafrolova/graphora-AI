@@ -1,9 +1,10 @@
 import { http, HttpResponse } from "msw";
 import { expect, test } from "vitest";
 
+import { server } from "../setup";
+
 import { ApiError, apiGet, apiPost, apiUpload } from "@/api/client";
 
-import { server } from "../setup";
 
 test("get builds the address and parses json", async () => {
   let seen = "";
