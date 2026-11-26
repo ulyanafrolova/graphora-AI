@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { GraphView } from "./GraphView";
+import { Search } from "./Search";
 import { SidePanel } from "./SidePanel";
 import "./graph.css";
 
@@ -35,6 +36,13 @@ export function GraphPage({ route }: { route: RouteState }) {
         impact={impacted}
         cycles={cycles.data}
         onChange={(next) => go({ ...route, ...next })}
+        search={
+          <Search
+            snapshot={snapshot}
+            graph={graph.data}
+            onPick={(node) => go({ ...route, node, level: route.level === "system" ? "file" : route.level })}
+          />
+        }
       />
       <SidePanel
         route={route}

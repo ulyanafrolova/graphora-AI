@@ -184,3 +184,28 @@ button.link {
   color: var(--heuristic);
   font-family: var(--mono);
 }
+
+.search {
+  position: relative;
+}
+.search input {
+  width: 320px;
+}
+.search-results {
+  position: absolute;
+  z-index: 20;
+  top: 110%;
+  left: 0;
+  width: 460px;
+  max-height: 360px;
+  overflow: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+}
+.search-results button {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+}

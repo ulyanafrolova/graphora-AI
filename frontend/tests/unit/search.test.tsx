@@ -10,7 +10,9 @@ import { makeQueryClient } from "@/api/queries";
 import type { GraphDocument } from "@/api/types";
 import { matchFiles, Search } from "@/graph/Search";
 
-const GRAPH = { nodes: ["src/Auth.py", "src/auth_util.py", "lib/x.py"].map((p) => ({ id: `file:${p}`, kind: "file", path: p })) } as unknown as GraphDocument;
+const GRAPH = {
+  nodes: ["src/Auth.py", "src/auth_util.py", "lib/x.py"].map((p) => ({ id: `file:${p}`, kind: "file", path: p })),
+} as unknown as GraphDocument;
 
 test("file matches are case-insensitive and sorted", () => {
   expect(matchFiles(GRAPH, "AUTH")).toEqual(["file:src/Auth.py", "file:src/auth_util.py"]);
@@ -22,7 +24,10 @@ test("files and definitions; choosing selects the file", async () => {
     http.get("*/api/v1/definitions", ({ request }) =>
       HttpResponse.json(
         new URL(request.url).searchParams.get("name") === "Auth"
-          ? { definitions: [{ file: "file:src/Auth.py", path: "src/Auth.py", line: 3, kind: "class", name: "Auth" }], total: 1 }
+          ? {
+              definitions: [{ file: "file:src/Auth.py", path: "src/Auth.py", line: 3, kind: "class", name: "Auth" }],
+              total: 1,
+            }
           : { definitions: [], total: 0 },
       ),
     ),
