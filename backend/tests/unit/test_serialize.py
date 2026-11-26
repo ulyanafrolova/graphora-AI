@@ -281,3 +281,24 @@ def test_http_call_route_line_round_trip():
     assert loads(dumps(doc)).edges == (http,)
     with pytest.raises(ValueError):
         _edge("file:a.py", "file:b.py", 1, route_line=3)
+
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        dict(confidence="heuristic", reason="namespace_spread", target="file:b.py", route_line=3),
+        dict(confidence="heuristic", reason="http_route", target="ext:npm:b", route_line=None),
+        dict(confidence="unresolved", reason="not_found", target="unresolved:npm:x", route_line=None),
+        dict(confidence="unresolved", reason="relative_beyond_top", target="unresolved:http:GET /x", route_line=None),
+        dict(confidence="heuristic", reason="http_route", target="file:b.py", route_line=3, form="dynamic"),
+        dict(confidence="heuristic", reason="http_route", target="file:b.py", route_line=3, type_only=True),
+        dict(confidence="heuristic", reason="http_route", target="file:b.py", route_line=3, type="imports"),
+    ],
+)
+def test_model_rejects_what_schema_v8_rejects(fields):
+    """013 review: `load` validates with the model, so the model must hold the schema's http_call rules."""
+    values = dict(type="http_call") | fields
+    target, confidence, reason = values.pop("target"), values.pop("confidence"), values.pop("reason")
+    with pytest.raises(ValueError):
+        Edge("file:a.ts", target, "GET /x", 1, 1, SNAP, confidence, reason, "http-bridge@0.1.0", "sha256:0000000000000000", **values)

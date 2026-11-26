@@ -165,15 +165,25 @@ class Edge:
             raise ValueError("a 'type_reference' edge has no directive and no alias")
         if self.type == "reexports" and self.form != "static":
             raise ValueError("'reexports' edges always have form 'static'")
-        if self.type == "http_call":
+        if self.type == "http_call":  # the same rules as schema v8 (specs/015-http-bridge contracts)
             if self.confidence == "resolved":
                 raise ValueError("an 'http_call' edge is never 'resolved'")
+            if not self.source.startswith("file:") or self.form != "static" or self.type_only:
+                raise ValueError("an 'http_call' edge goes from a file, static and not type-only")
+            if self.confidence == "heuristic" and (self.reason != "http_route" or not self.target.startswith("file:")):
+                raise ValueError("a heuristic 'http_call' edge has reason 'http_route' and a file target")
+            if self.confidence == "unresolved" and (
+                self.reason not in ("dynamic", "not_found", "ambiguous") or not self.target.startswith("unresolved:http:")
+            ):
+                raise ValueError("an unresolved 'http_call' edge has reason dynamic, not_found or ambiguous and an http target")
             if (self.route_line is not None) != self.target.startswith("file:"):
                 raise ValueError("route_line is set exactly on 'http_call' edges to a file")
             if self.route_line is not None and self.route_line < 1:
                 raise ValueError("route_line is at least 1")
         elif self.route_line is not None:
             raise ValueError("route_line is allowed only on 'http_call' edges")
+        elif self.reason == "http_route":
+            raise ValueError("reason 'http_route' is allowed only on 'http_call' edges")
 
 
 @dataclass(frozen=True)
