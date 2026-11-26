@@ -105,7 +105,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [X] T013 Add `components` to the CLI: `_QUESTIONS`, no target, rejects `--limit`, `--symbol`, `--max-depth`,
   `--follow-barrels`, `--level` like `overview` does, in `backend/src/graphora/cli/__init__.py`; test in
   `backend/tests/integration/test_query_cli.py` (text and json, usage errors).
-- [ ] T014 Add MCP tool `components(include_type_only: bool = True)` with a fixed description in `DESCRIPTIONS` to
+- [X] T014 Add MCP tool `components(include_type_only: bool = True)` with a fixed description in `DESCRIPTIONS` to
   `backend/src/graphora/mcp/server.py`; extend `backend/tests/golden/test_mcp_queries.py` `_flags`/CASES so the new
   queries.json entries compare tool = CLI (no `--limit` for `components`, like `projects`); update the tool list
   assertions in `backend/tests/unit/test_mcp_tools.py`.

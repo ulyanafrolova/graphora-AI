@@ -74,6 +74,9 @@ DESCRIPTIONS = {
     "Use a project path from it as target with level=\"project\". Empty for repositories without C# projects.",
     "key_files": "The files most depended on, ranked by transitive and then direct dependents. "
     + _TYPE_ONLY + "limit (default 10, at most 500) caps the files.",
+    "components": "Groups of files that import each other more than they import the rest (Louvain community "
+    "detection with a fixed seed), each named after its common folder, with the links between groups: how many file "
+    "links, how many of them heuristic, and whether a group or link lies on an import cycle. " + _TYPE_ONLY,
     "hotspots": "Files that change often and that many files depend on: risk = commits in the 12 months before the "
     "snapshot commit × transitive dependents. Each item has commits, authors (bus factor: how many people changed "
     "it), score and dependents. The history note says how much history was read; when history is not available the "
@@ -191,6 +194,10 @@ def create_server(served: Served) -> MCPServer:
     @server.tool(description=DESCRIPTIONS["hotspots"], annotations=READ_ONLY)
     def hotspots(include_type_only: bool = True, limit: int = 10) -> CallToolResult:
         return ask(queries.hotspots, include_type_only=include_type_only, limit=limit)
+
+    @server.tool(description=DESCRIPTIONS["components"], annotations=READ_ONLY)
+    def components(include_type_only: bool = True) -> CallToolResult:
+        return _result(queries.components(ix, include_type_only=include_type_only))
 
     if served.store is not None:
         store, repository = served.store, served.repository
