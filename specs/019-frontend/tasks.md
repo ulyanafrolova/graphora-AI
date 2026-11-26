@@ -332,7 +332,7 @@ equals the API answer.
 - [X] T057 [P] [US4] Write `frontend/tests/unit/history.test.ts` (`fake-indexeddb`): `saveRun` keeps the newest 20 per
   (repository, snapshot) and drops older ones; other snapshots untouched; `listRuns` newest first; `clearRuns` removes
   one snapshot's runs; unavailable IndexedDB → in-memory fallback with `persistent: false`.
-- [ ] T058 [US4] Implement `frontend/src/agents/history.ts` with `idb` (database `graphora`, store `answers`, key
+- [X] T058 [US4] Implement `frontend/src/agents/history.ts` with `idb` (database `graphora`, store `answers`, key
   `[repository, snapshot, created]`). Check: T057 passes.
 - [ ] T059 [P] [US4] Write `frontend/tests/unit/ask.test.tsx`: question box and suggested questions; while streaming,
   steps appear as they arrive with role colours (explorer purple, analyst blue, reviewer amber); the answer shows role

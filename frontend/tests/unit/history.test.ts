@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from "vitest";
 
-import type { AskResult } from "@/api/types";
 import { clearRuns, listRuns, openHistory, saveRun } from "@/agents/history";
+import type { AskResult } from "@/api/types";
 
 const result = { answer: { facts: [] }, trace: [] } as unknown as AskResult;
 
@@ -14,7 +14,8 @@ beforeEach(async () => {
 test("keeps the newest 20 per snapshot, newest first", async () => {
   const h = await openHistory();
   expect(h.persistent).toBe(true);
-  for (let i = 1; i <= 23; i++) await saveRun(h, { repository: "r", snapshot: "s", question: `q${i}`, created: i, result });
+  for (let i = 1; i <= 23; i++)
+    await saveRun(h, { repository: "r", snapshot: "s", question: `q${i}`, created: i, result });
   await saveRun(h, { repository: "r", snapshot: "t", question: "other", created: 1, result });
   const runs = await listRuns(h, "r", "s");
   expect(runs.map((r) => r.question)).toEqual(Array.from({ length: 20 }, (_, i) => `q${23 - i}`));
