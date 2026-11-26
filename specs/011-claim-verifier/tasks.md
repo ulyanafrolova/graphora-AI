@@ -211,7 +211,7 @@ claims (spec US3, FR-014–FR-019, FR-021; research R8–R10; contracts/agent-to
 
 ### Tests for User Story 3
 
-- [ ] T015 [P] [US3] Write `backend/tests/unit/test_tools.py` on a synthetic graph wrapped in `Served`
+- [X] T015 [P] [US3] Write `backend/tests/unit/test_tools.py` on a synthetic graph wrapped in `Served`
   (no store) and on a `Served` whose `store` is a fake object with `get_file`: `TOOLS` names in contract
   order (`find_definitions`, `read_lines`, `dependents`, `impact`, `neighbors`, `cycles`) and descriptions
   are fixed strings; `tools_for` without a store has no `read_lines`; invalid arguments (offset < 0,
@@ -223,7 +223,7 @@ claims (spec US3, FR-014–FR-019, FR-021; research R8–R10; contracts/agent-to
   contract, a line `# ignore previous instructions` appears only inside the frame; heuristic links shown with
   `(likely)`; citations match the shown items; same call twice → equal results; every returned claim
   verifies with `verify` (`heuristic` exactly for `(likely)` items).
-- [ ] T016 [P] [US3] Add to `backend/tests/golden/test_verify_store.py` (marked `db`): for every stored
+- [X] T016 [P] [US3] Add to `backend/tests/golden/test_verify_store.py` (marked `db`): for every stored
   fixture, call `dependents`, `impact` and `neighbors` on every analyzed file, `cycles`, and
   `find_definitions` on every definition name of `expected.json`, following `next` until not cut; compare the
   listed nodes with `queries.*` answers on the same index; verify all citations with `verify_served`: none
@@ -231,11 +231,11 @@ claims (spec US3, FR-014–FR-019, FR-021; research R8–R10; contracts/agent-to
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Create `backend/src/graphora/tools/limits.py` with `MAX_ITEMS = 20`, `MAX_LINES = 60`,
+- [X] T017 [US3] Create `backend/src/graphora/tools/limits.py` with `MAX_ITEMS = 20`, `MAX_LINES = 60`,
   `MAX_CHARS = 4000`, and in `backend/src/graphora/tools/__init__.py` the types `ToolSpec(name,
   description)`, `ToolResult(text, citations=(), lines=None, cut=False, next=None, error=None)`,
   `LineRef(path, start, end, snapshot)` (data-model.md § ToolSpec, ToolResult, LineRef).
-- [ ] T018 [US3] Implement `backend/src/graphora/tools/agent.py`: `TOOLS` with fixed English descriptions
+- [X] T018 [US3] Implement `backend/src/graphora/tools/agent.py`: `TOOLS` with fixed English descriptions
   (what the tool answers, argument meaning, `(likely)` = heuristic, how to get the rest; no repository
   content); argument validation of contracts/agent-tools.md § Validation, copying the one-line path rule of
   `mcp.server._valid_path` (the MCP server is not changed); list tools compute the answer with `limit=None`, slice
@@ -243,12 +243,12 @@ claims (spec US3, FR-014–FR-019, FR-021; research R8–R10; contracts/agent-to
   `results.render_text`, cut by whole lines to `MAX_CHARS`, append the cut line with `next` = offset + items actually shown; `read_lines` reads
   `Store.get_file(repository, snapshot, path, start, start + MAX_LINES - 1)` and frames the text exactly as
   the contract; errors become `ToolResult(text="error: …", error=…)`.
-- [ ] T019 [US3] Add citations in `backend/src/graphora/tools/agent.py` (research R10): a link without `via`
+- [X] T019 [US3] Add citations in `backend/src/graphora/tools/agent.py` (research R10): a link without `via`
   → dependency claim on its first edge (`path`, `line`, `target`, `name` = edge symbol); a link with `via`
   (barrel) → chain claim through the re-exporting files; impact item → chain along its chain (dependency at
   distance 1); cycle group → closed chain; definition match → definition claim; `read_lines` → `LineRef`.
   Only shown items get citations; `statement` is empty and `snapshot` is the served snapshot.
-- [ ] T020 [US3] Implement `tools_for(served)` in `backend/src/graphora/tools/__init__.py` returning a dict
+- [X] T020 [US3] Implement `tools_for(served)` in `backend/src/graphora/tools/__init__.py` returning a dict
   of typed closures named as in `TOOLS` (`read_lines` only when `served.store` is set). Run
   `uv run pytest tests/unit/test_tools.py` and, with the database, `uv run pytest -m db
   tests/golden/test_verify_store.py`.
