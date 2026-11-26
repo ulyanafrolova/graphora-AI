@@ -227,3 +227,43 @@ def job_app(request, store, database_url, tmp_path):
         yield TestClient(create_app(store, runner)), runner
     finally:
         runner.stop()
+
+
+# --- 013 ask over HTTP (specs/013-ask-sse tasks T007) ------------------------------------------------------------
+
+
+class AskWorld:
+    """The test app with an ask service over the stored `py-cycles` fixture; `models` are handed out in order."""
+
+    def __init__(self, client, service, snapshot, store):
+        self.client, self.service, self.snapshot, self.store = client, service, snapshot, store
+        self.models: list = []
+        self.built = 0
+
+    def factory(self, setting):
+        self.built += 1
+        return self.models.pop(0)
+
+    def body(self, question="What breaks if I change loop/a.py?", **more):
+        return {"repository": "py-cycles", "snapshot": self.snapshot, "question": question} | more
+
+
+@pytest.fixture
+def ask_app(request, store, database_url):
+    from fastapi.testclient import TestClient
+
+    from graphora.api import create_app
+    from graphora.api.ask import AskService
+
+    options = dict(getattr(request, "param", {}))
+    analysis = analyze_fixture("py-cycles")
+    store.put("py-cycles", analysis)
+    world = AskWorld(None, None, analysis.doc.snapshot, store)
+    service = AskService(store, database_url, "scripted:test", limit=options.get("limit", 1), model_factory=world.factory)
+    runner = options.get("runner")
+    world.service = service
+    world.client = TestClient(create_app(store, runner, service))
+    try:
+        yield world
+    finally:
+        service.stop(timeout=10)

@@ -17,6 +17,9 @@ dependencies = [
     "jsonschema==4.26.0",
     "networkx==3.7",
     "mcp==2.3.0",
+    "langgraph==1.2.21",
+    "langchain==1.4.10",
+    "langchain-ollama==1.1.0",
 ]
 
 [project.scripts]
@@ -41,6 +44,7 @@ testpaths = ["tests"]
 markers = [
     "slow: long-running tests (deselect with -m 'not slow')",
     "db: needs PostgreSQL via GRAPHORA_TEST_DATABASE_URL (deselect with -m 'not db')",
+    "llm: needs a live model via GRAPHORA_TEST_MODEL (deselect with -m 'not llm')",
 ]
 
 [tool.ruff]

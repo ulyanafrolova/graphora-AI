@@ -223,4 +223,4 @@ def test_serve_binds_localhost_by_default(db, monkeypatch):
     monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: calls.append(kwargs))
     assert cli.main(["serve"]) == 0
     assert cli.main(["serve", "--host", "0.0.0.0", "--port", "9001"]) == 0
-    assert calls == [{"host": "127.0.0.1", "port": 8000}, {"host": "0.0.0.0", "port": 9001}]
+    assert [(c["host"], c["port"]) for c in calls] == [("127.0.0.1", 8000), ("0.0.0.0", 9001)]
