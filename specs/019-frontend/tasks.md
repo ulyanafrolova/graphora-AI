@@ -377,7 +377,7 @@ equals the API answer.
   renderer when more than 1,000 nodes, labels hidden below zoom 0.8, `haystack` edges; layout in
   `frontend/src/graph/layout.worker.ts` (fcose headless in a Web Worker) when more than 500 nodes, positions cached per
   (snapshot, level, component).
-- [ ] T068 [P] [US5] Implement `frontend/src/graph/Minimap.tsx` (second, non-interactive Cytoscape on the same
+- [X] T068 [P] [US5] Implement `frontend/src/graph/Minimap.tsx` (second, non-interactive Cytoscape on the same
   elements, viewport rectangle; dragging the rectangle pans the main view) and "Export SVG"/"Export PNG" in the graph
   toolbar (`cytoscape-svg`, `cy.png`).
 - [ ] T069 [US5] Add to `backend/tests/e2e_server.py` the 5,000-file graph stored as repository `large` (same builder

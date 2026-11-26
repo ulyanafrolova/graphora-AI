@@ -1,6 +1,7 @@
 import type { Core } from "cytoscape";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { download, Minimap } from "./Minimap";
 import { createGraph, placeAndLayout, WEBGL_FROM } from "./cy";
 import { toElements } from "./elements";
 
@@ -28,6 +29,7 @@ const LEVEL_LABELS: [Level, string][] = [
 export function GraphView({ route, graph, components, impact, cycles, hot, onChange, search }: GraphViewProps) {
   const box = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
+  const [instance, setInstance] = useState<Core | null>(null);
   const [ready, setReady] = useState(false);
   const [counts, setCounts] = useState([0, 0]);
   const comps = components.components ?? [];
@@ -60,6 +62,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     if (box.current === null) return;
     const g = createGraph(box.current, webgl);
     cy.current = g;
+    setInstance(g);
     const resize = new ResizeObserver(() => g.resize());
     resize.observe(box.current);
     g.on("tap", "node", (event) => {
@@ -148,6 +151,28 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
         data-edges={counts[1]}
         data-testid="graph"
       />
+      <div className="graph-tools">
+        <Minimap cy={instance} ready={ready} />
+        <button
+          type="button"
+          onClick={() => cy.current && download("graph.png", cy.current.png({ full: true, bg: "#0b0e14" }))}
+        >
+          Export PNG
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const g = cy.current as (Core & { svg: (o: object) => string }) | null;
+            if (g)
+              download(
+                "graph.svg",
+                `data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg({ full: true, bg: "#0b0e14" }))}`,
+              );
+          }}
+        >
+          Export SVG
+        </button>
+      </div>
       <footer className="graph-footer">
         <span className="crumbs">
           <button type="button" className="link" onClick={() => onChange({ level: "system", component: null })}>

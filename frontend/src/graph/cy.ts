@@ -1,9 +1,11 @@
 import cytoscape, { type Core, type ElementDefinition, type LayoutOptions } from "cytoscape";
 import fcose from "cytoscape-fcose";
+import svg from "cytoscape-svg";
 
 import { STYLE } from "./style";
 
 cytoscape.use(fcose);
+cytoscape.use(svg);
 
 export const WEBGL_FROM = 1000;
 export const WORKER_FROM = 500;
