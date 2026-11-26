@@ -7,8 +7,14 @@ import { CutCard } from "@/insights/CutCard";
 import { CycleList, cycleTitle } from "@/insights/CycleList";
 
 const link = (s: string, t: string, line = 1): Link =>
-  ({ source: `file:${s}`, target: `file:${t}`, confidence: "resolved", type_only: false, via: [],
-     edges: [{ source: `file:${s}`, target: `file:${t}`, line, symbol: "hash_pw" }] }) as unknown as Link;
+  ({
+    source: `file:${s}`,
+    target: `file:${t}`,
+    confidence: "resolved",
+    type_only: false,
+    via: [],
+    edges: [{ source: `file:${s}`, target: `file:${t}`, line, symbol: "hash_pw" }],
+  }) as unknown as Link;
 
 const AUTH: CycleGroup = {
   files: ["file:auth/service.py", "file:users/models.py"],
@@ -19,7 +25,11 @@ const AUTH: CycleGroup = {
 };
 const BILLING: CycleGroup = {
   files: ["file:billing/invoice.py", "file:orders/api.py", "file:pricing.py"],
-  cycle: [link("billing/invoice.py", "orders/api.py"), link("orders/api.py", "pricing.py"), link("pricing.py", "billing/invoice.py")],
+  cycle: [
+    link("billing/invoice.py", "orders/api.py"),
+    link("orders/api.py", "pricing.py"),
+    link("pricing.py", "billing/invoice.py"),
+  ],
   type_only: true,
   confidence: "resolved",
   suggested_cut: { method: "greedy", links: [link("pricing.py", "billing/invoice.py")] },
@@ -44,7 +54,9 @@ test("list", async () => {
 
 test("cut card", async () => {
   const ask = vi.fn();
-  render(<CutCard group={AUTH} lines={new Map([["users/models.py:8", "from ..auth.service import hash_pw"]])} onAsk={ask} />);
+  render(
+    <CutCard group={AUTH} lines={new Map([["users/models.py:8", "from ..auth.service import hash_pw"]])} onAsk={ask} />,
+  );
   expect(screen.getByText("users/models.py → auth/service.py")).toBeInTheDocument();
   expect(screen.getByText("minimum feedback arc set")).toBeInTheDocument();
   expect(screen.getByText("from ..auth.service import hash_pw")).toBeInTheDocument();

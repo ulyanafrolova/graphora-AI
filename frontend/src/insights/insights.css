@@ -50,3 +50,57 @@
   background: var(--heuristic-bg);
   color: var(--heuristic);
 }
+.hotspots-grid {
+  display: grid;
+  grid-template-columns: 1fr 460px;
+  gap: 20px;
+  align-items: start;
+}
+.treemap {
+  position: relative;
+  width: 100%;
+  margin-top: 12px;
+}
+.tile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  color: #fff;
+  text-align: left;
+}
+.risks {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.risks th {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.risks td,
+.risks th {
+  padding: 9px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.legend-ramp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.legend-ramp i {
+  display: inline-block;
+  width: 220px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #1f3d2b, #d29922, #da3633);
+}

@@ -303,7 +303,7 @@ equals the API answer.
   amber → red), label path and score; "Top risks" table: file, commits, used by (`transitive_dependents`), bus factor
   (`authors`, red when 1, amber when 2) — no names; history base line from the answer's `history` (window start,
   commits read, partial note, local changes note); `not_available` → "history not available (<reason>)" and no tiles.
-- [ ] T051 [US3] Implement `frontend/src/insights/HotspotsPage.tsx`, `Treemap.tsx` (`d3-hierarchy` `treemap` with
+- [X] T051 [US3] Implement `frontend/src/insights/HotspotsPage.tsx`, `Treemap.tsx` (`d3-hierarchy` `treemap` with
   `treemapSquarify`, sorted by score then path), `TopRisks.tsx`. Check: T050 passes.
 - [ ] T052 [P] [US3] Write `frontend/tests/unit/search.test.tsx`: the search box lists file paths from the graph
   document containing the text (case-insensitive, max 20, sorted) and, for an identifier-like text, `/definitions`

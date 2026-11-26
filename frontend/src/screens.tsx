@@ -1,6 +1,7 @@
 import { CodePage } from "./code/CodePage";
 import { GraphPage } from "./graph/GraphPage";
 import { CyclesPage } from "./insights/CyclesPage";
+import { HotspotsPage } from "./insights/HotspotsPage";
 import type { RouteState } from "./state/route";
 import { useRoute } from "./state/useRoute";
 
@@ -22,6 +23,8 @@ function ScreenFor({ route }: { route: RouteState }) {
       return <CodePage route={route} />;
     case "cycles":
       return <CyclesPage route={route} />;
+    case "hotspots":
+      return <HotspotsPage route={route} />;
     default:
       return <Soon name={route.screen} />;
   }
