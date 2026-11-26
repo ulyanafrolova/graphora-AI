@@ -91,8 +91,9 @@ backend/
 │   │   ├── graph_checks.py                # dependency, chain and query claims
 │   │   └── text_checks.py                 # TextSource, store_text, definition and mention claims
 │   └── tools/                             # new
-│       ├── __init__.py                    # TOOLS, tools_for, ToolSpec, ToolResult, LineRef
+│       ├── __init__.py                    # exports TOOLS, tools_for, ToolSpec, ToolResult, LineRef, limits
 │       ├── limits.py                      # MAX_ITEMS, MAX_LINES, MAX_CHARS
+│       ├── result.py                      # ToolSpec, ToolResult, LineRef
 │       └── agent.py                       # the six tools, descriptions, trimming, citations
 └── tests/
     ├── unit/test_verify_claims.py         # validation, JSON round trip, determinism

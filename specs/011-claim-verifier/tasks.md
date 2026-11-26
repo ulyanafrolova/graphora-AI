@@ -271,9 +271,9 @@ changes are large)
 - [X] T023 [P] Add the Reviewer example to `backend/tests/unit/test_verify_graph.py`: a synthetic graph with
   `frontend/login.ts` and `auth/service.py` and no edge between them; the claim "frontend depends on
   auth/service.py" → `no_edge` (SC-007).
-- [ ] T024 Run `make check` from the repository root (with `make db` and `GRAPHORA_TEST_DATABASE_URL`); fix
+- [X] T024 Run `make check` from the repository root (with `make db` and `GRAPHORA_TEST_DATABASE_URL`); fix
   ruff findings.
-- [ ] T025 Walk through `specs/011-claim-verifier/quickstart.md` manually and fix any step that does not
+- [X] T025 Walk through `specs/011-claim-verifier/quickstart.md` manually and fix any step that does not
   match; update the PR #30 description (status checkboxes, how to try it).
 
 **Commit**: `performance and determinism tests`, then `quickstart fixes` if needed. Push and mark PR #30 ready
