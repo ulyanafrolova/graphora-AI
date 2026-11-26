@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import type { Answer, GraphDocument } from "@/api/types";
 import { isTest, toElements, type ElementsInput } from "@/graph/elements";
+import { componentLabel } from "@/graph/names";
 
 type E = { source: string; target: string; confidence?: string; type_only?: boolean; type?: string };
 
@@ -187,4 +188,14 @@ test("links inside a cycle group are marked", () => {
   expect(cls("file:a/x.py->file:b/z.py")).toBe("link");
   const inside = toElements({ ...base, level: "component", component: "component:1", cycles });
   expect(inside.find((e) => e.data.id === "file:a/y.py->file:a/x.py")?.classes).toBe("link cycle");
+});
+
+test("long component names are shortened from the left on the graph", () => {
+  expect(componentLabel("fixtures/repos/csharp-multiproject/repo/src")).toBe("…/csharp-multiproject/repo/src");
+  expect(componentLabel("fixtures/repos/ts-barrels/repo/src/types · 2")).toBe("…/ts-barrels/repo/src/types · 2");
+  expect(componentLabel("backend")).toBe("backend");
+  expect(componentLabel("src/auth · 3")).toBe("src/auth · 3");
+  expect(componentLabel("a-very-long-single-folder-name-without-any-slash-in-it")).toBe(
+    "a-very-long-single-folder-name-without-any-slash-in-it",
+  );
 });

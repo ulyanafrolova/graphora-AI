@@ -1,8 +1,11 @@
 // Answers of the service turned into Cytoscape elements: a view only, no graph walking (research R2).
 import type { ElementDefinition } from "cytoscape";
 
+import { componentLabel } from "./names";
+
 import type { Answer, Component, GraphDocument } from "@/api/types";
 import type { Hidden, Level } from "@/state/route";
+
 
 export interface ElementsInput {
   level: Level;
@@ -49,7 +52,7 @@ function filePairs(graph: GraphDocument): Pair[] {
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 const label = (id: string) => id.slice(id.lastIndexOf("/") + 1).replace(/^(file|ext:[a-z]+):/, "");
 const caption = (c: Component, impacted?: number) =>
-  `${c.name}\n${c.file_count} ${c.file_count === 1 ? "file" : "files"}${impacted ? `\n${impacted} affected` : ""}`;
+  `${componentLabel(c.name)}\n${c.file_count} ${c.file_count === 1 ? "file" : "files"}${impacted ? `\n${impacted} affected` : ""}`;
 const classes = (...names: (string | false)[]) => names.filter(Boolean).join(" ");
 
 export function toElements(input: ElementsInput): ElementDefinition[] {
@@ -91,7 +94,7 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
     node(
       c.id,
       {
-        label: c.name,
+        label: componentLabel(c.name),
         caption: caption(c, impacted.impacted),
         count: c.file_count,
         color: i + 1,
