@@ -223,6 +223,7 @@ class _Agents:
     def answer(self, state: AgentState) -> dict[str, Any]:
         self.rec.emit("role_start", "answer")
         counters = self._counters(state)
+        self._stopped(counters)  # a stop set during the last call still ends the run `stopped`
         facts, likely, _ = parts(state)
         summary = None
         if self.summary and (facts or likely) and not counters["failed"] and not self.rec.failed:

@@ -78,3 +78,11 @@ def test_facts_verified_before_stop_are_kept():
 def test_stopped_comes_first():
     assert end_reason({"failed": "stopped", "tool_calls": 15, "revisions": 2}) == "stopped"
     assert end_reason({"failed": "model_failed"}) == "model_failed"
+
+
+def test_stop_during_the_claims_call_ends_stopped():
+    """Stop set while the last model call runs, with nothing left to call afterwards (013 review)."""
+    model, script = scripted("x", "y", ClaimsReply(claims=[]))
+    run = ask("q", served(store=False), model=model, stop=lambda: any(k == "structured" for k, _, _ in script.calls))
+    assert [k for k, _, _ in script.calls][-1] == "structured"
+    assert run.answer.end == "stopped"
