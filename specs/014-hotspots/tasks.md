@@ -236,7 +236,7 @@ with an expired deadline, and a repository served by a local git server; check s
 
 ### Tests
 
-- [ ] T018 [P] [US2] Extend `backend/tests/integration/test_history_cli.py`:
+- [X] T018 [P] [US2] Extend `backend/tests/integration/test_history_cli.py`:
   - a ZIP of a built repository → `not_available` / `zip` (a `.git` folder in the archive is dropped at
     extraction, `ingest/archive.py`, so the reason is `zip` either way);
   - a plain folder → `no_git`;

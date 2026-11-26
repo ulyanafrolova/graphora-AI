@@ -4,8 +4,9 @@ import json
 
 import pytest
 
+from archives import zip_of_dir
 from conftest import run_analyze, run_query
-from history_repos import make_repo
+from history_repos import make_repo, make_shallow
 
 ZELDA = "Zelda Quorn <zelda@quorn.test>"
 OTTO = "Otto Vexley <otto@vexley.test>"
@@ -109,3 +110,71 @@ def test_usage_errors(repo, tmp_path, args):
     graph.write_bytes(analyze(path)[0])
     code, _, _ = run_query(str(graph), *args)
     assert code == 2
+
+
+def history_of(path, *args):
+    out, err = analyze(path, *args)
+    return json.loads(out)["history"], err
+
+
+def test_zip(repo, tmp_path):
+    path, _ = repo
+    archive = tmp_path / "app.zip"
+    archive.write_bytes(zip_of_dir(path))
+    history, err = history_of(archive)
+    assert (history["status"], history["reason"], history["files"]) == ("not_available", "zip", [])
+    assert "graphora: info: history: not available (zip)" in err
+
+
+def test_plain_folder(tmp_path):
+    (tmp_path / "a.py").write_text("import b\n")
+    (tmp_path / "b.py").write_text("")
+    history, err = history_of(tmp_path)
+    assert (history["status"], history["reason"]) == ("not_available", "no_git")
+    assert "history: not available (no_git)" in err
+
+
+def test_no_history(repo):
+    path, _ = repo
+    history, err = history_of(path, "--no-history")
+    assert (history["status"], history["reason"]) == ("not_available", "skipped")
+    assert "graphora: info: history: not available (skipped by request)" in err
+
+
+def test_alternates(repo):
+    path, _ = repo
+    (path / ".git" / "objects" / "info").mkdir(exist_ok=True)
+    (path / ".git" / "objects" / "info" / "alternates").write_text("/elsewhere/objects\n")
+    assert history_of(path)[0]["reason"] == "no_git"
+
+
+def test_missing_old_commit(repo):
+    path, shas = repo
+    (path / ".git" / "objects" / shas[0][:2] / shas[0][2:]).unlink()
+    out, _ = analyze(path)
+    doc = json.loads(out)
+    assert doc["snapshot"] == shas[-1]
+    assert (doc["history"]["status"], doc["history"]["reason"]) == ("not_available", "unreadable")
+
+
+def test_dirty(repo):
+    path, shas = repo
+    (path / "main.py").write_text("from auth.service import login\nlogin()\n")
+    out, err = analyze(path)
+    doc = json.loads(out)
+    assert "+dirty:" in doc["snapshot"]
+    assert doc["history"]["commit"] == shas[-1] and doc["history"]["local_changes"] is True
+    assert {"path": "main.py", "commits": 1, "authors": 1} in doc["history"]["files"]
+    assert "; uncommitted changes not counted" in err
+
+
+def test_shallow(repo):
+    path, shas = repo
+    make_shallow(path, [shas[1]])
+    history, err = history_of(path)
+    assert (history["status"], history["commits_read"], history["shallow_skipped"]) == ("available", 2, 1)
+    assert history["files"] == [
+        {"path": "api/routes.py", "commits": 1, "authors": 1},
+        {"path": "auth/service.py", "commits": 2, "authors": 1},
+    ]
+    assert "; 1 commits not counted (shallow history)" in err
