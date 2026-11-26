@@ -137,7 +137,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   returns `ui/index.html` for other `GET` paths not starting with `/api/`; adds the CSP header of contracts/backend.md to
   these responses. In `backend/src/graphora/cli/__init__.py` add `serve --ui DIR` (default `$GRAPHORA_UI_DIR`, else
   `<repo>/frontend/dist` resolved from the package location when it exists). Check: T016 passes.
-- [ ] T020 Write `backend/tests/e2e_server.py`: `--port`, opens the test database (`GRAPHORA_TEST_DATABASE_URL`), empties
+- [X] T020 Write `backend/tests/e2e_server.py`: `--port`, opens the test database (`GRAPHORA_TEST_DATABASE_URL`), empties
   it, stores the fixtures `py-cycles`, `ts-app`, `mixed-fullstack`, `csharp-multiproject` (via `analyze_fixture` from
   `conftest.py`) and a local git history repository built with `history_repos.make_repo` (for hotspots); starts
   `create_app(store, JobRunner(...), AskService(..., model_factory=<scripted model from tests/unit/scripted_model.py
