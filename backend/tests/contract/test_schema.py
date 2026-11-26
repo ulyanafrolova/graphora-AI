@@ -1,4 +1,4 @@
-"""Schema v8 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
+"""Schema v9 contract: serializer output is valid, and documents breaking a provenance rule are rejected."""
 
 import copy
 
@@ -173,7 +173,7 @@ def test_unresolved_without_ecosystem_rejected(ts_doc, validator):
     assert not validator.is_valid(bad)
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6, 7, 8])
 def test_old_schema_version_rejected(doc, validator, version):
     bad = copy.deepcopy(doc)
     bad["schema_version"] = version
@@ -385,6 +385,57 @@ def test_solution_invalid_rejected(sln_doc, validator, case):
     assert not validator.is_valid(bad)
 
 
+# --- 015 HTTP bridge (schema v8) ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def http_doc():
+    """frontend/a.ts calls backend/b.py (heuristic, route line 8) and an unknown route (unresolved)."""
+    extractor = "http-bridge@0.1.0"
+    edges = (
+        Edge("file:a.ts", "file:b.py", "GET /api/items", 2, 3, SNAP, "heuristic", "http_route", extractor, HASH,
+             type="http_call", route_line=8),
+        Edge("file:a.ts", "unresolved:http:GET /api/x", "GET /api/x", 4, 3, SNAP, "unresolved", "not_found", extractor, HASH,
+             type="http_call"),
+    )
+    return to_dict(
+        GraphDocument(
+            snapshot=SNAP,
+            extractors={"http-bridge": "0.1.0"},
+            nodes=(FileNode("a.ts", "typescript", (), ()), FileNode("b.py", "python"), UnresolvedNode("GET /api/x", "http")),
+            edges=edges,
+            files=(CoverageFile("a.ts", "typescript", "analyzed"), CoverageFile("b.py", "python", "analyzed")),
+            skipped=(),
+        )
+    )
+
+
+def test_http_document_valid(http_doc, validator):
+    assert http_doc["schema_version"] == 9
+    validator.validate(http_doc)
+    heuristic = _edge(http_doc, "http_call", "heuristic")
+    assert heuristic["route_line"] == 8 and heuristic["reason"] == "http_route"
+    assert _node(http_doc, "unresolved:http:")["ecosystem"] == "http"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda d: _edge(d, "http_call", "heuristic").update(confidence="resolved", reason=None) or _edge(d, "http_call", "resolved").pop("reason"),
+        lambda d: _edge(d, "http_call", "heuristic").pop("route_line"),
+        lambda d: _edge(d, "http_call", "unresolved").update(route_line=3),
+        lambda d: _edge(d, "http_call", "unresolved").update(reason="namespace_spread"),
+        lambda d: _edge(d, "http_call", "heuristic").update(route_line=0),
+        lambda d: _edge(d, "http_call", "heuristic").update(reason="namespace_spread"),
+        lambda d: d["edges"].append(dict(_edge(d, "http_call", "heuristic"), type="imports")),
+        lambda d: d.update(schema_version=7),
+    ],
+    ids=["resolved", "no route_line", "route_line on unresolved", "unresolved reason", "route_line 0",
+         "other heuristic reason", "route_line on imports", "version 7"],
+)
+def test_http_rules(http_doc, validator, change):
+    bad = copy.deepcopy(http_doc)
+    change(bad)
 SHA = "e" * 40
 AVAILABLE = {
     "status": "available",

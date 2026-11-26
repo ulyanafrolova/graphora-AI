@@ -158,7 +158,7 @@ MVP:
 
 Additional features:
 
-- Frontend ↔ backend bridge: Python routes matched with TS HTTP calls through a heuristic edge. URL templates must be normalized, for example /users/{id} and `/users/${id}`.
+- Frontend ↔ backend bridge: Python routes matched with TS HTTP calls through a heuristic edge. URL templates must be normalized, for example /users/{id} and `/users/${id}`. Implemented in 015 for FastAPI and Flask routes and `fetch`/`axios` calls: `http_call` edges, `heuristic` with reason `http_route`; dynamic, unmatched and ambiguous calls are `unresolved`.
 - Automatic components: Louvain clustering, agent-named clusters, zoom levels system → component → file → symbol.
 - Cycle breaking: minimum feedback arc set plus an agent explanation, recommendations only.
 - Hotspots: change frequency from git history multiplied by graph centrality, plus bus factor (how many people have changed a file).

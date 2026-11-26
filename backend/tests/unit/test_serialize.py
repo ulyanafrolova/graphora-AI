@@ -80,8 +80,8 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_8():
-    assert to_dict(_doc())["schema_version"] == 8
+def test_schema_version_9():
+    assert to_dict(_doc())["schema_version"] == 9
 
 
 def test_history_not_collected_by_default():
@@ -293,3 +293,48 @@ def test_alias_on_python_imports_only():
         Edge("file:a.ts", "file:b.ts", "f", 1, 1, SNAP, "resolved", None, "js-adapter@0.2.0", h, alias="g")
     with pytest.raises(ValueError):
         Edge("file:a.py", "file:b.py", "f", 1, 1, SNAP, "resolved", None, "python-adapter@0.4.0", h, alias="f")
+
+
+def test_http_call_route_line_round_trip():
+    """015: route_line is written for http_call edges and read back; other edges have no such key."""
+    from graphora.graph.load import loads
+    from graphora.graph.serialize import SCHEMA_VERSION
+
+    assert SCHEMA_VERSION == 9
+    http = Edge("file:a.ts", "file:b.py", "GET /x", 2, 1, SNAP, "heuristic", "http_route", "http-bridge@0.1.0",
+                "sha256:0000000000000000", type="http_call", route_line=8)
+    doc = GraphDocument(
+        snapshot=SNAP,
+        extractors={"http-bridge": "0.1.0"},
+        nodes=(FileNode("a.ts", "typescript", (), ()), FileNode("b.py", "python")),
+        edges=(http,),
+        files=(CoverageFile("a.ts", "typescript", "analyzed"), CoverageFile("b.py", "python", "analyzed")),
+        skipped=(),
+    )
+    data = to_dict(doc)
+    assert data["edges"][0]["route_line"] == 8
+    assert "route_line" not in to_dict(_doc())["edges"][0]
+    assert loads(dumps(doc)).edges == (http,)
+    with pytest.raises(ValueError):
+        _edge("file:a.py", "file:b.py", 1, route_line=3)
+
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        dict(confidence="heuristic", reason="namespace_spread", target="file:b.py", route_line=3),
+        dict(confidence="heuristic", reason="http_route", target="ext:npm:b", route_line=None),
+        dict(confidence="unresolved", reason="not_found", target="unresolved:npm:x", route_line=None),
+        dict(confidence="unresolved", reason="relative_beyond_top", target="unresolved:http:GET /x", route_line=None),
+        dict(confidence="heuristic", reason="http_route", target="file:b.py", route_line=3, form="dynamic"),
+        dict(confidence="heuristic", reason="http_route", target="file:b.py", route_line=3, type_only=True),
+        dict(confidence="heuristic", reason="http_route", target="file:b.py", route_line=3, type="imports"),
+    ],
+)
+def test_model_rejects_what_schema_v8_rejects(fields):
+    """013 review: `load` validates with the model, so the model must hold the schema's http_call rules."""
+    values = dict(type="http_call") | fields
+    target, confidence, reason = values.pop("target"), values.pop("confidence"), values.pop("reason")
+    with pytest.raises(ValueError):
+        Edge("file:a.ts", target, "GET /x", 1, 1, SNAP, confidence, reason, "http-bridge@0.1.0", "sha256:0000000000000000", **values)

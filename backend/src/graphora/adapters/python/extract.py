@@ -10,6 +10,7 @@ import tree_sitter_python
 from tree_sitter import Language, Node, Parser
 
 from graphora.adapters.position import CHECK_EVERY, Positions, normalize_newlines
+from graphora.adapters.python import http
 from graphora.graph.model import Definition
 
 _PARSER = Parser(Language(tree_sitter_python.language()))
@@ -38,6 +39,9 @@ class FileFacts:
     imports: tuple[ImportRecord, ...]
     definitions: tuple[Definition, ...]
     has_error: bool
+    routes: tuple[http.RouteFact, ...] = ()  # 015: route decorators
+    routers: tuple[http.RouterFact, ...] = ()  # 015: app, router and blueprint declarations
+    mounts: tuple[http.MountFact, ...] = ()  # 015: include_router / register_blueprint calls
 
 
 def _text(node: Node) -> str:
@@ -196,6 +200,7 @@ def extract(source: bytes, check: Callable[[], None] = lambda: None) -> FileFact
     position = Positions(source)
     statements: list[ImportRecord] = []
     calls: list[Node] = []
+    decorators: list[Node] = []
     stack = [root]
     visited = 0
     while stack:
@@ -211,9 +216,12 @@ def extract(source: bytes, check: Callable[[], None] = lambda: None) -> FileFact
             continue
         if node.type == "call":
             calls.append(node)
+        elif node.type == "decorator":
+            decorators.append(node)
         stack.extend(reversed(node.children))
 
     importlib_names, import_module_names = _importlib_aliases(statements)
     dynamic = [r for r in (_dynamic_call(position, c, importlib_names, import_module_names) for c in calls) if r is not None]
     imports = sorted(statements + dynamic, key=lambda r: (r.line, r.column, r.module_text))
-    return FileFacts(tuple(imports), tuple(_definitions(root)), root.has_error)
+    routes, routers, mounts = http.facts(Positions(source), root, decorators, calls)
+    return FileFacts(tuple(imports), tuple(_definitions(root)), root.has_error, routes, routers, mounts)
