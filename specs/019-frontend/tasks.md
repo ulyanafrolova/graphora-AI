@@ -415,10 +415,10 @@ equals the API answer.
 - [X] T075 [P] Add a "Web UI" section to `README.md` (develop with `make web`, demo with `make web-build` + `graphora
   serve`, tests) and to `CLAUDE.md` Commands (`make web`, `make web-build`, `make web-test`, `make e2e`, `serve --ui`,
   `query … components`).
-- [ ] T076 Run `specs/019-frontend/quickstart.md` by hand (dev and demo modes) and compare each screen with its mockup
+- [X] T076 Run `specs/019-frontend/quickstart.md` by hand (dev and demo modes) and compare each screen with its mockup
   in `docs/demo/`; note deliberate differences (Assumptions of spec.md) in the PR description; time the SC-001 path
   (empty screen → impact of a file of an imported fixture) and record it (target < 2 min).
-- [ ] T077 Run the full suites: `cd backend && uv run pytest -m "not llm"`, `uv run pytest -m slow`, `make web-test`,
+- [X] T077 Run the full suites: `cd backend && uv run pytest -m "not llm"`, `uv run pytest -m slow`, `make web-test`,
   `make e2e`; then mark the PR ready for review and retarget it to `main` if #39 is merged.
 
 ---
