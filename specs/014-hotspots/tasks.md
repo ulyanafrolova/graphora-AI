@@ -29,9 +29,9 @@ of the group. Push at the end of each phase.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create the package `backend/src/graphora/history/__init__.py` with a one-line module docstring
+- [X] T001 Create the package `backend/src/graphora/history/__init__.py` with a one-line module docstring
   referencing `specs/014-hotspots` and `HISTORY_READER_VERSION = "1.0.0"`.
-- [ ] T002 Create `backend/tests/history_repos.py`, a test helper that builds git repositories with dulwich only
+- [X] T002 Create `backend/tests/history_repos.py`, a test helper that builds git repositories with dulwich only
   (no git binary).
   - `make_repo(path, commits)` takes a list of commit specs: `files` (path → bytes or `None` for delete),
     `author` (`"Name <mail>"`), `time` (UTC seconds), `parents` (indexes of earlier commits; default: the
