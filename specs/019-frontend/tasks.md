@@ -290,7 +290,7 @@ equals the API answer.
 
 ### Frontend
 
-- [ ] T048 [P] [US3] Write `frontend/tests/unit/cycles.test.tsx`: list of groups (title from first two folder names
+- [X] T048 [P] [US3] Write `frontend/tests/unit/cycles.test.tsx`: list of groups (title from first two folder names
   joined with ⇄ or →, files, "<n> edges" = cycle length, type-only mark), header pill "<groups> cycles · <files>
   modules"; selected group shows Before (the cycle links, the cut links red dashed with `path:line`) and After
   (the cycle without the cut links), "Edge to remove" card with source → target, method ("minimum feedback arc set"
