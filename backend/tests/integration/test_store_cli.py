@@ -103,7 +103,7 @@ def test_github_reuse_skips_download(db, fake):
     assert _lines(second[2], "graphora: warning:") == warnings
     assert _lines(second[2], "graphora: info: analyzed") == _lines(first[2], "graphora: info: analyzed")
     order = [line.split(":", 2)[2].split()[0] for line in second[2].splitlines()]
-    assert order == ["reused", "ignoring", "analyzed"]
+    assert order == ["reused", "ignoring", "analyzed", "history:"]
 
 
 @pytest.mark.db

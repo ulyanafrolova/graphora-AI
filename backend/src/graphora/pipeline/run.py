@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from graphora.graph.build import analyze
+from graphora.history import with_history
 from graphora.ingest import github
 from graphora.ingest.fetch import IngestLimits, fetch_snapshot, with_skipped
 from graphora.ingest.source import GitHubSource, Source, ZipSource
@@ -73,7 +74,7 @@ def run_pipeline(
     with fetch_snapshot(source, limits.ingest(), deadline, sha=sha, workdir=workdir) as fetched:
         on_stage("analyzing")
         result = analyze(fetched.root, limits.max_files, limits.max_bytes, deadline, snapshot=fetched.snapshot)
-        result = dataclasses.replace(result, doc=with_skipped(result.doc, fetched.skipped))
+        result = dataclasses.replace(result, doc=with_history(with_skipped(result.doc, fetched.skipped), fetched, deadline))
         on_stage("storing")
         stored_result = store.put(fetched.repository, result)
     info = None

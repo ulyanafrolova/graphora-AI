@@ -109,5 +109,10 @@
     {"path": ".next", "reason": "excluded_dir"},
     {"path": "dist", "reason": "excluded_dir"},
     {"path": "node_modules", "reason": "excluded_dir"}
-  ]
+  ],
+  "history": {
+    "status": "not_available", "reason": "no_git", "commit": null, "window_start": null, "newest": null,
+    "oldest": null, "commits_read": 0, "merges_skipped": 0, "shallow_skipped": 0, "local_changes": false,
+    "files": []
+  }
 }

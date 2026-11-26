@@ -145,7 +145,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
   - `limit` gives `total` and `truncated`, and a negative limit raises `ValueError`;
   - the answer carries `history` without `files`;
   - `render_text` matches the contract lines.
-- [ ] T012 [P] [US1] Write `backend/tests/integration/test_history_cli.py` (local folder part):
+- [X] T012 [P] [US1] Write `backend/tests/integration/test_history_cli.py` (local folder part):
   - **analyze**: on a built repository, `run_analyze(repo)` writes `history.status available` with the
     hand-written counts per file, and stderr has the `history:` info line;
   - **repeat**: a second run gives identical bytes (SC-002);
@@ -204,7 +204,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
   `backend/src/graphora/ingest/fetch.py` (set in each branch of `fetch_snapshot`). Add a shared helper
   `with_history(doc, fetched, deadline, enabled)` in `backend/src/graphora/history/__init__.py` that returns
   `dataclasses.replace(doc, history=collect_history(...))`.
-- [ ] T017 [US1] Call `with_history` after `build`/`analyze` in both flows:
+- [X] T017 [US1] Call `with_history` after `build`/`analyze` in both flows:
   - `_analyze` in `backend/src/graphora/cli/__init__.py`;
   - `run_pipeline` in `backend/src/graphora/pipeline/run.py`, inside the `fetch_snapshot` block, before
     storing.
