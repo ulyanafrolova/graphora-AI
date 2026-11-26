@@ -158,7 +158,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   params]` for repositories, graph, overview, components, key_files (limit 500), cycles (limit 500), hotspots (limit
   500), files, info, impact, neighbors, dependencies, dependents, definitions, file lines; `staleTime: Infinity` for
   snapshot data (immutable), retry only on `network`/`store_unavailable`.
-- [ ] T024 [P] Write `frontend/tests/unit/route.test.tsx`: route state of data-model.md round-trips through the
+- [X] T024 [P] Write `frontend/tests/unit/route.test.tsx`: route state of data-model.md round-trips through the
   address (`/r/:repo/:snap/:screen?level&component&node&impact&hide&path&line`), encoding of `/` and `:` in names, and
   unknown values fall back to defaults (`level=system`); switching to another snapshot clears `node`, `component` and
   `impact` and shows the note "selection cleared: not in this snapshot" when the node does not exist there.
