@@ -272,7 +272,7 @@ equals the API answer.
 
 ### Backend: suggested cut (FR-022, research R4)
 
-- [ ] T045 [P] [US3] Write `backend/tests/unit/test_cycle_cut.py` on hand-built graphs: a 2-file loop → one link,
+- [X] T045 [P] [US3] Write `backend/tests/unit/test_cycle_cut.py` on hand-built graphs: a 2-file loop → one link,
   `exact`; a triangle → the link with the fewest import edges, ties by (source, target); two loops sharing one link →
   that single link; a self-import → the self link; a group of 21 files → `greedy`; an exact search that exceeds the
   budget (monkeypatch the budget to 1) → `greedy`; removing `suggested_cut.links` always leaves the group acyclic;
