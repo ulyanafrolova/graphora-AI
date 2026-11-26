@@ -191,3 +191,17 @@ def test_router_passed_by_keyword():
     facts = py(m='from fastapi import APIRouter, FastAPI\napp = FastAPI()\nr = APIRouter()\n@r.get("/x")\ndef x(): pass\n'
                  'app.include_router(router=r, prefix="/v1")\n')
     assert [r.segments for r in routes(facts)] == [("v1", "x")]
+
+
+def test_plain_dotted_import_is_reached_by_its_full_name():
+    """`import app.routers.orders` binds `app`, not orders.py; the mount uses the full dotted path (013 review)."""
+    base = dict(app____init__="", app__routers____init__="", app__routers__orders=ORDERS)
+    full = py(**base, main='from fastapi import FastAPI\nimport app.routers.orders\napi = FastAPI()\n'
+                          'api.include_router(app.routers.orders.router, prefix="/v1")\n')
+    assert [r.segments for r in routes(full)] == [("v1", "orders", "x")]
+    aliased = py(**base, main='from fastapi import FastAPI\nimport app.routers.orders as o\napi = FastAPI()\n'
+                             'api.include_router(o.router, prefix="/v2")\n')
+    assert [r.segments for r in routes(aliased)] == [("v2", "orders", "x")]
+    wrong = py(**base, main='from fastapi import FastAPI\nimport app.routers.orders\napi = FastAPI()\n'
+                           'api.include_router(app.router, prefix="/v3")\n')
+    assert [r.segments for r in routes(wrong)] == [("orders", "x")]

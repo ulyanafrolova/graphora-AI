@@ -78,13 +78,15 @@ def _locals(path: str, facts: Any, index: py_resolve.ModuleIndex) -> dict[str, t
         if record.kind == "dynamic":
             continue
         targets = py_resolve.resolve(path, record, index)
-        for (name, local), target in zip(record.bindings, targets, strict=False):
+        aliases = record.aliases if len(record.aliases) == len(record.bindings) else (None,) * len(record.bindings)
+        for (name, local), alias, target in zip(record.bindings, aliases, targets, strict=False):
             if target.kind != "file":
                 continue
             file = target.node_id.split(":", 1)[1]
             if record.kind == "import":
-                if local != name or "." not in name:
-                    out[local] = (file, None)
+                # `import a.b as x` binds x to a/b.py; `import a.b` binds only `a`, so the module is reached by its
+                # full dotted name (`a.b.router`), never by `a`
+                out[alias if alias is not None else name] = (file, None)
             elif target.symbol is not None:
                 base = _from_module(path, record, index)
                 module = index.modules.get(f"{base}.{name}") if base else None
