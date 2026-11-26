@@ -32,7 +32,7 @@ and a final pass `ask: docs and checks` (Phase 8).
 
 ## Phase 1: Setup
 
-- [ ] T001 Write `backend/tests/integration/sse.py`: `read_stream(response) -> list[tuple[str, str | None,
+- [X] T001 Write `backend/tests/integration/sse.py`: `read_stream(response) -> list[tuple[str, str | None,
   str]]` parsing a `text/event-stream` body into `(event, id, data)` messages and keep-alive comments as
   `("ping", None, "")`; `messages(...)` drops pings; `data` is the raw `data:` line. One-line module docstring
   referencing `specs/013-ask-sse`.
@@ -45,13 +45,13 @@ and a final pass `ask: docs and checks` (Phase 8).
 
 ### Tests
 
-- [ ] T002 [P] Write `backend/tests/unit/test_agents_stop.py` (no store, `tests/unit/agent_world.py`):
+- [X] T002 [P] Write `backend/tests/unit/test_agents_stop.py` (no store, `tests/unit/agent_world.py`):
   `ask(..., stop=lambda: True)` makes no model call and ends `stopped` with an empty answer; a stop that turns
   true after the first `tool_call` event (set from `on_event`) lets the current tool call finish, makes no
   further model or tool call (script has unused replies left) and ends `stopped`, keeping facts verified
   before; a stop set during the analyst's tool loop still makes no claims call; `end_reason` puts `stopped`
   before `model_failed`; without `stop` every 012 test still passes (run `tests/unit/test_agents_*.py`).
-- [ ] T003 [P] Write `backend/tests/unit/test_api_ask_body.py`: `parse_ask(body)` per data-model.md §
+- [X] T003 [P] Write `backend/tests/unit/test_api_ask_body.py`: `parse_ask(body)` per data-model.md §
   AskRequest — returns `(repository, snapshot, question)` with the question trimmed; refuses with `ApiError`
   kind `bad_request` and the exact messages of contracts/http-api.md: `the body must be a JSON object` (list,
   string, invalid JSON bytes), `unknown key: <k>`, `missing repository` / `missing snapshot` / `missing
@@ -60,26 +60,26 @@ and a final pass `ask: docs and checks` (Phase 8).
 
 ### Implementation
 
-- [ ] T004 Add the stop signal to the 012 agents: `stop: Callable[[], bool] | None = None` keyword on `ask` in
+- [X] T004 Add the stop signal to the 012 agents: `stop: Callable[[], bool] | None = None` keyword on `ask` in
   `backend/src/graphora/agents/graph.py`, checked before every model call (`_call`) and every tool call (tool
   loop), setting `failed = "stopped"` and making no new call; add `"stopped"` to `EndReason` / `END_REASONS`
   in `backend/src/graphora/agents/state.py`; `end_reason` in `backend/src/graphora/agents/review.py` returns
   `stopped` first. Update `specs/012-agents/contracts/agents.md` (the `ask` signature and the end reasons) and
   `specs/012-agents/data-model.md` § EndReason.
-- [ ] T005 Create `backend/src/graphora/api/ask.py`: module docstring referencing
+- [X] T005 Create `backend/src/graphora/api/ask.py`: module docstring referencing
   `specs/013-ask-sse/contracts/http-api.md`; `MAX_QUESTION = 2000`; `parse_ask(body)`;
   `AskService(url, setting, limit=1, model_factory=model_from_setting)` with `setting` defaulting to
   `setting_from_env()` and a `threading.BoundedSemaphore(limit)` slot counter (open/stop come in US1–US4);
   `router(service) -> APIRouter` with prefix `/api/v1` (empty for now).
-- [ ] T006 Add `ApiError` helpers to `backend/src/graphora/api/errors.py`: `busy()` (kind `busy`, 429, message
+- [X] T006 Add `ApiError` helpers to `backend/src/graphora/api/errors.py`: `busy()` (kind `busy`, 429, message
   `another question is being answered; try again later`) and `model_unavailable(message)` (kind
   `model_unavailable`, 503); make `_api_error` add `Retry-After: 30` for kind `busy`.
-- [ ] T007 Extend `create_app(store, runner=None, asks=None)` in `backend/src/graphora/api/__init__.py` to
+- [X] T007 Extend `create_app(store, runner=None, asks=None)` in `backend/src/graphora/api/__init__.py` to
   include `ask.router(asks)` when given; add an `ask_app` fixture to `backend/tests/conftest.py`: stores the
   `py-cycles` fixture, builds `AskService(database_url, "scripted:test", model_factory=...)` whose factory
   returns the next `ScriptedModel` from a list the test sets, and yields `(TestClient, service, snapshot,
   scripts)`; `indirect` parameters override `limit`.
-- [ ] T008 Run `uv run pytest tests/unit/test_agents_stop.py tests/unit/test_api_ask_body.py
+- [X] T008 Run `uv run pytest tests/unit/test_agents_stop.py tests/unit/test_api_ask_body.py
   tests/unit/test_agents_*.py` until green.
 
 ---
@@ -93,7 +93,7 @@ and a final pass `ask: docs and checks` (Phase 8).
 
 ### Tests
 
-- [ ] T009 [US1] Write `backend/tests/integration/test_api_ask.py` (marked `db`, uses `ask_app` and
+- [X] T009 [US1] Write `backend/tests/integration/test_api_ask.py` (marked `db`, uses `ask_app` and
   `tests/integration/sse.py`): (a) the 012 "what breaks" script on `py-cycles` → response 200
   `text/event-stream`; messages are `step` with ids `1…N` in order, then exactly one `answer`; the parsed step
   data equal `[e.to_dict() for e in run.trace]` of a direct `ask` with an identical script on the same stored
@@ -110,13 +110,13 @@ and a final pass `ask: docs and checks` (Phase 8).
 
 ### Implementation
 
-- [ ] T010 [US1] Implement `AskRun` in `backend/src/graphora/api/ask.py` (data-model.md § AskRun): its own
+- [X] T010 [US1] Implement `AskRun` in `backend/src/graphora/api/ask.py` (data-model.md § AskRun): its own
   `Served`, the model, a `threading.Event` stop, an `asyncio.Queue` and a daemon thread
   `graphora-ask-<n>` running 012 `ask(question, served, model=…, setting=…, on_event=…, stop=stop.is_set)`;
   `on_event` and the end hand messages to the loop with `loop.call_soon_threadsafe`; the thread's `finally`
   closes `served.store`, releases the slot and puts the end marker; any non-model exception is logged with
   `log.error(..., exc_info=…)` and sent as `error`.
-- [ ] T011 [US1] Implement `AskService.open(repository, snapshot, question)` (check the pair with the shared
+- [X] T011 [US1] Implement `AskService.open(repository, snapshot, question)` (check the pair with the shared
   store's `has_snapshot`/`has_repository`, take a slot, then load the run's own `Served` with `from_store`,
   build the model, start the run; `AskService` gets the shared `Store` for the cheap check) and the endpoint `POST /ask` in `router` with
   `response_class=EventSourceResponse`: parse the body (`_params(request, ())` first, like `/jobs`), call
@@ -124,7 +124,7 @@ and a final pass `ask: docs and checks` (Phase 8).
   raw_data=…)`, `ServerSentEvent(event="answer", raw_data=…)` or `ServerSentEvent(event="error",
   raw_data=…)`, with compact sorted-key JSON (`json.dumps(…, sort_keys=True, ensure_ascii=False,
   separators=(",", ":"))`).
-- [ ] T012 [US1] Run `uv run pytest tests/integration/test_api_ask.py` until green.
+- [X] T012 [US1] Run `uv run pytest tests/integration/test_api_ask.py` until green.
 
 ---
 
@@ -137,7 +137,7 @@ model call and no slot taken.
 
 ### Tests
 
-- [ ] T013 [US2] Extend `backend/tests/integration/test_api_ask.py`: unknown repository → 404
+- [X] T013 [US2] Extend `backend/tests/integration/test_api_ask.py`: unknown repository → 404
   `repository not found: nope`; unknown snapshot → 404 `snapshot not found: py-cycles nope`; each bad body of
   T003 → 400 with its message; a query parameter → 400 `unknown parameter: x`; a model factory raising
   `ModelUnavailable` → 503 `model_unavailable` with its message; in every case the response is JSON (not a
@@ -147,13 +147,13 @@ model call and no slot taken.
 
 ### Implementation
 
-- [ ] T014 [US2] Complete the checks in `AskService.open` and the endpoint in
+- [X] T014 [US2] Complete the checks in `AskService.open` and the endpoint in
   `backend/src/graphora/api/ask.py`, in the order body → pair (shared store lookup, `not_found` with the
   `GET /api/v1/graph` messages) → slot (`acquire(blocking=False)`, → `busy()`) → `from_store` load
   (`PairNotFound` after a race → `not_found`, releasing the slot) → model; `StoreUnavailable` passes to the
   existing handler; a refused request never calls `from_store`; build the model last (`ModelUnavailable` → `model_unavailable(exc.message)`, releasing the slot and closing the store);
   the model is never invoked before the stream starts.
-- [ ] T015 [US2] Run `uv run pytest tests/integration/test_api_ask.py` until green.
+- [X] T015 [US2] Run `uv run pytest tests/integration/test_api_ask.py` until green.
 
 **Checkpoint**: commit `ask: stop signal, service and stream` and push.
 

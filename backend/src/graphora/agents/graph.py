@@ -62,8 +62,17 @@ def _text(message: BaseMessage) -> str:
 
 
 class _Agents:
-    def __init__(self, served: Served, model: BaseChatModel, setting: str, summary: bool, on_event: OnEvent | None) -> None:
+    def __init__(
+        self,
+        served: Served,
+        model: BaseChatModel,
+        setting: str,
+        summary: bool,
+        on_event: OnEvent | None,
+        stop: Callable[[], bool] | None = None,
+    ) -> None:
         self.served = served
+        self.stop = stop
         self.model = model
         self.setting = setting
         self.summary = summary
@@ -77,9 +86,18 @@ class _Agents:
     def _failed(self, state: AgentState) -> str | None:
         return "model_failed" if self.rec.failed else state.get("failed")
 
+    def _stopped(self, counters: dict[str, Any]) -> bool:
+        """True once the caller asked to stop: no new model or tool call is made after that."""
+        if counters["failed"] == "stopped" or (self.stop is not None and self.stop()):
+            counters["failed"] = "stopped"
+            return True
+        return False
+
     def _call(self, runnable: Any, messages: list[BaseMessage], counters: dict[str, Any], parse: bool = False) -> Any:
-        """One model call within the run budget. None when the budget is spent, the model failed or (with
+        """One model call within the run budget. None when stopped, the budget is spent, the model failed or (with
         `parse`) the structured reply could not be read; only the last leaves `failed` unset."""
+        if self._stopped(counters):
+            return None
         if counters["model_calls"] >= MAX_MODEL_CALLS:
             counters["failed"] = "model_budget_spent"
             return None
@@ -113,6 +131,8 @@ class _Agents:
                 notes = _text(reply)
                 break
             for call in calls + [dict(b, args=None) for b in broken]:
+                if self._stopped(counters):
+                    break
                 if counters["tool_calls"] >= MAX_TOOL_CALLS:
                     message, evidence = refuse(call, role)
                 else:
@@ -243,14 +263,16 @@ def ask(
     setting: str | None = None,
     summary: bool = True,
     on_event: OnEvent | None = None,
+    stop: Callable[[], bool] | None = None,
 ) -> Run:
-    """Answer one question about one snapshot (contracts/agents.md). Model failures end the run, never raise."""
+    """Answer one question about one snapshot (contracts/agents.md). Model failures end the run, never raise.
+    `stop` is checked before every model and tool call; once true the run makes no new call and ends `stopped`."""
     if not question.strip():
         raise ValueError("question must not be empty")
     setting = setting or setting_from_env()
     if model is None:
         model = model_from_setting(setting)
-    agents = _Agents(served, model, setting, summary, on_event)
+    agents = _Agents(served, model, setting, summary, on_event, stop)
     start: AgentState = {
         "question": question.strip(),
         "snapshot": served.snapshot,

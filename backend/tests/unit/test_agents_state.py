@@ -17,7 +17,7 @@ def test_limits():
 
 def test_end_reasons():
     assert set(typing.get_args(EndReason)) == set(END_REASONS) == {
-        "answered", "revisions_spent", "budget_spent", "model_budget_spent", "model_failed", "no_claims"
+        "answered", "revisions_spent", "budget_spent", "model_budget_spent", "model_failed", "no_claims", "stopped"
     }
 
 

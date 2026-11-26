@@ -102,7 +102,9 @@ target), `claim` (Claim), `reason` and `hint` for hypotheses.
 `answered` (review passed or nothing left to revise) · `revisions_spent` · `budget_spent` (tool calls) ·
 `model_budget_spent` · `model_failed` · `no_claims`.
 
-When several apply, the first in this order wins: `model_failed` > `model_budget_spent` > `budget_spent` >
+`stopped` (013: the caller's stop signal was set).
+
+When several apply, the first in this order wins: `stopped` > `model_failed` > `model_budget_spent` > `budget_spent` >
 `revisions_spent` > `no_claims` > `answered` (`end_reason(state)` in `review.py`, one place).
 
 ## TraceEvent

@@ -30,6 +30,12 @@ an async generator yielding `ServerSentEvent`s:
 FastAPI inserts the keep-alive comment `: ping` after 15 s without an item (`fastapi.sse._PING_INTERVAL`), which
 is FR-007; tests shorten it by monkeypatching that constant, as its docstring allows.
 
+**Outcome (implementation)**: FastAPI's encoding and keep-alive only apply to generator endpoints, and a
+generator endpoint has already answered 200 when its first line runs, so refusals could not be normal errors.
+The endpoint is therefore a plain `async def` that checks everything, then returns `EventSourceResponse` over our
+own byte stream framed with `fastapi.sse.format_sse_event`; the keep-alive is ours: `: ping` after
+`KEEPALIVE_SECONDS = 15` without a message (`api/ask.py`), patched in tests.
+
 **Rationale**: no new dependency; the keep-alive, the `text/event-stream` media type and the event encoding
 already exist and are tested upstream. `raw_data` with our own `json.dumps(sort_keys=True)` keeps the bytes
 deterministic, like the other API bodies.
