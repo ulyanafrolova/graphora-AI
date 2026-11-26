@@ -155,7 +155,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 **Independent Test**: a known class name and an unknown name on a fixture, compared with the CLI.
 
-- [ ] T013 [P] [US3] In `backend/tests/golden/test_http_queries.py` add `test_definitions` over the fixtures that
+- [X] T013 [P] [US3] In `backend/tests/golden/test_http_queries.py` add `test_definitions` over the fixtures that
   have hand-written `definitions` in `expected.json` (the `DEFINED` list of the MCP golden test): for each short name
   found there, GET `/api/v1/definitions?name=<n>&limit=500` equals `run_query(graph, "definitions", n, "--limit",
   "500", "--format", "json")`.

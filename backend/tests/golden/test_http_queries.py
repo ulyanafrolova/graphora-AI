@@ -82,3 +82,23 @@ def test_overview(store, tmp_path, name):
     assert (code, err) == (0, "")
     assert ask(client, name, snapshot, "overview") == as_json
     assert ask(client, name, snapshot, "overview") == as_json
+
+
+DEFINED = [
+    p.parent.name
+    for p in sorted(FIXTURES.glob("*/expected.json"))
+    if any(n.get("definitions") for n in json.loads(p.read_text(encoding="utf-8")).get("nodes", []))
+]
+
+
+@pytest.mark.parametrize("name", DEFINED)
+def test_definitions(store, tmp_path, name):
+    snapshot, graph = stored(store, tmp_path, name)
+    client = TestClient(create_app(store))
+    nodes = json.loads((FIXTURES / name / "expected.json").read_text(encoding="utf-8"))["nodes"]
+    names = sorted({d["name"].rsplit(".", 1)[-1] for n in nodes for d in n.get("definitions", [])})
+    assert names
+    for symbol in names:
+        code, as_json, err = run_query(graph, "definitions", symbol, "--limit", "500", "--format", "json")
+        assert (code, err) == (0, "")
+        assert ask(client, name, snapshot, "definitions", name=symbol, limit="500") == as_json
