@@ -21,6 +21,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.sse import EventSourceResponse, format_sse_event
+from starlette.background import BackgroundTask
 
 from graphora.agents import ModelUnavailable, ask, model
 from graphora.api.errors import ApiError, bad_request, busy, model_unavailable
@@ -73,6 +74,32 @@ class AskRun:
         self.stop = threading.Event()
         self.queue: asyncio.Queue[tuple[str, Any] | None] = asyncio.Queue()
         self.thread = threading.Thread(target=self._run, name=f"graphora-ask-{next(_numbers)}", daemon=True)
+        self.state = "new"  # new → started (the thread owns cleanup) or new → closed (never started)
+        self._state = threading.Lock()
+
+    def begin(self) -> bool:
+        """Start the thread unless the run was stopped or abandoned first; False when it will not run."""
+        with self._state:
+            if self.state != "new" or self.stop.is_set():
+                start = False
+            else:
+                self.state = "started"
+                start = True
+        if not start:
+            self.abandon()
+            return False
+        self.thread.start()
+        return True
+
+    def abandon(self) -> None:
+        """Release a run whose thread never started: its connection and its slot. A no-op once started."""
+        with self._state:
+            if self.state != "new":
+                return
+            self.state = "closed"
+        self.stop.set()
+        AskService._close(self.served)
+        self.service._finished(self)
 
     def _put(self, item: tuple[str, Any] | None) -> None:
         try:
@@ -101,8 +128,11 @@ class AskRun:
             self._put(None)
 
     async def stream(self) -> AsyncIterator[bytes]:
-        """Steps as they happen, then one answer or error; a ping after each silence of KEEPALIVE_SECONDS."""
+        """Steps as they happen, then one answer or error; a ping after each silence of KEEPALIVE_SECONDS. The
+        thread starts here, so a request dropped before the stream starts never runs the agents."""
         try:
+            if not self.begin():
+                return
             while True:
                 try:
                     item = await asyncio.wait_for(self.queue.get(), KEEPALIVE_SECONDS)
@@ -179,7 +209,6 @@ class AskService:
                 self._slots.release()
                 raise Stopping()
             self._runs.add(run)
-        run.thread.start()
         return run
 
     @staticmethod
@@ -204,6 +233,7 @@ class AskService:
             runs = list(self._runs)
         for run in runs:
             run.stop.set()
+            run.abandon()  # a run whose stream never started
         deadline = time.monotonic() + timeout
         for run in runs:
             if run.thread.ident is not None:  # a run added by open() whose thread is not started yet
@@ -222,6 +252,7 @@ def router(service: AskService) -> APIRouter:
             raise bad_request("the body must be a JSON object") from None
         repository, snapshot, question = parse_ask(body)
         run = await run_in_threadpool(service.open, repository, snapshot, question, asyncio.get_running_loop())
-        return EventSourceResponse(run.stream())
+        # runs after the response, also when the client left before the stream started (research R5)
+        return EventSourceResponse(run.stream(), background=BackgroundTask(run.abandon))
 
     return api

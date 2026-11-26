@@ -225,3 +225,18 @@ def test_stop_between_open_and_thread_start(ask_app, monkeypatch):
     ask_app.client.post("/api/v1/ask", json=ask_app.body())
     assert errors == []
     wait(lambda: ask_app.service.running() == 0)
+
+
+def test_client_gone_before_the_stream_starts(ask_app, monkeypatch):
+    """A request dropped before its stream starts never runs the agents and frees its slot (013 review)."""
+    model, script, _ = gated_model()
+    ask_app.models.append(model)
+
+    async def never_started(self):
+        return
+        yield  # an async generator the response closes without advancing
+
+    monkeypatch.setattr(ask_module.AskRun, "stream", never_started)
+    ask_app.client.post("/api/v1/ask", json=ask_app.body())
+    wait(lambda: ask_app.service.running() == 0)
+    assert script.calls == []
