@@ -103,9 +103,10 @@ and a final pass `ask: docs and checks` (Phase 8).
   in `answer.hypotheses`; (c) a script raising `httpx.ConnectError` after one tool call → last message
   `answer` with `answer.end == "model_failed"`, `error` set, earlier facts kept; (d) an exception that is not a
   model failure (patch `graphora.api.ask.ask` to raise `RuntimeError`) → last message `error` with
-  `{"message": "internal error"}` and no traceback text; (e) no `step` data contains a line of a fixture file
-  or any scripted model text; (f) the first `step` is received before the scripted model's first reply is
-  released (reply gated on a `threading.Event` set after the first step is read) (SC-001).
+  `{"message": "internal error"}` and no traceback text; (e) no `step` data contains a line of a fixture file,
+  any scripted model text or the question text (the question appears only in `answer.question`); (f) the first `step` is received before the scripted model's first reply is
+  released (reply gated on a `threading.Event` set after the first step is read), within 1 s of sending the
+  request (SC-001).
 
 ### Implementation
 
@@ -115,8 +116,9 @@ and a final pass `ask: docs and checks` (Phase 8).
   `on_event` and the end hand messages to the loop with `loop.call_soon_threadsafe`; the thread's `finally`
   closes `served.store`, releases the slot and puts the end marker; any non-model exception is logged with
   `log.error(..., exc_info=…)` and sent as `error`.
-- [ ] T011 [US1] Implement `AskService.open(repository, snapshot, question)` (validate the pair with
-  `from_store`, build the model, start the run) and the endpoint `POST /ask` in `router` with
+- [ ] T011 [US1] Implement `AskService.open(repository, snapshot, question)` (check the pair with the shared
+  store's `has_snapshot`/`has_repository`, take a slot, then load the run's own `Served` with `from_store`,
+  build the model, start the run; `AskService` gets the shared `Store` for the cheap check) and the endpoint `POST /ask` in `router` with
   `response_class=EventSourceResponse`: parse the body (`_params(request, ())` first, like `/jobs`), call
   `open` in the thread pool, then an async generator yielding `ServerSentEvent(event="step", id=str(n),
   raw_data=…)`, `ServerSentEvent(event="answer", raw_data=…)` or `ServerSentEvent(event="error",
@@ -139,15 +141,17 @@ model call and no slot taken.
   `repository not found: nope`; unknown snapshot → 404 `snapshot not found: py-cycles nope`; each bad body of
   T003 → 400 with its message; a query parameter → 400 `unknown parameter: x`; a model factory raising
   `ModelUnavailable` → 503 `model_unavailable` with its message; in every case the response is JSON (not a
-  stream), the factory call count is 0 (except the 503 case, 1), no slot is held afterwards
+  stream), the factory call count is 0 (except the 503 case, 1), `from_store` is not called for not-found and
+  busy refusals (spy on `graphora.api.ask.from_store`), no slot is held afterwards
   (`service` accepts the next ask), and the answer arrives within 1 s (SC-003).
 
 ### Implementation
 
 - [ ] T014 [US2] Complete the checks in `AskService.open` and the endpoint in
-  `backend/src/graphora/api/ask.py`: `PairNotFound` → `not_found(message)`; `StoreUnavailable` passes to the
-  existing handler; take the slot with `acquire(blocking=False)` after the pair check (→ `busy()`), build the
-  model last (`ModelUnavailable` → `model_unavailable(exc.message)`, releasing the slot and closing the store);
+  `backend/src/graphora/api/ask.py`, in the order body → pair (shared store lookup, `not_found` with the
+  `GET /api/v1/graph` messages) → slot (`acquire(blocking=False)`, → `busy()`) → `from_store` load
+  (`PairNotFound` after a race → `not_found`, releasing the slot) → model; `StoreUnavailable` passes to the
+  existing handler; a refused request never calls `from_store`; build the model last (`ModelUnavailable` → `model_unavailable(exc.message)`, releasing the slot and closing the store);
   the model is never invoked before the stream starts.
 - [ ] T015 [US2] Run `uv run pytest tests/integration/test_api_ask.py` until green.
 
@@ -168,7 +172,9 @@ completes meanwhile.
   model gated on a `threading.Event`, (a) a second ask while the first waits → 429 `busy`, header
   `Retry-After: 30`, no second model built; (b) after the first stream ends, an ask is accepted; (c) with
   `limit=2` two gated asks are accepted and the third is busy; (d) with the app built with both a `JobRunner`
-  (as `job_app`) and `AskService`, a ZIP job submitted while a gated ask waits reaches `done` (SC-005).
+  (as `job_app`) and `AskService`, a ZIP job submitted while a gated ask waits reaches `done` (SC-005);
+  (e) while a gated ask waits, `GET /api/v1/graph` and `GET /api/v1/file` for the same snapshot answer 200
+  within 1 s (FR-014).
 
 ### Implementation
 
@@ -193,17 +199,19 @@ gate, the script has unused replies, the run ended `stopped`, the slot is free.
 - [ ] T019 [US4] Extend `backend/tests/integration/test_api_ask_slots.py`: (a) read the first `step`, close
   the `TestClient` stream, release the gate → within 2 s the run's thread has ended, `stop` is set, the
   scripted model has unused replies left (no new call), the store connection is closed and a new ask is
-  accepted (SC-004); (b) calling `aclose()` on the endpoint's async generator directly (unit-level) sets the
+  accepted (SC-004); the suite's network block (`tests/conftest.py` `_no_network`) stays on, so a run reaching any
+  address other than the scripted model fails the test (FR-013); (b) calling `aclose()` on the endpoint's async generator directly (unit-level) sets the
   stop event; (c) `AskService.stop()` with a gated run sets its stop, releases the gate's waiter within one
   call and joins the thread; nothing is written to the store (row counts of `analyses` and `files` unchanged).
 
 ### Implementation
 
 - [ ] T020 [US4] In `backend/src/graphora/api/ask.py`: the async generator sets `run.stop` in `finally`
-  (disconnect, cancellation, normal end); `AskService.stop()` sets every running stop and joins each thread
-  with a timeout of 120 s; the service refuses new asks after `stop()` with the existing `Stopping` error.
+  (disconnect, cancellation, normal end); `AskService.stop()` sets every running stop and joins all threads
+  within one overall limit of 120 s (daemon threads left after it end with the process); the service refuses new asks after `stop()` with the existing `Stopping` error.
 - [ ] T021 [US4] In `_serve` in `backend/src/graphora/cli/__init__.py`: run uvicorn with
-  `timeout_graceful_shutdown=5`, and call `asks.stop()` before `runner.stop()` in the `finally`.
+  `timeout_graceful_shutdown=5`; after `uvicorn.run` returns, call `asks.stop()` (refuse new asks, set every
+  stop, join all run threads within one overall limit of 120 s) and then `runner.stop()`, in the `finally`.
 - [ ] T022 [US4] Run `uv run pytest tests/integration/test_api_ask_slots.py` until green.
 
 ---
@@ -227,7 +235,7 @@ waiting and step ids stay consecutive.
 - [ ] T024 [US5] No code beyond `EventSourceResponse`; if T023 shows FastAPI's interval cannot be patched in
   tests, wrap the generator to yield a comment `ServerSentEvent(comment="ping")` after
   `KEEPALIVE_SECONDS = 15` of queue silence in `backend/src/graphora/api/ask.py` instead. Run the test until
-  green.
+  green and record which way was taken in `specs/013-ask-sse/research.md` § R2.
 
 **Checkpoint**: commit `ask: slots, disconnect and keep-alive` and push.
 

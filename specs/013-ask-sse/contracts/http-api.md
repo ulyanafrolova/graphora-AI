@@ -25,8 +25,10 @@ Body `{"error": {"kind": "...", "message": "..."}}` as the rest of the API.
 | 429 | `busy` | `another question is being answered; try again later`, header `Retry-After: 30` |
 | 503 | `model_unavailable` | the 012 `ModelUnavailable` message, e.g. `model nope:x unavailable at the nope API: Unsupported provider='nope'.` |
 | 503 | `store_unavailable` | `store unavailable` |
+| 503 | `stopping` | `the service is stopping` (after shutdown began) |
 
-Checks run in this order: body, pair, slot, model; a refused request takes no slot and calls no model.
+Checks run in this order: body, pair (a cheap lookup in the shared store), slot, then the run's own snapshot
+load and the model; a refused request loads no graph, takes no slot and calls no model.
 
 ## Stream (`200`, `Content-Type: text/event-stream`)
 

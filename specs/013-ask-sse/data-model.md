@@ -18,13 +18,15 @@ Any other key → `unknown key: <k>`; body not a JSON object → `the body must 
 | Field | Rule |
 |---|---|
 | `url` | database URL of the service |
+| `store` | the shared `Store`, used only for the cheap pair check |
 | `setting` | model setting: `--model`, else `$GRAPHORA_MODEL`, else `ollama:qwen3:8b` |
 | `limit` | `--asks`, ≥ 1, default 1 |
 | `model_factory` | `model_from_setting` (tests pass a scripted model factory) |
 | running | set of `AskRun`s; `len ≤ limit` |
 
-Operations: `open(request) -> AskRun` (validate pair, take a slot, build the model; raises `ApiError`
-400/404/429/503 before any stream), `stop()` (stop every run, join threads).
+Operations: `open(request) -> AskRun` (pair checked in the shared store, slot taken, own snapshot loaded, model
+built; raises `ApiError` 400/404/429/503 before any stream), `stop()` (refuse new asks, stop every run, join
+threads within 120 s overall).
 
 ## AskRun (one per accepted request)
 

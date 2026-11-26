@@ -80,8 +80,9 @@ HTTP side sets a `threading.Event` in the generator's `finally` (reached on disc
 the streaming task) and on service shutdown. Without `stop`, 012 behaviour is unchanged.
 
 Shutdown: `graphora serve` passes `timeout_graceful_shutdown=5` to uvicorn so open streams are cancelled 5 s
-after Ctrl-C; their `finally` sets the stop events; `AskService.stop()` sets any left and joins the threads for
-at most the time of one model call before the job runner stops. A stream cancelled this way ends without a final
+after Ctrl-C; their `finally` sets the stop events. After `uvicorn.run` returns, `AskService.stop()` refuses new
+asks, sets any stop left and joins all run threads within one overall limit of 120 s (enough for one model
+call); threads still running after it are daemon threads and end with the process. Then the job runner stops. A stream cancelled this way ends without a final
 answer (the connection is being closed); the spec's shutdown edge case is worded accordingly.
 
 **Rationale**: SC-004 (at most the running model call completes); a model call cannot be interrupted safely
@@ -93,10 +94,12 @@ over cancellation.
 
 ## R6. Store connections
 
-**Decision**: the request validates the pair with 012/006 `from_store(url, repository, snapshot)` in the thread
-pool (it opens a new `Store`, loads and indexes the graph, and raises `PairNotFound` with exactly the API's
-messages "repository not found: …" / "snapshot not found: … …"). That `Served` and its connection belong to the
-ask and are closed by the agent thread when the run ends (FR-014). `StoreUnavailable` maps to the existing 503.
+**Decision**: the request first checks the pair with the shared store's `has_snapshot` / `has_repository`
+(one indexed lookup each, the same messages as `GET /api/v1/graph`: "repository not found: …" / "snapshot not
+found: … …"), then takes a slot, and only then loads the run's own snapshot with 012/006
+`from_store(url, repository, snapshot)` in the thread pool (a new `Store`, the graph loaded and indexed). That
+`Served` and its connection belong to the ask and are closed by the agent thread when the run ends (FR-014). A
+refused request (not found, busy) never loads a graph. `StoreUnavailable` maps to the existing 503.
 
 **Rationale**: the shared `Store` serializes access to one connection; a run doing dozens of `get_file` calls
 over minutes must not hold it. Loading before the stream opens keeps not-found a normal error (FR-002).
