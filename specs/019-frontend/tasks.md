@@ -412,7 +412,7 @@ equals the API answer.
 - [X] T074 [P] Write `frontend/tests/e2e/hostile.spec.ts` (SC-004): `e2e_server.py` stores a hand-built analysis whose
   file names, contents and symbol names contain the T031 strings and a scripted answer quoting them; every screen shows
   them literally and no dialog opens (`page.on("dialog")` fails the test).
-- [ ] T075 [P] Add a "Web UI" section to `README.md` (develop with `make web`, demo with `make web-build` + `graphora
+- [X] T075 [P] Add a "Web UI" section to `README.md` (develop with `make web`, demo with `make web-build` + `graphora
   serve`, tests) and to `CLAUDE.md` Commands (`make web`, `make web-build`, `make web-test`, `make e2e`, `serve --ui`,
   `query … components`).
 - [ ] T076 Run `specs/019-frontend/quickstart.md` by hand (dev and demo modes) and compare each screen with its mockup
