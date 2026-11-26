@@ -1,4 +1,10 @@
-import cytoscape, { type Core, type ElementDefinition, type LayoutOptions } from "cytoscape";
+import cytoscape, {
+  type Core,
+  type ElementDefinition,
+  type LayoutOptions,
+  type NodeCollection,
+  type StylesheetJson,
+} from "cytoscape";
 import fcose from "cytoscape-fcose";
 import svg from "cytoscape-svg";
 
@@ -8,7 +14,13 @@ cytoscape.use(fcose);
 cytoscape.use(svg);
 
 export const WEBGL_FROM = 1000;
-export const WORKER_FROM = 500;
+export const GRID_FROM = 500;
+
+const BIG_STYLE: StylesheetJson = [
+  ...STYLE,
+  { selector: "edge", style: { "curve-style": "haystack", "target-arrow-shape": "none" } },
+  { selector: "node", style: { "min-zoomed-font-size": 10 } },
+];
 
 export function createGraph(container: HTMLElement, webgl = false): Core {
   const options = {
@@ -36,31 +48,16 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
     const angle = (2 * Math.PI * i) / Math.max(leaves.length, 1);
     n.position({ x: r * Math.cos(angle), y: r * Math.sin(angle) });
   });
+  const big = leaves.length > WEBGL_FROM;
   const finish = () => {
     cy.resize();
-    cy.style(STYLE); // a fresh stylesheet after the elements exist; the first one leaves edges undrawn
-    if (leaves.length > WEBGL_FROM) {
-      cy.edges().style({ "curve-style": "haystack", "target-arrow-shape": "none" });
-      cy.nodes().style({ "min-zoomed-font-size": 10 });
-    }
-    cy.fit(undefined, 40);
-    if (cy.zoom() > 1.5) {
-      cy.zoom(1.5);
-      cy.center();
-    }
+    cy.style(big ? BIG_STYLE : STYLE); // a fresh stylesheet after the elements exist; the first one leaves edges undrawn
+    fitLeaves(cy, leaves);
     onDone();
   };
-  if (leaves.length > WORKER_FROM && typeof Worker !== "undefined") {
-    const worker = new Worker(new URL("./layout.worker.ts", import.meta.url), { type: "module" });
-    worker.onmessage = (event: MessageEvent<Record<string, { x: number; y: number }>>) => {
-      worker.terminate();
-      cy.nodes().forEach((n) => {
-        const p = event.data[n.id()];
-        if (p && n.isChildless()) n.position(p);
-      });
-      finish();
-    };
-    worker.postMessage({ elements: cy.elements().jsons() });
+  if (leaves.length > GRID_FROM) {
+    gridAndRing(leaves);
+    finish();
     return;
   }
   const layout = cy.layout({
@@ -76,4 +73,37 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
   } as LayoutOptions);
   layout.one("layoutstop", finish);
   layout.run();
+}
+
+/** fcose takes about a minute on 1,500 files; files go on a grid in id order, collapsed components on a ring around it. */
+function gridAndRing(leaves: NodeCollection): void {
+  const inside = leaves.filter((n) => n.parent().nonempty());
+  const grid = inside.nonempty() ? inside : leaves;
+  const cols = Math.ceil(Math.sqrt(grid.length));
+  grid.forEach((n, i) => {
+    n.position({ x: (i % cols) * 160, y: Math.floor(i / cols) * 60 });
+  });
+  const ring = leaves.filter((n) => !grid.contains(n));
+  const middle = { x: ((cols - 1) * 160) / 2, y: ((Math.ceil(grid.length / cols) - 1) * 60) / 2 };
+  const r = Math.hypot(middle.x, middle.y) + 300;
+  ring.forEach((n, i) => {
+    const angle = (2 * Math.PI * i) / ring.length - Math.PI / 2;
+    n.position({ x: middle.x + r * Math.cos(angle), y: middle.y + r * Math.sin(angle) });
+  });
+}
+
+/** cy.fit measures every label and edge; leaf positions are enough to frame the graph. */
+function fitLeaves(cy: Core, leaves: NodeCollection): void {
+  if (leaves.empty()) return;
+  let [x1, y1, x2, y2] = [Infinity, Infinity, -Infinity, -Infinity];
+  leaves.forEach((n) => {
+    const { x, y } = n.position();
+    [x1, y1, x2, y2] = [Math.min(x1, x), Math.min(y1, y), Math.max(x2, x), Math.max(y2, y)];
+  });
+  const pad = 120;
+  const zoom = Math.min(1.5, cy.width() / (x2 - x1 + 2 * pad), cy.height() / (y2 - y1 + 2 * pad));
+  cy.viewport({
+    zoom,
+    pan: { x: cy.width() / 2 - (zoom * (x1 + x2)) / 2, y: cy.height() / 2 - (zoom * (y1 + y2)) / 2 },
+  });
 }

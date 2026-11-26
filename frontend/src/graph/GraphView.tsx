@@ -52,7 +52,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     [level, route.component, components, graph, route.hide, route.node, impact, cycles, hot],
   );
   const structure = useMemo(() => elements.map((e) => e.data.id).join("|"), [elements]);
-  const webgl = elements.length > WEBGL_FROM * 2;
+  const webgl = level === "file" && (components.components?.reduce((n, c) => n + c.file_count, 0) ?? 0) > WEBGL_FROM;
   const handlers = useRef({ onChange, level });
   useLayoutEffect(() => {
     handlers.current = { onChange, level };

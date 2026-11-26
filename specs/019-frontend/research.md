@@ -163,8 +163,10 @@ shows "history will not be kept".
 children of the compound node; other components stay collapsed with their component links. File level for a whole
 snapshot uses Cytoscape's WebGL renderer when the snapshot has more than 1,000 files, labels hidden below a zoom
 threshold, and `haystack` edges. Layout: fcose with `randomize: false`, starting from positions on a circle in node-id order (so the result is the
-same on every load), computed in a Web Worker for
-more than 500 nodes. Minimap: a second small Cytoscape instance (view only) synchronised with the main viewport. Export:
+same on every load), for up to 500 nodes. Above that fcose took about 70 s on a 1,500-file component even in a Web
+Worker (and `quality: "draft"` with `randomize: false` crashes on small disconnected parts), so files go on a grid in id
+order and collapsed components on a ring around it; the frame is fitted from node positions, not label boxes. The WebGL
+renderer is used only at File level: creating it and drawing 1,500 nodes cost about 0.8 s, canvas about 0.1 s. Minimap: a second small Cytoscape instance (view only) synchronised with the main viewport. Export:
 Cytoscape `png()`/`svg` via `cytoscape-svg`.
 
 **Rationale**: SC-003 (overview < 5 s, expand < 1 s) on 5,000 files; constitution allows a WebGL renderer when needed.

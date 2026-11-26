@@ -19,7 +19,8 @@ export function GraphPage({ route }: { route: RouteState }) {
   const cycles = useCycles(snapshot);
   const hotspots = useHotspots(snapshot);
   const hot = useMemo(() => new Set((hotspots.data?.items ?? []).slice(0, 10).map((i) => i.node)), [hotspots.data]);
-  const impact = useImpact(snapshot, route.impact ? route.node : null);
+  // fetched on selection, so that switching impact mode on does not wait for the service
+  const impact = useImpact(snapshot, route.impact || route.node?.startsWith("file:") ? route.node : null);
   const impacted = useMemo(
     () => (route.impact && impact.data ? new Set((impact.data.items ?? []).map((i) => i.node)) : null),
     [route.impact, impact.data],
@@ -50,7 +51,7 @@ export function GraphPage({ route }: { route: RouteState }) {
       <SidePanel
         route={route}
         components={components.data}
-        impact={impact.data}
+        impact={route.impact ? impact.data : undefined}
         onChange={(next) => go({ ...route, ...next })}
       />
     </div>
