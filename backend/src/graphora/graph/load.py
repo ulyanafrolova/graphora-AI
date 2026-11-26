@@ -13,8 +13,10 @@ from graphora.graph.model import (
     Edge,
     Export,
     ExternalNode,
+    FileHistory,
     FileNode,
     GraphDocument,
+    History,
     Node,
     ProjectNode,
     Skipped,
@@ -192,6 +194,44 @@ def _check_edges(edges: tuple[Edge, ...], nodes: dict[str, Node], snapshot: str)
             raise InvalidGraph(f"{where}: only 'unresolved' edges may point to an unresolved node")
 
 
+def _opt(obj: Any, key: str, where: str, read) -> Any:  # type: ignore[no-untyped-def]
+    return None if _field(obj, key, where) is None else read(obj, key, where)
+
+
+def _history(raw: Any, nodes: dict[str, Node], snapshot: str) -> History:
+    where = "history"
+    files = []
+    for i, f in enumerate(_list(raw, "files", where)):
+        at = f"{where}.files[{i}]"
+        files.append(FileHistory(_str(f, "path", at), _int(f, "commits", at), _int(f, "authors", at)))
+    status = _enum(_str(raw, "status", where), get_args(model.HistoryStatus), f"{where}.status")
+    reason = _field(raw, "reason", where)
+    if reason is not None:
+        reason = _enum(reason, get_args(model.HistoryReason), f"{where}.reason")
+    try:
+        history = History(
+            status,
+            reason,
+            _opt(raw, "commit", where, _str),
+            _opt(raw, "window_start", where, _str),
+            _opt(raw, "newest", where, _str),
+            _opt(raw, "oldest", where, _str),
+            _int(raw, "commits_read", where),
+            _int(raw, "merges_skipped", where),
+            _int(raw, "shallow_skipped", where),
+            _bool(raw, "local_changes", where),
+            tuple(files),
+        )
+    except ValueError as exc:
+        raise InvalidGraph(f"{where}: {exc}") from None
+    for i, f in enumerate(history.files):
+        if not isinstance(nodes.get(f"file:{f.path}"), FileNode):
+            raise InvalidGraph(f"{where}.files[{i}].path: {f.path} is not a file node of the document")
+    if history.commit is not None and history.commit != snapshot.split("+", 1)[0]:
+        raise InvalidGraph(f"{where}.commit: {history.commit} differs from the snapshot {snapshot}")
+    return history
+
+
 def loads(data: bytes) -> GraphDocument:
     try:
         raw = json.loads(data)
@@ -234,4 +274,5 @@ def loads(data: bytes) -> GraphDocument:
         )
         for i, s in enumerate(_list(coverage, "skipped", "coverage"))
     )
-    return GraphDocument(snapshot, dict(extractors), tuple(nodes.values()), edges, files, skipped)
+    history = _history(_field(raw, "history", "document"), nodes, snapshot)
+    return GraphDocument(snapshot, dict(extractors), tuple(nodes.values()), edges, files, skipped, history)

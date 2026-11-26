@@ -5,16 +5,16 @@ import json
 import pytest
 
 from graphora.graph.model import (
-    FileHistory,
-    History,
     AssetNode,
     CoverageFile,
     Definition,
     Edge,
     Export,
     ExternalNode,
+    FileHistory,
     FileNode,
     GraphDocument,
+    History,
     ProjectNode,
     Skipped,
     UnresolvedNode,

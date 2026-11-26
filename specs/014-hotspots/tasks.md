@@ -74,7 +74,7 @@ of the group. Push at the end of each phase.
 
 **Commit**: `history model`
 
-- [ ] T005 [P] Extend `backend/tests/unit/test_serialize.py` and `backend/tests/unit/test_load.py`:
+- [X] T005 [P] Extend `backend/tests/unit/test_serialize.py` and `backend/tests/unit/test_load.py`:
   - `schema_version` is 8;
   - `history` is written with all keys of contracts/graph-schema-v8.md, `files` sorted by path;
   - a round trip `loads(dumps(doc))` keeps `history`;
@@ -82,7 +82,7 @@ of the group. Push at the end of each phase.
     files, a path that is not a file node, `authors > commits`, and a `commit` that differs from the snapshot
     id's SHA part for `available`/`partial`;
   - `extractors` contains `"history-reader": "1.0.0"`.
-- [ ] T006 Write the section in `backend/src/graphora/graph/serialize.py` (`SCHEMA_VERSION = 8`, `_history_dict`
+- [X] T006 Write the section in `backend/src/graphora/graph/serialize.py` (`SCHEMA_VERSION = 8`, `_history_dict`
   with sorted keys, called from `to_dict`). Read and check it in `backend/src/graphora/graph/load.py`
   (`_history`, with the checks of T005). Add `"history-reader": history.HISTORY_READER_VERSION` to
   `current_extractors()` in `backend/src/graphora/graph/build.py`.
