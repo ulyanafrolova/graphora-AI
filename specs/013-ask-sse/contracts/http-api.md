@@ -20,7 +20,7 @@ Body `{"error": {"kind": "...", "message": "..."}}` as the rest of the API.
 
 | Status | `kind` | When / message |
 |---|---|---|
-| 400 | `bad_request` | `the body must be a JSON object`, `unknown key: <k>`, `missing repository` / `missing snapshot` / `missing question` (absent, not a string or empty), `question is longer than 2000 characters` |
+| 400 | `bad_request` | `the body is larger than 16384 bytes` (read in chunks, never buffered past that), `the body must be a JSON object`, `unknown key: <k>`, `missing repository` / `missing snapshot` / `missing question` (absent, not a string or empty), `question is longer than 2000 characters` |
 | 404 | `not_found` | `repository not found: <r>`, `snapshot not found: <r> <s>` |
 | 429 | `busy` | `another question is being answered; try again later`, header `Retry-After: 30` |
 | 503 | `model_unavailable` | the 012 `ModelUnavailable` message, e.g. `model nope:x unavailable at the nope API: Unsupported provider='nope'.` |

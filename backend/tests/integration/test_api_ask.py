@@ -216,3 +216,11 @@ def test_bad_context_size_is_503(ask_app, monkeypatch):
     assert (code, data["error"]["kind"]) == (503, "model_unavailable")
     assert "GRAPHORA_MODEL_CTX must be a positive integer" in data["error"]["message"]
     assert ask_app.service.running() == 0
+
+
+def test_large_body_is_refused_early(ask_app):
+    """The body is read with a cap, not buffered whole (013 review)."""
+    big = json.dumps(ask_app.body(padding="x" * 20000))
+    r = ask_app.client.post("/api/v1/ask", content=big, headers={"Content-Type": "application/json"})
+    assert (r.status_code, r.json()) == (400, {"error": {"kind": "bad_request", "message": "the body is larger than 16384 bytes"}})
+    assert ask_app.built == 0 and ask_app.service.running() == 0

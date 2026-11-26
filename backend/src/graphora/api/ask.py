@@ -33,6 +33,7 @@ from graphora.store import Store
 log = logging.getLogger("graphora.api")
 
 MAX_QUESTION = 2000
+MAX_BODY = 16 * 1024
 KEEPALIVE_SECONDS = 15.0
 _KEYS = ("question", "repository", "snapshot")
 _PING = b": ping\n\n"
@@ -258,8 +259,13 @@ def router(service: AskService) -> APIRouter:
     @api.post("/ask")
     async def ask_question(request: Request) -> EventSourceResponse:
         _params(request, ())
+        raw = bytearray()
+        async for chunk in request.stream():
+            raw += chunk
+            if len(raw) > MAX_BODY:
+                raise bad_request(f"the body is larger than {MAX_BODY} bytes")
         try:
-            body = json.loads(await request.body())
+            body = json.loads(bytes(raw))
         except (ValueError, UnicodeDecodeError):
             raise bad_request("the body must be a JSON object") from None
         repository, snapshot, question = parse_ask(body)
