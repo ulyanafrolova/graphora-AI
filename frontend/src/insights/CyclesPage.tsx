@@ -45,7 +45,7 @@ export function CyclesPage({ route }: { route: RouteState }) {
             Circular dependencies found with graph algorithms · suggestions are recommendations only
           </p>
         </div>
-        <span className="pill cycle">
+        <span className={cycles.data.total > 0 ? "pill cycle" : "pill resolved"}>
           {cycles.data.total} cycles · {modules} modules
         </span>
       </header>
