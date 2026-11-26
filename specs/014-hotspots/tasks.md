@@ -406,7 +406,7 @@ true and wrong hotspot claims with the verifier.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T033 [P] Write `backend/tests/integration/test_history_performance.py` (marked `slow`): build a repository
+- [X] T033 [P] Write `backend/tests/integration/test_history_performance.py` (marked `slow`): build a repository
   of 5,000 files in nested folders and 10,000 commits touching 1–5 files each, all within the window. Reading
   its history takes ≤ 30 s (SC-003).
 - [ ] T034 [P] Add the new commands to `CLAUDE.md`: `uv run graphora analyze <source> --no-history` and `uv run
