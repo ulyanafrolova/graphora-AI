@@ -43,18 +43,18 @@ phase. Messages short, lowercase, English.
 
 **Purpose**: the shared types all three stories use (data-model.md, contracts/verifier.md).
 
-- [ ] T003 [P] Write `backend/tests/unit/test_verify_claims.py`: `Claim.from_dict`/`to_dict` round trip for
+- [X] T003 [P] Write `backend/tests/unit/test_verify_claims.py`: `Claim.from_dict`/`to_dict` round trip for
   every JSON example of `contracts/verifier.md`; `to_dict` drops `None` fields; `Claim.cite()` gives
   `path:line@snapshot` (first step for chains); `validate(claim)` returns an error for each rule of
   data-model.md § Claim validation: a dependency/chain claim with no steps or a definition/mention claim
   without path → `no_citation` (checked first, no other error), query claims never `no_citation`; unknown kind, fields of another kind present, line < 1, empty
-  path/symbol/target, a dependency with other than 1 step, a chain with < 2 steps or unconnected steps,
+  path/symbol/target, a dependency with other than 1 step, a chain with < 2 steps (unconnected steps need the graph: tested in T006),
   query option key not allowed for the question, not exactly one of `count`/`member`/`rank`, `distance`
   without `member` or outside `impact`, `rank` outside `key_files`, `target` None for a question other than
   `cycles`/`key_files`; `Verdict.to_dict()` writes `fact` as `status == "verified"`, proof items as
   `{"kind": "edge", …}` / `{"kind": "line", …}`; `dumps(verdicts)` is byte-identical on two calls and ends
   with a newline.
-- [ ] T004 Implement `backend/src/graphora/verify/claims.py`: frozen dataclasses `Step(path, line, target,
+- [X] T004 Implement `backend/src/graphora/verify/claims.py`: frozen dataclasses `Step(path, line, target,
   name=None)`, `Claim` (fields of data-model.md § Claim; `kind` one of `dependency | chain | definition |
   mention | query`; `question` one of `dependencies | dependents | impact | neighbors | cycles | key_files`),
   `Check(name, ok, detail)`, `Line(path, n, text)`, `Verdict(status, checks, reason=None, hint=None,
@@ -64,7 +64,7 @@ phase. Messages short, lowercase, English.
   `validate(claim) -> str | None`; `from_dict`, `to_dict`, `cite`; `dumps(verdicts)` with
   `json.dumps(sort_keys=True, ensure_ascii=False, indent=2) + "\n"`; edges in proof serialized with
   `graph.serialize._edge_dict`.
-- [ ] T005 Export `Claim`, `Step`, `Verdict`, `Check`, `Line`, `dumps` from
+- [X] T005 Export `Claim`, `Step`, `Verdict`, `Check`, `Line`, `dumps` from
   `backend/src/graphora/verify/__init__.py`; run `uv run pytest tests/unit/test_verify_claims.py`.
 
 **Commit**: `claim and verdict types`
@@ -96,7 +96,7 @@ the expected reason — all without a database.
   message as hint; snapshot ≠ graph snapshot → `snapshot_mismatch`; invalid claim → `invalid_claim` and the
   next claim in the same call still verified; `project:`/`solution:` source → verified; type-only edge →
   verified and its check detail says `type-only`; chain of 3 steps all resolved → `verified`, one heuristic
-  step → `heuristic`, step 2 wrong → `rejected` with `step` 2; closed chain (cycle) → `verified`;
+  step → `heuristic`, step 2 wrong → `rejected` with `step` 2; closed chain (cycle) → `verified`; unconnected chain steps → `invalid_claim`; a barrel link as a chain → `verified`;
   query claims: dependents count (`count_mismatch`, hint `actual 3`), impact member with distance
   (`not_in_result`, hint `at distance 1`), impact with `max_depth`, neighbors member in incoming or outgoing,
   cycles count and member, key_files rank (`rank_mismatch`, hint `rank 7` / `not ranked`), heuristic item →

@@ -26,14 +26,15 @@ One import link a claim relies on (R3, R5).
 | `question` | `dependencies \| dependents \| impact \| neighbors \| cycles \| key_files` | query |
 | `target` | str \| None | query; None only for `cycles` and `key_files` |
 | `options` | dict | query; allowed keys per question: `include_type_only`, `follow_barrels`, `symbol` (dependents), `max_depth` (impact), `level` (dependencies, dependents, impact, cycles) |
-| `count` | int \| None | query; exactly one of `count`, `member`, `rank` |
+| `count` | int \| None | query; exactly one of `count` and `member` |
 | `member` | str \| None | query; a node the result contains (path or id) |
 | `distance` | int \| None | query with `member`, impact only |
-| `rank` | int \| None | query, `key_files` only: the member is within the first `rank` files |
+| `rank` | int \| None | query, `key_files` with `member` only: the member is within the first `rank` files (without `rank`: the member is ranked at all) |
 
 A dependency or chain claim without steps, or a definition or mention claim without a path, is rejected with
 `no_citation` before validation. Validation (any other failure → `invalid_claim`): known kind; fields of other kinds absent; lines ≥ 1; symbol, path
-and target non-empty; chain steps connected; option keys allowed for the question; exactly one query assertion.
+and target non-empty; option keys allowed for the question; exactly one of `count` and `member`; `distance` and `rank` only
+with `member`. Chain steps being connected needs the graph and is checked by the verifier (`invalid_claim`).
 
 `Claim.cite()` gives the display form `path:line@snapshot` (first step for chains).
 
