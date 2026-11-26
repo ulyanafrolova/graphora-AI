@@ -167,7 +167,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [X] T026 [P] Write `frontend/src/styles/tokens.css` and `frontend/src/styles/base.css` with the palette and type of
   the mockups (background `#0d1117`-like dark, panel, border, text, muted; accent blue; green resolved/verified; amber
   heuristic/hypothesis; red cycle; component palette of 14 distinct colours), monospace for paths and code.
-- [ ] T027 [P] Write `frontend/tests/unit/shell.test.tsx`: header shows `repository @ abcdef1` (7 chars, `content:`
+- [X] T027 [P] Write `frontend/tests/unit/shell.test.tsx`: header shows `repository @ abcdef1` (7 chars, `content:`
   ids shortened to `content:` + 8), one badge per `overview.languages` entry with status analyzed/detected only from
   the overview file counts, model badge `qwen3:8b · local` for `ollama:qwen3:8b`, `agents off` when `ask.enabled` is
   false; sidebar sections and items exactly as FR-001 with the active item marked; footer text.
