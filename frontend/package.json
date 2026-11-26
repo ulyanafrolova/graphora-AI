@@ -14,7 +14,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "e2e": "playwright test",
-    "gen:types": "echo gen:types is added in T008"
+    "gen:types": "json2ts -i ../schema/graph.schema.json -o src/api/graph.gen.ts --bannerComment \"// generated from schema/graph.schema.json by npm run gen:types\" && prettier --write src/api/graph.gen.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.108.4",

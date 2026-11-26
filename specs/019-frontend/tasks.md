@@ -63,7 +63,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   --exit-code src/api/graph.gen.ts`, `npm test`, `npm run build`), and `e2e` (PostgreSQL 17 service as the backend
   job, setup-uv + `uv sync --locked`, setup-node, `npm ci`, `npx playwright install --with-deps chromium`, `npm run
   build`, `npx playwright test` with `GRAPHORA_TEST_DATABASE_URL`; upload `playwright-report/` on failure).
-- [ ] T008 [P] Add `gen:types` in `frontend/package.json`: `json2ts -i ../schema/graph.schema.json -o
+- [X] T008 [P] Add `gen:types` in `frontend/package.json`: `json2ts -i ../schema/graph.schema.json -o
   src/api/graph.gen.ts --bannerComment "// generated from schema/graph.schema.json by npm run gen:types"`; run it and
   commit `frontend/src/api/graph.gen.ts`.
 
