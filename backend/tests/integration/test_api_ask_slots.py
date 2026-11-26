@@ -203,3 +203,25 @@ def test_keep_alive_during_silence(ask_app, monkeypatch):
     steps = [m for m in messages(got) if m[0] == "step"]
     assert [int(i) for _, i, _ in steps] == list(range(1, len(steps) + 1))
     assert messages(got)[-1][0] == "answer"
+
+
+def test_stop_between_open_and_thread_start(ask_app, monkeypatch):
+    """`stop()` racing an `open()` that has registered its run but not started its thread (013 review)."""
+    model, _, gated = gated_model()
+    gated.gate.set()
+    ask_app.models.append(model)
+    real_start = threading.Thread.start
+    errors = []
+
+    def start(self):
+        if self.name.startswith("graphora-ask"):
+            try:
+                ask_app.service.stop(timeout=1)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+        real_start(self)
+
+    monkeypatch.setattr(threading.Thread, "start", start)
+    ask_app.client.post("/api/v1/ask", json=ask_app.body())
+    assert errors == []
+    wait(lambda: ask_app.service.running() == 0)

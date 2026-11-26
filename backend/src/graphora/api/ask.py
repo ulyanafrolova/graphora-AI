@@ -206,7 +206,8 @@ class AskService:
             run.stop.set()
         deadline = time.monotonic() + timeout
         for run in runs:
-            run.thread.join(max(0.0, deadline - time.monotonic()))
+            if run.thread.ident is not None:  # a run added by open() whose thread is not started yet
+                run.thread.join(max(0.0, deadline - time.monotonic()))
 
 
 def router(service: AskService) -> APIRouter:
