@@ -64,6 +64,14 @@ def _items(items: list[dict]) -> list[dict]:
     return out
 
 
+def _group(g: dict) -> dict:
+    out = {"files": g["files"], "cycle": _chain(g["cycle"]), "type_only": g["type_only"]}
+    if "suggested_cut" in g:  # 019
+        links = [f"{_path(link['edges'][0]['source'])}:{link['edges'][0]['line']} -> {_path(link['target'])}" for link in g["suggested_cut"]["links"]]
+        out["suggested_cut"] = {"method": g["suggested_cut"]["method"], "links": links}
+    return out
+
+
 def project_answer(answer: dict) -> dict:
     out: dict = {"total": answer["total"]}
     if answer["truncated"]:
@@ -72,7 +80,7 @@ def project_answer(answer: dict) -> dict:
         if key in answer:
             out[key] = _items(answer[key])
     if "groups" in answer:
-        out["groups"] = [{"files": g["files"], "cycle": _chain(g["cycle"]), "type_only": g["type_only"]} for g in answer["groups"]]
+        out["groups"] = [_group(g) for g in answer["groups"]]
     if "unresolved" in answer:
         out["unresolved"] = [f"{_path(e['source'])}:{e['line']} {e['reason']}" for e in answer["unresolved"]]
     if "cut" in answer:
@@ -115,6 +123,9 @@ def test_cited_edges_are_graph_edges_and_chains_connect(name, i, entry):
         for a, b in zip(cycle, cycle[1:] + cycle[:1], strict=True):
             assert a["target"] == b["source"]
         assert cycle[0]["source"] == group["files"][0]
+        for link in group.get("suggested_cut", {}).get("links", []):
+            for e in link["edges"]:
+                assert graph_edges[e["id"]] == e
     for e in answer.get("unresolved", []):
         assert graph_edges[e["id"]] == e
 

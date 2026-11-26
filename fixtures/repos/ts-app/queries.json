@@ -146,7 +146,13 @@
             "src/cycle/a.ts:1",
             "src/cycle/b.ts:1"
           ],
-          "type_only": false
+          "type_only": false,
+          "suggested_cut": {
+            "method": "exact",
+            "links": [
+              "src/cycle/a.ts:1 -> src/cycle/b.ts"
+            ]
+          }
         }
       ],
       "total": 1

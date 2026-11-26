@@ -169,7 +169,13 @@
             "pkg/a.py:3",
             "pkg/b.py:1"
           ],
-          "type_only": false
+          "type_only": false,
+          "suggested_cut": {
+            "method": "exact",
+            "links": [
+              "pkg/a.py:3 -> pkg/b.py"
+            ]
+          }
         }
       ],
       "total": 1

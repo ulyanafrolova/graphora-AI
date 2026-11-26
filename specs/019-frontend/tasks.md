@@ -277,7 +277,7 @@ equals the API answer.
   that single link; a self-import → the self link; a group of 21 files → `greedy`; an exact search that exceeds the
   budget (monkeypatch the budget to 1) → `greedy`; removing `suggested_cut.links` always leaves the group acyclic;
   same input twice → same bytes; `level="project"` groups have no `suggested_cut`.
-- [ ] T046 [P] [US3] Add hand-written `suggested_cut` to every file-level `cycles` entry (not those with
+- [X] T046 [P] [US3] Add hand-written `suggested_cut` to every file-level `cycles` entry (not those with
   `"level": "project"`) of `fixtures/repos/*/queries.json` (as
   `{"method", "links": ["<source path>:<line> -> <target path>", …]}`) and project it in `project_answer` of
   `backend/tests/golden/test_queries.py`; extend `test_cited_edges_are_graph_edges_and_chains_connect` to check cut

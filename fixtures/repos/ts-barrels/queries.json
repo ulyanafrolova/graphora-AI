@@ -159,7 +159,13 @@
             "src/types/a.ts:1",
             "src/types/b.ts:1"
           ],
-          "type_only": true
+          "type_only": true,
+          "suggested_cut": {
+            "method": "exact",
+            "links": [
+              "src/types/a.ts:1 -> src/types/b.ts"
+            ]
+          }
         }
       ],
       "total": 1
