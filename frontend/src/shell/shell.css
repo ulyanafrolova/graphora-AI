@@ -54,6 +54,7 @@
 
 .picker .menu button {
   width: 100%;
+  white-space: nowrap;
   text-align: left;
   border: 0;
   background: none;
