@@ -90,6 +90,7 @@ def _parser() -> argparse.ArgumentParser:
     serve.add_argument("--queue", type=int, default=20, help="jobs that may wait")
     serve.add_argument("--asks", type=int, default=1, help="questions answered at the same time (POST /api/v1/ask)")
     serve.add_argument("--model", help="the agents' model, provider:model (default: $GRAPHORA_MODEL or ollama:qwen3:8b)")
+    serve.add_argument("--ui", help="a built UI folder to serve (default: $GRAPHORA_UI_DIR, else frontend/dist if built)")
     serve.add_argument("--work-dir", help="folder for uploads and extracted snapshots (default: <temp>/graphora-jobs)")
     serve.add_argument("--max-files", type=int, default=5000)
     serve.add_argument("--max-bytes", type=int, default=50 * 1024 * 1024)
@@ -381,6 +382,15 @@ def _ask(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _ui_dir(option: str | None) -> Path | None:
+    """`--ui`, `$GRAPHORA_UI_DIR`, or `frontend/dist` of this checkout when it was built (specs/019-frontend R7)."""
+    chosen = option or os.environ.get("GRAPHORA_UI_DIR")
+    if chosen:
+        return Path(chosen)
+    built = Path(__file__).resolve().parents[4] / "frontend" / "dist"
+    return built if (built / "index.html").is_file() else None
+
+
 def _serve(args: argparse.Namespace) -> int:
     from graphora.pipeline import LIMIT_KEYS, PipelineLimits
     from graphora.store import Store, StoreUnavailable
@@ -389,6 +399,10 @@ def _serve(args: argparse.Namespace) -> int:
         if getattr(args, name) < 1:
             _log("error", f"--{name.replace('_', '-')} must be at least 1")
             return EXIT_USAGE
+    ui = _ui_dir(args.ui)
+    if ui is not None and not (ui / "index.html").is_file():
+        _log("error", f"no built UI in {ui}: run `make web-build` or leave out --ui")
+        return EXIT_USAGE
     url = _database_url(args.database)
     try:
         if url is None:
@@ -419,7 +433,7 @@ def _serve(args: argparse.Namespace) -> int:
         asks = AskService(store, url, args.model or setting_from_env(), limit=args.asks)
         try:
             # open streams are cancelled 5 s after Ctrl-C; their runs stop at the next step (013 research R5)
-            uvicorn.run(create_app(store, runner, asks), host=args.host, port=args.port, timeout_graceful_shutdown=5)
+            uvicorn.run(create_app(store, runner, asks, ui), host=args.host, port=args.port, timeout_graceful_shutdown=5)
         finally:
             try:
                 asks.stop()

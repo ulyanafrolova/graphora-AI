@@ -132,7 +132,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `PipelineLimits` and skipped folder names; tools (store mode, with `read_lines`) from a new constant `TOOL_NAMES` exported by
   `backend/src/graphora/mcp/server.py` with `DESCRIPTIONS`) in `backend/src/graphora/api/routes.py`; `router` takes the
   optional runner and ask service (pass from `create_app`). Paths added to `test_only_read_endpoints`.
-- [ ] T019 Serve the built UI in `backend/src/graphora/api/__init__.py`: `create_app(..., ui: Path | None = None)`
+- [X] T019 Serve the built UI in `backend/src/graphora/api/__init__.py`: `create_app(..., ui: Path | None = None)`
   mounts, after all API routers, a handler that serves files of `ui` with Starlette `StaticFiles(directory=ui)` and
   returns `ui/index.html` for other `GET` paths not starting with `/api/`; adds the CSP header of contracts/backend.md to
   these responses. In `backend/src/graphora/cli/__init__.py` add `serve --ui DIR` (default `$GRAPHORA_UI_DIR`, else
