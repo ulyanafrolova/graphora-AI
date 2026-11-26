@@ -41,7 +41,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   dependencies per plan.md Technical Context (including dev dependencies `fake-indexeddb` and `fflate`); run `npm install` to create `frontend/package-lock.json`. Add
   `frontend/node_modules/`, `frontend/test-results/`, `frontend/playwright-report/` to `.gitignore` (root `dist/` is
   already ignored; do NOT ignore `node_modules/` globally, fixtures contain them on purpose).
-- [ ] T002 [P] Configure TypeScript strict in `frontend/tsconfig.json` (+ `tsconfig.node.json`): `strict`,
+- [X] T002 [P] Configure TypeScript strict in `frontend/tsconfig.json` (+ `tsconfig.node.json`): `strict`,
   `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, path alias `@/` → `src/`.
 - [ ] T003 [P] Configure linting in `frontend/eslint.config.js` (flat config): typescript-eslint strict, react,
   react-hooks, import order; errors for `react/no-danger`, `no-eval`, `no-implied-eval`, `no-new-func`;
