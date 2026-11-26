@@ -14,7 +14,7 @@
       ],
       "total": 1,
       "completeness": {
-        "unresolved_imports": 1,
+        "unresolved_imports": 2,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }
@@ -35,7 +35,7 @@
       ],
       "total": 1,
       "completeness": {
-        "unresolved_imports": 1,
+        "unresolved_imports": 2,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }
@@ -58,7 +58,7 @@
       "total": 1,
       "cut": false,
       "completeness": {
-        "unresolved_imports": 1,
+        "unresolved_imports": 2,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }
@@ -92,7 +92,7 @@
       "unresolved": [],
       "total": 3,
       "completeness": {
-        "unresolved_imports": 1,
+        "unresolved_imports": 2,
         "not_analyzed_files": 0,
         "files_with_errors": 0
       }

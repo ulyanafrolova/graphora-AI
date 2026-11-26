@@ -6,13 +6,14 @@ Forms and fields are defined in specs/003-ts-js-analysis/research.md § R2 and d
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 import tree_sitter_javascript
 import tree_sitter_typescript
 from tree_sitter import Language, Node, Parser
 
+from graphora.adapters.js import http
 from graphora.adapters.position import CHECK_EVERY, Positions, normalize_newlines
 from graphora.graph.model import Definition, Export
 
@@ -55,6 +56,8 @@ class FileFacts:
     definitions: tuple[Definition, ...]
     exports: tuple[Export, ...]
     has_error: bool
+    http_calls: tuple[http.HttpCallFact, ...] = ()  # 015: fetch and axios calls
+    constants: dict[str, str] = field(default_factory=dict)  # 015: top-level string constants
 
 
 def _parser(path: str) -> Parser:
@@ -173,7 +176,8 @@ def _call(position: Positions, node: Node) -> ImportRecord | None:
     return _record(position, node, "imports", form, _literal(arguments[0]), [ImportName(None, False)])
 
 
-def _imports(position: Positions, root: Node, check: Callable[[], None]) -> list[ImportRecord]:
+def _imports(position: Positions, root: Node, check: Callable[[], None], call_nodes: list[Node]) -> list[ImportRecord]:
+    """Import records; every call expression is also added to `call_nodes` for the HTTP bridge (015)."""
     records: list[ImportRecord] = []
     stack = [root]
     visited = 0
@@ -188,6 +192,7 @@ def _imports(position: Positions, root: Node, check: Callable[[], None]) -> list
         elif node.type == "export_statement" and node.child_by_field_name("source") is not None:
             record = _reexport_statement(position, node)
         elif node.type == "call_expression":
+            call_nodes.append(node)
             record = _call(position, node)
         if record is not None:
             records.append(record)
@@ -342,4 +347,6 @@ def extract(path: str, source: bytes, check: Callable[[], None] = lambda: None) 
     source = normalize_newlines(source)
     root = _parser(path).parse(source).root_node
     definitions, exports = _definitions(root)
-    return FileFacts(tuple(_imports(Positions(source), root, check)), definitions, exports, _has_error(root))
+    call_nodes: list[Node] = []
+    imports = tuple(_imports(Positions(source), root, check, call_nodes))
+    return FileFacts(imports, definitions, exports, _has_error(root), http.calls(Positions(source), call_nodes), http.constants(root))

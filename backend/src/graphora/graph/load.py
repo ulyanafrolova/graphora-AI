@@ -142,6 +142,7 @@ def _edge(raw: Any, where: str) -> Edge:
     if isinstance(raw, dict) and "reason" in raw:
         reason = _enum(raw["reason"], get_args(model.Reason), f"{where}.reason")
     alias = _opt_str(raw, "alias", where) if isinstance(raw, dict) and "alias" in raw else None
+    route_line = _int(raw, "route_line", where) if isinstance(raw, dict) and "route_line" in raw else None
     directive = None
     global_using = None
     if isinstance(raw, dict) and "directive" in raw:
@@ -166,6 +167,7 @@ def _edge(raw: Any, where: str) -> Edge:
             alias=alias,
             directive=directive,
             global_using=global_using,
+            route_line=route_line,
         )
     except ValueError as exc:
         raise InvalidGraph(f"{where}: {exc}") from None

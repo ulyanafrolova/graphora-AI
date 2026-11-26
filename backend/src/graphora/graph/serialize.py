@@ -22,7 +22,7 @@ from graphora.graph.model import (
     UnresolvedNode,
 )
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9  # 8: history (014); 9: http_call edges (015)
 
 
 def _sha16(text: str) -> str:
@@ -96,6 +96,8 @@ def _edge_dict(edge: Edge) -> dict[str, Any]:
     }
     if edge.reason is not None:
         out["reason"] = edge.reason
+    if edge.route_line is not None:
+        out["route_line"] = edge.route_line
     if edge.alias is not None:
         out["alias"] = edge.alias
     if edge.directive is not None:

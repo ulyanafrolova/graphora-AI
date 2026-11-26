@@ -59,6 +59,13 @@ def test_expected_edge_lines_start_an_import(name):
             continue  # a file without text (e.g. invalid UTF-8) has no served lines
         assert 1 <= edge["line"] <= len(lines), (path, edge["line"])
         line = lines[edge["line"] - 1]
+        if edge["type"] == "http_call":  # 015: the line holds the call; a matched route's line holds its decorator
+            assert "fetch" in line or "axios" in line, (path, edge["line"], line)
+            if "route_line" in edge:
+                target = edge["target"].split(":", 1)[1]
+                route = text_lines(target, (root / target).read_bytes())[edge["route_line"] - 1]
+                assert route.lstrip().startswith("@"), (target, edge["route_line"], route)
+            continue
         if edge["type"] == "type_reference":  # 008: a use of the type, not an import statement
             short = edge["symbol"].rsplit(".", 1)[-1].removesuffix("Attribute")
             # an alias (`using Member = App.Models.User;`) is written under another name, but never on a blank line

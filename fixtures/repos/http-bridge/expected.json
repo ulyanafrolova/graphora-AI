@@ -1,0 +1,122 @@
+{
+  "snapshot_kind": "content",
+  "nodes": [
+    {"id": "ext:npm:axios", "kind": "external", "ecosystem": "npm", "category": "third_party"},
+    {"id": "ext:python:fastapi", "kind": "external", "ecosystem": "python", "category": "third_party"},
+    {"id": "ext:python:flask", "kind": "external", "ecosystem": "python", "category": "third_party"},
+    {"id": "file:backend/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:backend/app/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:backend/app/blueprints.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "stats", "line": 8},
+      {"kind": "function", "name": "daily", "line": 13}
+    ]},
+    {"id": "file:backend/app/health_a.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "health", "line": 7}
+    ]},
+    {"id": "file:backend/app/health_b.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "health", "line": 7}
+    ]},
+    {"id": "file:backend/app/items.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "list_items", "line": 7},
+      {"kind": "function", "name": "add_item", "line": 12}
+    ]},
+    {"id": "file:backend/app/legacy.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "ping", "line": 11},
+      {"kind": "function", "name": "legacy_user", "line": 16}
+    ]},
+    {"id": "file:backend/app/main.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:backend/app/routers/__init__.py", "kind": "file", "language": "python", "definitions": []},
+    {"id": "file:backend/app/routers/orders.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "get_order", "line": 7}
+    ]},
+    {"id": "file:backend/app/users.py", "kind": "file", "language": "python", "definitions": [
+      {"kind": "function", "name": "me", "line": 7},
+      {"kind": "function", "name": "user", "line": 12},
+      {"kind": "function", "name": "orders", "line": 17}
+    ]},
+    {"id": "file:frontend/src/items.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "loadItems", "line": 3, "exported_as": ["loadItems"]},
+      {"kind": "function", "name": "addItem", "line": 7, "exported_as": ["addItem"]},
+      {"kind": "function", "name": "ping", "line": 11, "exported_as": ["ping"]},
+      {"kind": "function", "name": "reloadItems", "line": 15, "exported_as": ["reloadItems"]}
+    ], "exports": []},
+    {"id": "file:frontend/src/misc.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "calls", "line": 1, "exported_as": ["calls"]}
+    ], "exports": []},
+    {"id": "file:frontend/src/orders.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "getOrder", "line": 5, "exported_as": ["getOrder"]},
+      {"kind": "function", "name": "adminStats", "line": 9, "exported_as": ["adminStats"]},
+      {"kind": "function", "name": "dailyReport", "line": 13, "exported_as": ["dailyReport"]},
+      {"kind": "function", "name": "oldDailyReport", "line": 17, "exported_as": ["oldDailyReport"]}
+    ], "exports": []},
+    {"id": "file:frontend/src/users.ts", "kind": "file", "language": "typescript", "definitions": [
+      {"kind": "function", "name": "getUser", "line": 1, "exported_as": ["getUser"]},
+      {"kind": "function", "name": "getMe", "line": 5, "exported_as": ["getMe"]},
+      {"kind": "function", "name": "getOrders", "line": 9, "exported_as": ["getOrders"]},
+      {"kind": "function", "name": "getLegacyUser", "line": 13, "exported_as": ["getLegacyUser"]},
+      {"kind": "function", "name": "deleteLegacyUser", "line": 17, "exported_as": ["deleteLegacyUser"]},
+      {"kind": "function", "name": "getMeWithQuery", "line": 21, "exported_as": ["getMeWithQuery"]}
+    ], "exports": []},
+    {"id": "unresolved:http:GET /health", "kind": "unresolved", "ecosystem": "http"},
+    {"id": "unresolved:http:GET /nowhere", "kind": "unresolved", "ecosystem": "http"},
+    {"id": "unresolved:http:GET /old/daily", "kind": "unresolved", "ecosystem": "http"},
+    {"id": "unresolved:http:GET ?", "kind": "unresolved", "ecosystem": "http"}
+  ],
+  "edges": [
+    {"source": "file:backend/app/blueprints.py", "line": 1, "target": "ext:python:flask", "type": "imports", "form": "static", "symbol": "Blueprint", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/health_a.py", "line": 1, "target": "ext:python:fastapi", "type": "imports", "form": "static", "symbol": "FastAPI", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/health_b.py", "line": 1, "target": "ext:python:fastapi", "type": "imports", "form": "static", "symbol": "FastAPI", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/items.py", "line": 1, "target": "ext:python:fastapi", "type": "imports", "form": "static", "symbol": "FastAPI", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/legacy.py", "line": 1, "target": "ext:python:flask", "type": "imports", "form": "static", "symbol": "Flask", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/legacy.py", "line": 3, "target": "file:backend/app/blueprints.py", "type": "imports", "form": "static", "symbol": "bp", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/legacy.py", "line": 3, "target": "file:backend/app/blueprints.py", "type": "imports", "form": "static", "symbol": "report", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/main.py", "line": 1, "target": "ext:python:fastapi", "type": "imports", "form": "static", "symbol": "FastAPI", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/main.py", "line": 3, "target": "file:backend/app/routers/orders.py", "type": "imports", "form": "static", "symbol": "orders", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/routers/orders.py", "line": 1, "target": "ext:python:fastapi", "type": "imports", "form": "static", "symbol": "APIRouter", "confidence": "resolved", "reason": null},
+    {"source": "file:backend/app/users.py", "line": 1, "target": "ext:python:fastapi", "type": "imports", "form": "static", "symbol": "FastAPI", "confidence": "resolved", "reason": null},
+
+    {"source": "file:frontend/src/items.ts", "line": 1, "target": "ext:npm:axios", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+    {"source": "file:frontend/src/items.ts", "line": 4, "target": "file:backend/app/items.py", "type": "http_call", "form": "static", "symbol": "GET /api/items", "route_line": 6, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/items.ts", "line": 8, "target": "file:backend/app/items.py", "type": "http_call", "form": "static", "symbol": "POST /api/items", "route_line": 11, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/items.ts", "line": 12, "target": "file:backend/app/legacy.py", "type": "http_call", "form": "static", "symbol": "GET /legacy/ping", "route_line": 10, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/items.ts", "line": 16, "target": "file:backend/app/items.py", "type": "http_call", "form": "static", "symbol": "GET /api/items", "route_line": 6, "confidence": "heuristic", "reason": "http_route"},
+
+    {"source": "file:frontend/src/misc.ts", "line": 2, "target": "unresolved:http:GET ?", "type": "http_call", "form": "static", "symbol": "GET ?", "confidence": "unresolved", "reason": "dynamic"},
+    {"source": "file:frontend/src/misc.ts", "line": 3, "target": "unresolved:http:GET ?", "type": "http_call", "form": "static", "symbol": "GET ?", "confidence": "unresolved", "reason": "dynamic"},
+    {"source": "file:frontend/src/misc.ts", "line": 4, "target": "unresolved:http:GET /health", "type": "http_call", "form": "static", "symbol": "GET /health", "confidence": "unresolved", "reason": "ambiguous"},
+    {"source": "file:frontend/src/misc.ts", "line": 5, "target": "unresolved:http:GET /nowhere", "type": "http_call", "form": "static", "symbol": "GET /nowhere", "confidence": "unresolved", "reason": "not_found"},
+    {"source": "file:frontend/src/misc.ts", "line": 7, "target": "file:backend/app/items.py", "type": "http_call", "form": "static", "symbol": "? /api/items", "route_line": 6, "confidence": "heuristic", "reason": "http_route"},
+
+    {"source": "file:frontend/src/orders.ts", "line": 1, "target": "ext:npm:axios", "type": "imports", "form": "static", "symbol": "default", "confidence": "resolved", "reason": null},
+    {"source": "file:frontend/src/orders.ts", "line": 6, "target": "file:backend/app/routers/orders.py", "type": "http_call", "form": "static", "symbol": "GET /v1/orders/{}", "route_line": 6, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/orders.ts", "line": 10, "target": "file:backend/app/blueprints.py", "type": "http_call", "form": "static", "symbol": "GET /admin/stats", "route_line": 7, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/orders.ts", "line": 14, "target": "file:backend/app/blueprints.py", "type": "http_call", "form": "static", "symbol": "GET /reports/daily", "route_line": 12, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/orders.ts", "line": 18, "target": "unresolved:http:GET /old/daily", "type": "http_call", "form": "static", "symbol": "GET /old/daily", "confidence": "unresolved", "reason": "not_found"},
+
+    {"source": "file:frontend/src/users.ts", "line": 2, "target": "file:backend/app/users.py", "type": "http_call", "form": "static", "symbol": "GET /users/{}", "route_line": 11, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/users.ts", "line": 6, "target": "file:backend/app/users.py", "type": "http_call", "form": "static", "symbol": "GET /users/me", "route_line": 6, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/users.ts", "line": 10, "target": "file:backend/app/users.py", "type": "http_call", "form": "static", "symbol": "GET /users/{}/orders", "route_line": 16, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/users.ts", "line": 14, "target": "file:backend/app/legacy.py", "type": "http_call", "form": "static", "symbol": "GET /legacy/users/{}", "route_line": 15, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/users.ts", "line": 18, "target": "file:backend/app/legacy.py", "type": "http_call", "form": "static", "symbol": "DELETE /legacy/users/{}", "route_line": 15, "confidence": "heuristic", "reason": "http_route"},
+    {"source": "file:frontend/src/users.ts", "line": 22, "target": "file:backend/app/users.py", "type": "http_call", "form": "static", "symbol": "GET /users/me", "route_line": 6, "confidence": "heuristic", "reason": "http_route"}
+  ],
+  "coverage": [
+    {"path": "README.md", "language": null, "status": "not_code", "flags": []},
+    {"path": "backend/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/blueprints.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/health_a.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/health_b.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/items.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/legacy.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/main.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/routers/__init__.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/routers/orders.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "backend/app/users.py", "language": "python", "status": "analyzed", "flags": []},
+    {"path": "frontend/src/items.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "frontend/src/misc.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "frontend/src/orders.ts", "language": "typescript", "status": "analyzed", "flags": []},
+    {"path": "frontend/src/users.ts", "language": "typescript", "status": "analyzed", "flags": []}
+  ],
+  "skipped": []
+}
