@@ -152,8 +152,8 @@ keep-alive messages arrive during the wait and are not counted as steps.
 
 - A snapshot stored without file text (for example an older stored analysis): the agents run with the tools
   they can use; text claims become hypotheses "file text not available", as in 012.
-- The service is shutting down while an ask runs: the run is stopped like a disconnected client and the stream
-  ends with the final answer built so far, if the connection is still open.
+- The service is shutting down while an ask runs: open streams are closed after a short grace period and their
+  runs are stopped like a disconnected client; such a stream ends without a final answer.
 - An unexpected internal error during the run (not a model failure): the stream ends with an error message
   carrying a short reason and no traceback, and the ask slot is freed.
 - The question contains text that looks like instructions or markup: it is passed to the agents as the
