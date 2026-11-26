@@ -220,7 +220,7 @@ equals the API answer.
   in the address; request `/impact?target=<node>&limit=500`); collapsed component nodes show a badge with the number
   of impact items inside them, and only files of expanded components are highlighted one by one. Check: T037 passes
   (add the badge case to T037).
-- [ ] T039 [P] [US1] Write `frontend/tests/unit/code-view.test.tsx`: `FileTree` from the graph document's coverage
+- [X] T039 [P] [US1] Write `frontend/tests/unit/code-view.test.tsx`: `FileTree` from the graph document's coverage
   files (folders collapsible, `detected only`/`not code` marked); `CodeView` renders `/file` lines as text with line
   numbers, binary/long/missing states; lines with outgoing edges get markers by type (resolved import, external, HTTP
   route, call reference); selecting a line shows `ProvenancePanel` with type and symbol, `source path:line@short
