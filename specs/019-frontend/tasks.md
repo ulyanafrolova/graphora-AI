@@ -78,7 +78,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 
 ### Backend: components (FR-021, research R3)
 
-- [ ] T009 [P] Write `backend/tests/unit/test_components.py` on small hand-built `GraphDocument`s (like
+- [X] T009 [P] Write `backend/tests/unit/test_components.py` on small hand-built `GraphDocument`s (like
   `tests/integration/test_query_performance.py` builds one): two dense clusters joined by one link → two components;
   naming rules (common folder; no common folder → most frequent top-level folder, ties by path; root files → `.`;
   duplicates → ` · 2`, ` · 3` in order of first file path); isolated files grouped per top-level folder; ids
