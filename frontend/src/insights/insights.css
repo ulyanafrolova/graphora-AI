@@ -1,0 +1,52 @@
+.insight-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.insight-head h1 {
+  margin: 0;
+}
+.cycles-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr 360px;
+  gap: 20px;
+  align-items: start;
+}
+.cycle-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.cycle-list button {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  text-align: left;
+  background: var(--panel);
+  padding: 14px 16px;
+}
+.cycle-list li[aria-current="true"] button {
+  border-color: var(--cycle);
+}
+.rows li.cut {
+  color: var(--cycle);
+  text-decoration: line-through dashed;
+}
+.cut-card pre {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  white-space: pre-wrap;
+}
+.recommend {
+  padding: 10px 12px;
+  border: 1px solid var(--heuristic);
+  border-radius: var(--radius);
+  background: var(--heuristic-bg);
+  color: var(--heuristic);
+}

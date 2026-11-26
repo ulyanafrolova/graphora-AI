@@ -296,7 +296,7 @@ equals the API answer.
   (the cycle without the cut links), "Edge to remove" card with source → target, method ("minimum feedback arc set"
   for `exact`, "greedy" otherwise), the import line text from `/file`, "Recommendation only — Graphora never modifies
   your code", "Ask agents about this" prefilled "How do I break the <a> ⇄ <b> cycle?"; "no cycles" empty state.
-- [ ] T049 [US3] Implement `frontend/src/insights/CyclesPage.tsx`, `CycleList.tsx`, `CycleDiagram.tsx` (small
+- [X] T049 [US3] Implement `frontend/src/insights/CyclesPage.tsx`, `CycleList.tsx`, `CycleDiagram.tsx` (small
   Cytoscape, preset positions), `CutCard.tsx`. Check: T048 passes.
 - [ ] T050 [P] [US3] Write `frontend/tests/unit/hotspots.test.tsx`: treemap tiles = hotspot items, area ∝ line count
   from `/files` (minimum area for 0-line files), colour from score normalised to the answer's maximum (low green →
