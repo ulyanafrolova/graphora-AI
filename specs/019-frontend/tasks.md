@@ -343,7 +343,7 @@ equals the API answer.
   earlier runs with "Clear history"; "history will not be kept" note when not persistent.
 - [X] T060 [US4] Implement `frontend/src/agents/AskPage.tsx`, `StepList.tsx`, `AnswerCard.tsx`, `CitedGraph.tsx`,
   `RunHistory.tsx`. Check: T059 passes.
-- [ ] T061 [P] [US4] Write `frontend/tests/unit/trace.test.tsx`: for a stored run, the timeline lists each trace event
+- [X] T061 [P] [US4] Write `frontend/tests/unit/trace.test.tsx`: for a stored run, the timeline lists each trace event
   with role, tool and arguments, result summary, duration when present; revision requests shown as red notes; "Agent
   flow" Explorer → Analyst → Reviewer with the revision loop when revisions > 0; claims table with statuses
   (verified green, rejected red, hypothesis amber); budget bars "Tool calls n / limit" and "Revisions n / limit" from
