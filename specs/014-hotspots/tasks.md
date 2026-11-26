@@ -356,7 +356,7 @@ true and wrong hotspot claims with the verifier.
   - validation errors: `metric` without `value`, `metric` on `key_files`, a target given, an unknown option,
     an unknown metric;
   - verdict JSON is byte-identical on two calls.
-- [ ] T029 [P] [US3] Extend `backend/tests/integration/test_mcp_store.py` (or a new
+- [X] T029 [P] [US3] Extend `backend/tests/integration/test_mcp_store.py` (or a new
   `backend/tests/integration/test_mcp_hotspots.py`, `db`):
   - the `hotspots` tool is listed as read-only with the fixed description;
   - its output equals `render_text` of `queries.hotspots`;
@@ -390,7 +390,7 @@ true and wrong hotspot claims with the verifier.
     contracts/interfaces.md, calling `queries.hotspots` through `ask`;
   - add `history` to `Overview` in `backend/src/graphora/graph/results.py` (JSON `{status, reason}` and a text
     line) and set it in `queries.overview`.
-- [ ] T032 [US3] Add `GET /api/v1/hotspots` to `backend/src/graphora/api/routes.py`:
+- [X] T032 [US3] Add `GET /api/v1/hotspots` to `backend/src/graphora/api/routes.py`:
   - `_params(request, ("repository", "snapshot"), ("limit", "include_type_only"))`;
   - `include_type_only` must be `true` or `false`;
   - load the stored graph with `graph.load.loads`, index it, call `queries.hotspots`;

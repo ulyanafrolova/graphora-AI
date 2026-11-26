@@ -221,11 +221,12 @@ def test_only_get(client, method, path):
     _error(getattr(client, method)(path), 405, "method_not_allowed")
 
 
-def test_only_three_read_endpoints(client):
+def test_only_read_endpoints(client):
     paths = client.app.openapi()["paths"]
     assert {p: sorted(v) for p, v in paths.items()} == {
         "/api/v1/repositories": ["get"],
         "/api/v1/graph": ["get"],
+        "/api/v1/hotspots": ["get"],  # 014
         "/api/v1/file": ["get"],
     }
     _error(client.get("/api/v1/import"), 404, "not_found")
