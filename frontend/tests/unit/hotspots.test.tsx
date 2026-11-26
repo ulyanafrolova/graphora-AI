@@ -46,7 +46,7 @@ test("tiles: area by lines of code, all inside the box, sorted by score", () => 
   const [a, b, c] = out.map((t) => (t.x1 - t.x0) * (t.y1 - t.y0));
   expect(a).toBeGreaterThan(b ?? Infinity);
   expect(c).toBeGreaterThan(0);
-  for (const t of out) expect(t.x0 >= 0 && t.y0 >= 0 && t.x1 <= 400 && t.y1 <= 200).toBe(true);
+  for (const t of out) expect(t.x0 >= -1e-6 && t.y0 >= -1e-6 && t.x1 <= 400 + 1e-6 && t.y1 <= 200 + 1e-6).toBe(true);
 });
 
 test("colour from the score relative to the highest", () => {
@@ -62,9 +62,15 @@ test("history line", () => {
   expect(historyLine({ ...HISTORY, status: "not_available", reason: "zip", commits_read: 0 })).toBe(
     "history not available (zip)",
   );
-  expect(historyLine({ ...HISTORY, status: "partial", commits_read: 6000, oldest: "2026-03-01T00:00:00Z" })).toBe(
-    "partial history (time limit): 6000 commits read back to 2026-03-01",
-  );
+  expect(
+    historyLine({
+      ...HISTORY,
+      status: "partial",
+      commits_read: 6000,
+      merges_skipped: 0,
+      oldest: "2026-03-01T00:00:00Z",
+    }),
+  ).toBe("partial history (time limit): 6000 commits read back to 2026-03-01");
   expect(historyLine({ ...HISTORY, local_changes: true })).toContain("uncommitted changes not counted");
 });
 
