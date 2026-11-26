@@ -84,7 +84,7 @@ the expected reason — all without a database.
 
 ### Tests for User Story 1
 
-- [ ] T006 [P] [US1] Write `backend/tests/unit/test_verify_graph.py` on graphs from
+- [X] T006 [P] [US1] Write `backend/tests/unit/test_verify_graph.py` on graphs from
   `tests/unit/synthetic.py`, one test per rule:
   resolved edge at the cited line → `verified`, `fact` true, proof = that edge; same claim on another line →
   `edge_not_on_line`, hint `edge on line 3` (`edges on lines 3, 9` for two); no edge → `no_edge`; only a
@@ -102,7 +102,7 @@ the expected reason — all without a database.
   cycles count and member, key_files rank (`rank_mismatch`, hint `rank 7` / `not ranked`), heuristic item →
   `heuristic`, count ignores any `limit` (full total); verdicts come back in claim order and `dumps` is equal
   on two runs.
-- [ ] T007 [P] [US1] Write `backend/tests/golden/test_verify_fixtures.py` (no `db` mark), parametrized over
+- [X] T007 [P] [US1] Write `backend/tests/golden/test_verify_fixtures.py` (no `db` mark), parametrized over
   every fixture with `expected.json`, using `analyze_fixture` from `conftest.py` and `queries.index`:
   each non-unresolved edge → dependency claim (`path` = source id without its kind prefix, `line`, `target` =
   target id, `name` = edge `symbol`) gets `verified` for `resolved`, `heuristic` for `heuristic`; each
@@ -118,7 +118,7 @@ the expected reason — all without a database.
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement dependency and chain checks in `backend/src/graphora/verify/graph_checks.py`
+- [X] T008 [US1] Implement dependency and chain checks in `backend/src/graphora/verify/graph_checks.py`
   following research R5 exactly: resolve the source with `queries.resolve` (status `not_in_snapshot` →
   `file_not_in_snapshot`; `detected_only`, `not_code` or a skip reason → `file_not_analyzed`; other →
   `invalid_claim`); the source node must be `file:`, `project:` or `solution:`; resolve the target
@@ -128,14 +128,14 @@ the expected reason — all without a database.
   `name` is set → `name_not_imported`; status `verified` if any remaining edge is resolved else `heuristic`;
   proof = remaining edges sorted by `edge_sort_key`; a chain runs each step and takes `results.weakest`,
   stopping at the first rejected step with `step` set. Checks named as in data-model.md § Verdict.
-- [ ] T009 [US1] Implement `verify(claims, ix, text=None)` in `backend/src/graphora/verify/__init__.py`:
+- [X] T009 [US1] Implement `verify(claims, ix, text=None)` in `backend/src/graphora/verify/__init__.py`:
   for each claim in order, `validate` → `invalid_claim`; snapshot check → `snapshot_mismatch`; dispatch by
   kind; definition and mention claims return `rejected` / `text_unavailable` until US2. Run
   `uv run pytest tests/unit/test_verify_graph.py -k "not query"`.
 
 **Commit**: `dependency and chain checks`
 
-- [ ] T010 [US1] Add query result checks to `backend/src/graphora/verify/graph_checks.py` (research R7):
+- [X] T010 [US1] Add query result checks to `backend/src/graphora/verify/graph_checks.py` (research R7):
   call `queries.dependencies | dependents | impact | neighbors | cycles | key_files` with the claim's options
   and `limit=None` (key_files: `limit=None` too); `NodeNotFound` → `target_not_found`, `ValueError` →
   `invalid_claim`; count vs `Answer.total` → `count_mismatch` (hint `actual N`); member resolved with
