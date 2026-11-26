@@ -116,7 +116,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 
 ### Backend: line counts, info, UI serving (FR-023, FR-024, FR-025; research R5–R7)
 
-- [ ] T016 [P] Write `backend/tests/integration/test_ui_api.py` (`db`): `GET /api/v1/files` returns every stored file
+- [X] T016 [P] Write `backend/tests/integration/test_ui_api.py` (`db`): `GET /api/v1/files` returns every stored file
   `{"path", "has_text", "line_count"}` sorted by path and equals `store.get_file(...).line_count` per file; 404 / 409 /
   400 as 018; `GET /api/v1/info` with and without `AskService` and `JobRunner` (`ask.enabled`, `ask.model`
   = the setting or `null`, `jobs.enabled`, `jobs.limits` = the runner's limits (`null` without a runner), `mcp_tools`
