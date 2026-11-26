@@ -51,7 +51,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   it again")` (the exact message `/hotspots` gives today); otherwise `queries.index(loads(stored.graph))`. Change
   the `/hotspots` handler to call it, keeping its parameter checks before the store read. Check:
   `uv run pytest tests/integration/test_hotspots_api.py tests/integration/test_api.py` passes unchanged (db).
-- [ ] T003 [P] Write `backend/tests/unit/test_api_questions.py` for the functions of T004, without a store
+- [X] T003 [P] Write `backend/tests/unit/test_api_questions.py` for the functions of T004, without a store
   (build a fake `Question` row and a parameter dict):
   - `_allowed(row)` = (`repository`, `snapshot`, the row's target parameter) required, and the row's `options` plus
     `limit` when `default_limit` is not None optional (unknown and repeated keys are rejected by `_params`, tested
