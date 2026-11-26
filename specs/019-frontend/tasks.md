@@ -34,7 +34,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 
 ## Phase 1: Setup (frontend scaffold and infrastructure)
 
-- [ ] T001 Create `frontend/` with Vite 7 React-TS: `frontend/package.json` (name `graphora-ui`, `"private": true`,
+- [X] T001 Create `frontend/` with Vite 7 React-TS: `frontend/package.json` (name `graphora-ui`, `"private": true`,
   `"type": "module"`, `engines.node: ">=22"`, scripts `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`,
   `typecheck`, `test` (`vitest run`), `e2e` (`playwright test`), `gen:types`), `frontend/.nvmrc` (`22`),
   `frontend/index.html` (title "Graphora"), `frontend/src/main.tsx`, `frontend/src/App.tsx` (renders "graphora"),
