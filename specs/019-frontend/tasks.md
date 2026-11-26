@@ -380,7 +380,7 @@ equals the API answer.
 - [X] T068 [P] [US5] Implement `frontend/src/graph/Minimap.tsx` (second, non-interactive Cytoscape on the same
   elements, viewport rectangle; dragging the rectangle pans the main view) and "Export SVG"/"Export PNG" in the graph
   toolbar (`cytoscape-svg`, `cy.png`).
-- [ ] T069 [US5] Add to `backend/tests/e2e_server.py` the 5,000-file graph stored as repository `large` (same builder
+- [X] T069 [US5] Add to `backend/tests/e2e_server.py` the 5,000-file graph stored as repository `large` (same builder
   as `test_query_performance.py`, contents `b"x = 1\n"`), and write `frontend/tests/e2e/us5-large.spec.ts`: overview
   of `large` visible in < 5 s; expanding a component and toggling impact each < 1 s (measured with `performance.now()`
   around the action and a `data-ready` attribute set after layout); with impact on, collapsed components show their

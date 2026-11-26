@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path[:0] = [str(HERE), str(HERE / "unit")]
+sys.path[:0] = [str(HERE), str(HERE / "unit"), str(HERE / "integration")]
 
 import uvicorn  # noqa: E402
 
@@ -19,11 +19,14 @@ from conftest import analyze_dir, analyze_fixture  # noqa: E402
 from graphora.agents.claims import ClaimItem, ClaimsReply  # noqa: E402
 from graphora.api import create_app  # noqa: E402
 from graphora.api.ask import AskService  # noqa: E402
+from graphora.graph.build import Analysis  # noqa: E402
+from graphora.graph.load import loads  # noqa: E402
 from graphora.pipeline import PipelineLimits  # noqa: E402
 from graphora.pipeline.jobs import JobRunner  # noqa: E402
 from graphora.store import Store  # noqa: E402
 from history_repos import make_repo  # noqa: E402
 from scripted_model import call, scripted  # noqa: E402
+from test_query_performance import _graph  # noqa: E402
 
 FIXTURES = ("py-cycles", "ts-app", "mixed-fullstack", "csharp-multiproject")
 UI = HERE.parents[1] / "frontend" / "dist"
@@ -70,6 +73,8 @@ def main() -> None:
     work = Path(tempfile.mkdtemp(prefix="graphora-e2e-"))
     make_repo(work / "history-app", HISTORY)
     store.put("history-app", analyze_dir(work / "history-app"))
+    large = loads(_graph())  # the 5,000-file graph of test_query_performance (SC-003)
+    store.put("large", Analysis(doc=large, warnings=(), contents={f.path: b"x = 1\n" for f in large.files}))
 
     runner = JobRunner(url, PipelineLimits(), work_dir=work / "jobs")
     runner.start()
