@@ -73,6 +73,8 @@ def main() -> None:
     work = Path(tempfile.mkdtemp(prefix="graphora-e2e-"))
     make_repo(work / "history-app", HISTORY)
     store.put("history-app", analyze_dir(work / "history-app"))
+    store.put("stale-app", analyze_fixture("py-cycles"))  # analyzed by an older version: errors.spec.ts
+    store._conn.execute("UPDATE analyses SET schema_version = schema_version - 1 WHERE repository = 'stale-app'")
     large = loads(_graph())  # the 5,000-file graph of test_query_performance (SC-003)
     store.put("large", Analysis(doc=large, warnings=(), contents={f.path: b"x = 1\n" for f in large.files}))
 

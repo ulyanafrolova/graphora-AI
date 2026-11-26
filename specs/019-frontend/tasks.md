@@ -406,7 +406,7 @@ equals the API answer.
 
 ## Phase 9: Polish & cross-cutting
 
-- [ ] T073 [P] Write `frontend/tests/e2e/errors.spec.ts`: service stopped → "Graphora service unavailable" + Retry;
+- [X] T073 [P] Write `frontend/tests/e2e/errors.spec.ts`: service stopped → "Graphora service unavailable" + Retry;
   unknown snapshot address → "Snapshot not found"; a `stale` analysis (schema version lowered in the test database by
   `e2e_server.py --stale` repository) → "analyze again".
 - [ ] T074 [P] Write `frontend/tests/e2e/hostile.spec.ts` (SC-004): `e2e_server.py` stores a hand-built analysis whose
