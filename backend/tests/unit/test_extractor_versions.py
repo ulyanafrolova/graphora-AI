@@ -16,6 +16,7 @@ import pytest
 from graphora.adapters import csharp, js, msbuild, python
 from graphora.adapters.msbuild import sln
 from graphora.resolve import csharp as cs_resolve
+from graphora.resolve import http as http_resolve
 from graphora.resolve import js as js_resolve
 from graphora.resolve import python as py_resolve
 
@@ -36,6 +37,7 @@ COMPONENTS = {
     "dotnet-namespaces": (cs_resolve.NAMESPACES_VERSION, ["resolve/data/dotnet_namespaces.txt"], []),
     "dotnet-types": (cs_resolve.TYPES_VERSION, ["resolve/data/dotnet_types.txt"], []),
     "dotnet-implicit-usings": (cs_resolve.IMPLICIT_USINGS_VERSION, ["resolve/data/implicit_usings.txt"], []),
+    "http-bridge": (http_resolve.HTTP_VERSION, ["resolve/http.py"], []),  # 015
 }
 
 

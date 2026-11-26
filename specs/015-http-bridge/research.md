@@ -85,8 +85,10 @@ is `/` + segments joined, with `{}` for `*` (e.g. `/users/{}`).
 
 Matching a call (method `m`, segments `c`) against routes with `m` in methods (or any method when the call's
 method is unknown) and equal segment count: a segment matches when equal or either side is `*`. Among matches,
-a route scores one point per position where its segment is literal; the highest score wins, ties broken by
-the earliest literal position (so `/users/me` beats `/users/{id}`). If all winners are in one file, the call gets
+each position scores 2 when call and route have the same form there (equal text, or both parameters) and 1
+when one is a parameter and the other text; scores are compared position by position. So a call to `/users/me`
+picks `/users/me` over `/users/{id}`, and a call to `` `/users/${x}` `` picks `/users/{id}` over `/users/me`
+(found while implementing: scoring only the route's literal segments sent the second call to `/users/me`). If all winners are in one file, the call gets
 one edge to that file (route line = the first winner's line); winners in two or more files → `ambiguous`. No match →
 `not_found`. An unknown method with matches in one file → edge; in more → `ambiguous`.
 
@@ -132,6 +134,10 @@ code; a node per route — rejected for this slice (spec: file-level edges).
   applies as is. Project-level views (C#) ignore `http_call` like other non-project edges.
 - `verify/graph_checks.py`: no change — a dependency claim on the call line finds the heuristic edge and is
   `heuristic` (FR-013); tests prove it.
+- `completeness.unresolved_imports` (overview and every answer) counts unresolved `http_call` edges too: each is a
+  link the graph could not establish. Renaming the field would change the query contract for MCP and the HTTP API,
+  so the name stays; `mixed-fullstack/queries.json` goes from 1 to 2 (its `app` import and its `/api/items` call).
+  Found while implementing; raised for review.
 - `store`: stored v7 analyses are not reused (version check) and are re-analyzed on the next `--store` run; the
   HTTP API serves stored bytes as stored. `mcp`, `agents`: no change.
 

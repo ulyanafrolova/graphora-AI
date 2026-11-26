@@ -1,3 +1,3 @@
 NAME = "python-adapter"
-VERSION = "0.4.0"  # 0.4.0: `as` names on import edges (017)
+VERSION = "0.5.0"  # 0.5.0: route facts for the HTTP bridge (015)
 EXTRACTOR = f"{NAME}@{VERSION}"
