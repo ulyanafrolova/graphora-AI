@@ -350,7 +350,7 @@ equals the API answer.
   the trace; model, duration and tokens chips only when present; empty state links to Ask agents.
 - [X] T062 [US4] Implement `frontend/src/agents/TracePage.tsx`, `Timeline.tsx`, `AgentFlow.tsx`, `ClaimsTable.tsx`,
   `Budget.tsx`. Check: T061 passes.
-- [ ] T063 [US4] Write `frontend/tests/e2e/us4-agents.spec.ts` (scripted model of `tests/e2e_server.py`): ask the
+- [X] T063 [US4] Write `frontend/tests/e2e/us4-agents.spec.ts` (scripted model of `tests/e2e_server.py`): ask the
   scripted question on `py-cycles`, steps stream in, the answer shows its verified facts and hypothesis, reload keeps
   it in history, Agent trace shows the same steps and claims; a second ask while one runs shows "busy".
 
