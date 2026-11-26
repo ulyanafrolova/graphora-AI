@@ -58,7 +58,7 @@ New tool `components(include_type_only: bool = True)`, read-only, description in
 | `GET /api/v1/components` | `repository`, `snapshot`, `include_type_only` | = `graphora query … components --format json` |
 | `GET /api/v1/cycles` (018) | unchanged | now includes `suggested_cut` |
 | `GET /api/v1/files` | `repository`, `snapshot` | `{"repository", "snapshot", "files": [{"path", "has_text", "line_count"}]}` sorted by path |
-| `GET /api/v1/info` | none | `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled"}, "mcp_tools": [{"name", "description"}]}` |
+| `GET /api/v1/info` | none | `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled", "limits"}, "mcp_tools": [{"name", "description"}]}` |
 
 Errors as 018: 400 parameters, 404 missing repository/snapshot, 409 `stale`.
 

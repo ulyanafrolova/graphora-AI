@@ -7,7 +7,7 @@ All routes are client routes of one page; the service returns `index.html` for t
 | Route | Screen (docs/demo) | Data |
 |---|---|---|
 | `/` | redirect: last opened snapshot, else `/import` | `/repositories` |
-| `/import` | Import (§ 1) | `POST /jobs`, `POST /jobs/zip`, `GET /jobs/{id}` |
+| `/import` | Import (§ 1) | `POST /jobs`, `POST /jobs/zip`, `GET /jobs/{id}`, `/info` (limits) |
 | `/r/:repo/:snap/graph?level&component&node&impact&hide` | Dependency graph (§ 2–4) | `/graph`, `/components`, `/key_files?limit=500`, `/cycles?limit=500`, `/hotspots?limit=500`, `/impact`, `/neighbors`, `/files` |
 | `/r/:repo/:snap/code?path&line` | Code & provenance (§ 5) | `/graph`, `/file`, `/dependencies`, `/dependents` |
 | `/r/:repo/:snap/ask` | Ask agents (§ 6) | `POST /ask` (SSE), history (IndexedDB) |

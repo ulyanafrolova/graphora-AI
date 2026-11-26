@@ -43,7 +43,7 @@ Rule: removing all `links` leaves the group without cycles (checked in tests).
 
 - **Files** (`GET /api/v1/files`): `{"repository", "snapshot", "files": [{"path", "has_text", "line_count"}]}` sorted by
   path.
-- **Info** (`GET /api/v1/info`): `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled"}, "mcp_tools": [{"name",
+- **Info** (`GET /api/v1/info`): `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled", "limits"}, "mcp_tools": [{"name",
   "description"}]}`.
 
 ## Client state (frontend)

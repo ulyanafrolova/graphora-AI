@@ -7,13 +7,16 @@ alternatives.
 
 **Decision**: `frontend/` with Vite 7, React 19, TypeScript (strict), React Router (URL state), TanStack Query
 (server state and caching), Cytoscape.js with the `cytoscape-fcose` layout (compound nodes for components), `d3-hierarchy`
-for the hotspot treemap layout, Shiki `codeToTokens` for code colouring, `idb` for IndexedDB. npm with a committed
+for the hotspot treemap layout, Shiki `codeToTokens` with its JavaScript regex engine for code colouring, `idb` for
+IndexedDB. npm with a committed
 `package-lock.json`; Node 22 LTS (`.nvmrc`, `engines`).
 
 **Rationale**: the constitution fixes React + Vite + TypeScript + Cytoscape.js. fcose lays out compound graphs well and
 deterministically with a fixed seed. TanStack Query gives retries, caching per (repository, snapshot) and loading /
 error states without hand-written stores. `d3-hierarchy` only computes rectangles (a view operation). Shiki's
-`codeToTokens` returns tokens, not HTML, so code is rendered as React text nodes (constitution VI).
+`codeToTokens` returns tokens, not HTML, so code is rendered as React text nodes (constitution VI). Shiki is created
+with `createJavaScriptRegexEngine()` instead of the default Oniguruma WASM engine, so the CSP of R12 needs no
+`'wasm-unsafe-eval'`.
 
 **Alternatives**: Redux/Zustand for server data (more code, no gain); Prism/highlight.js (return HTML strings that would
 need `dangerouslySetInnerHTML`); pnpm/yarn (one more tool for the team; npm ships with Node); D3 force graph instead of
@@ -96,11 +99,14 @@ CLI and MCP are not changed (the line counts live only in the store).
 
 ## R6. Service info (backend, FR-024)
 
-**Decision**: `GET /api/v1/info` → `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled"}, "mcp_tools": [{"name",
-"description"}]}`. `model` is the `provider:model` setting of `AskService`, `null` when asks are off. `mcp_tools` lists
-the tool names and descriptions of `mcp/server.py` (one source of truth for the MCP page, FR-019).
+**Decision**: `GET /api/v1/info` → `{"version", "ask": {"enabled", "model"}, "jobs": {"enabled", "limits"},
+"mcp_tools": [{"name", "description"}]}`. `model` is the `provider:model` setting of `AskService`, `null` when asks are
+off. `jobs.limits` are the analysis limits the running service applies (the six limit keys of 010 and the skipped
+folder names), `null` when jobs are off; the Import screen shows these, never defaults kept in the UI (constitution IV).
+`mcp_tools` lists the tool names and descriptions of `mcp/server.py` in store mode, the mode the MCP page tells users
+to run, so `read_lines` is included (one source of truth for the MCP page, FR-019).
 
-**Rationale**: the header badge, Ask agents and the MCP page need facts only the service knows; no secrets are exposed
+**Rationale**: the header badge, Import limits, Ask agents and the MCP page need facts only the service knows; no secrets are exposed
 (the setting is a model name, never a key).
 
 **Alternatives**: hard-coding tool names in the UI (drifts from the server).
@@ -154,7 +160,8 @@ shows "history will not be kept".
 **Decision**: System level draws components only (≤ a few hundred nodes). Expanding a component adds its files as
 children of the compound node; other components stay collapsed with their component links. File level for a whole
 snapshot uses Cytoscape's WebGL renderer when the snapshot has more than 1,000 files, labels hidden below a zoom
-threshold, and `haystack` edges. Layout: fcose with `randomize: false` and a fixed seed, computed in a Web Worker for
+threshold, and `haystack` edges. Layout: fcose with `randomize: false`, starting from positions on a circle in node-id order (so the result is the
+same on every load), computed in a Web Worker for
 more than 500 nodes. Minimap: a second small Cytoscape instance (view only) synchronised with the main viewport. Export:
 Cytoscape `png()`/`svg` via `cytoscape-svg`.
 
@@ -165,7 +172,8 @@ reports).
 
 ## R12. Security of rendered text
 
-**Decision**: all repository and model text goes through React text nodes. ESLint `react/no-danger` is an error; no
+**Decision**: all repository and model text goes through React text nodes. Shiki uses the JavaScript regex engine
+(R1), so no WASM and no `eval` are needed. ESLint `react/no-danger` is an error; no
 `innerHTML`, no `eval`, no `new Function`; links built only from known route patterns with `encodeURIComponent`. A
 Content-Security-Policy header (`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'
 data: blob:`) is sent by `graphora serve` for the UI files. Tests feed `<script>`, `<img onerror>`, `javascript:` and

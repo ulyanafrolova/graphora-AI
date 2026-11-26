@@ -33,7 +33,7 @@ What it does not change: the graph schema, the store schema, analysis, ingest, h
 - backend: none new (NetworkX `louvain_communities`, Starlette `StaticFiles` come with existing pins);
 - frontend: react, react-dom, react-router, @tanstack/react-query, cytoscape, cytoscape-fcose, cytoscape-svg,
   d3-hierarchy, shiki, idb; dev: vite, @vitejs/plugin-react, typescript, eslint (+ react, react-hooks, import plugins),
-  prettier, vitest, @testing-library/react, msw, @playwright/test, json-schema-to-typescript.
+  prettier, vitest, @testing-library/react, msw, fake-indexeddb, fflate, @playwright/test, json-schema-to-typescript.
 
 **Storage**: PostgreSQL store of 005, read only (new `list_files` query); browser IndexedDB for agent history.
 

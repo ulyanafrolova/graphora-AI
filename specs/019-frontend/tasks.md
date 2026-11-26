@@ -38,7 +38,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `"type": "module"`, `engines.node: ">=22"`, scripts `dev`, `build` (`tsc -b && vite build`), `preview`, `lint`,
   `typecheck`, `test` (`vitest run`), `e2e` (`playwright test`), `gen:types`), `frontend/.nvmrc` (`22`),
   `frontend/index.html` (title "Graphora"), `frontend/src/main.tsx`, `frontend/src/App.tsx` (renders "graphora"),
-  dependencies per plan.md Technical Context; run `npm install` to create `frontend/package-lock.json`. Add
+  dependencies per plan.md Technical Context (including dev dependencies `fake-indexeddb` and `fflate`); run `npm install` to create `frontend/package-lock.json`. Add
   `frontend/node_modules/`, `frontend/test-results/`, `frontend/playwright-report/` to `.gitignore` (root `dist/` is
   already ignored; do NOT ignore `node_modules/` globally, fixtures contain them on purpose).
 - [ ] T002 [P] Configure TypeScript strict in `frontend/tsconfig.json` (+ `tsconfig.node.json`): `strict`,
@@ -99,7 +99,9 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   per research R3: undirected weighted file graph from `_links(ix, include_type_only)` file-to-file pairs (weight = edge
   count, both directions summed), nodes and edges added in sorted order, `nx.community.louvain_communities(g,
   weight="weight", resolution=1, seed=0)`, singletons without links regrouped per top-level folder, naming and ids as
-  T009, `has_cycle`/`in_cycle` from `cycles(ix, include_type_only=include_type_only)` groups. Check: T009, T010 pass.
+  T009, `has_cycle`/`in_cycle` from `cycles(ix, include_type_only=include_type_only)` groups. Check: T009 and
+  `tests/golden/test_queries.py` pass; the new `components` entries keep `tests/golden/test_mcp_queries.py` red until
+  T014 and `tests/golden/test_http_queries.py` until T015 (expected).
 - [ ] T013 Add `components` to the CLI: `_QUESTIONS`, no target, rejects `--limit`, `--symbol`, `--max-depth`,
   `--follow-barrels`, `--level` like `overview` does, in `backend/src/graphora/cli/__init__.py`; test in
   `backend/tests/integration/test_query_cli.py` (text and json, usage errors).
@@ -117,7 +119,8 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [ ] T016 [P] Write `backend/tests/integration/test_ui_api.py` (`db`): `GET /api/v1/files` returns every stored file
   `{"path", "has_text", "line_count"}` sorted by path and equals `store.get_file(...).line_count` per file; 404 / 409 /
   400 as 018; `GET /api/v1/info` with and without `AskService` and `JobRunner` (`ask.enabled`, `ask.model`
-  = the setting or `null`, `jobs.enabled`, `mcp_tools` names = the MCP server's tool names in sorted order); with a UI
+  = the setting or `null`, `jobs.enabled`, `jobs.limits` = the runner's limits (`null` without a runner), `mcp_tools`
+  names = the MCP server's store-mode tool names (including `read_lines`) in sorted order); with a UI
   folder (tmp dir with `index.html` and `assets/app.js`): `GET /` → index, `GET /assets/app.js` → file,
   `GET /r/x/y/graph` → index (200), `GET /api/v1/nope` → JSON 404, `GET /../secret` blocked, CSP header on UI responses
   equals contracts/backend.md; without a UI folder `GET /` → JSON 404 as before.
@@ -125,7 +128,8 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   line_count FROM files WHERE repository = %s AND snapshot = %s ORDER BY path`) in
   `backend/src/graphora/store/store.py`, with a test in `backend/tests/golden/test_store_roundtrip.py`.
 - [ ] T018 Add `GET /api/v1/files` (uses `stored_index` for 404/409, then `list_files`) and `GET /api/v1/info` (no
-  parameters; `version` = `importlib.metadata.version("graphora")`; tools from a new constant `TOOL_NAMES` exported by
+  parameters; `version` = `importlib.metadata.version("graphora")`; `jobs.limits` from the `JobRunner`'s
+  `PipelineLimits` and skipped folder names; tools (store mode, with `read_lines`) from a new constant `TOOL_NAMES` exported by
   `backend/src/graphora/mcp/server.py` with `DESCRIPTIONS`) in `backend/src/graphora/api/routes.py`; `router` takes the
   optional runner and ask service (pass from `create_app`). Paths added to `test_only_read_endpoints`.
 - [ ] T019 Serve the built UI in `backend/src/graphora/api/__init__.py`: `create_app(..., ui: Path | None = None)`
@@ -156,7 +160,8 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   snapshot data (immutable), retry only on `network`/`store_unavailable`.
 - [ ] T024 [P] Write `frontend/tests/unit/route.test.tsx`: route state of data-model.md round-trips through the
   address (`/r/:repo/:snap/:screen?level&component&node&impact&hide&path&line`), encoding of `/` and `:` in names, and
-  unknown values fall back to defaults (`level=system`).
+  unknown values fall back to defaults (`level=system`); switching to another snapshot clears `node`, `component` and
+  `impact` and shows the note "selection cleared: not in this snapshot" when the node does not exist there.
 - [ ] T025 Implement `frontend/src/routes.tsx` and `frontend/src/state/route.ts` (read/write helpers) with React Router;
   `/` redirects to the last opened snapshot (localStorage key `graphora.last`) or `/import`. Check: T024 passes.
 - [ ] T026 [P] Write `frontend/src/styles/tokens.css` and `frontend/src/styles/base.css` with the palette and type of
@@ -193,11 +198,12 @@ equals the API answer.
   class `heuristic` when `heuristic > 0`, class `cycle` when `in_cycle`); Component level → the expanded component's
   files as children, other components collapsed; File level → files and file links from the graph document (classes
   `resolved`/`heuristic`, `type-only`; unresolved imports never become edges; externals only when not hidden);
-  `hide=tests` removes paths matching `(^|/)(tests?|__tests__)/|(_test|\.test|\.spec)\.` ; selection and impact classes.
+  `hide=tests` removes paths matching `(^|/)(tests?|__tests__)/|(_test|\.test|\.spec)\.` ; selection and impact classes;
+  a snapshot with files but no links and a one-file snapshot give valid elements (no edges, no error).
 - [ ] T033 [US1] Implement `frontend/src/graph/elements.ts` (`toElements`) and `frontend/src/graph/style.ts`
   (Cytoscape stylesheet from tokens: dashed amber heuristic, red cycle, blue impact, dim others). Check: T032 passes.
 - [ ] T034 [US1] Implement `frontend/src/graph/GraphView.tsx`: Cytoscape instance, fcose layout (`randomize: false`,
-  fixed seed via deterministic initial positions), level switch System / Component / File (Symbol tab opens search),
+  initial positions on a circle in node-id order so every load gives the same picture), level switch System / Component / File (Symbol tab opens search),
   click component → `level=component&component=…`, click file → `node=…`, filters `hide`, search box placeholder, footer
   breadcrumb "System › <component> (<shown> of <n> files shown)" and the Legend.
 - [ ] T035 [P] [US1] Write `frontend/tests/unit/side-panel.test.tsx`: component panel (name, file count, lines of code =
@@ -211,7 +217,9 @@ equals the API answer.
   component with the count of impact items whose file is in it, the heuristic part as "~N heuristic" (items with
   `confidence: "heuristic"`), "and N more" when `truncated`; highlighted node ids equal the answer's item nodes.
 - [ ] T038 [US1] Implement `frontend/src/graph/ImpactPanel.tsx` and impact highlighting in `GraphView.tsx` (`impact=on`
-  in the address; request `/impact?target=<node>&limit=500`). Check: T037 passes.
+  in the address; request `/impact?target=<node>&limit=500`); collapsed component nodes show a badge with the number
+  of impact items inside them, and only files of expanded components are highlighted one by one. Check: T037 passes
+  (add the badge case to T037).
 - [ ] T039 [P] [US1] Write `frontend/tests/unit/code-view.test.tsx`: `FileTree` from the graph document's coverage
   files (folders collapsible, `detected only`/`not code` marked); `CodeView` renders `/file` lines as text with line
   numbers, binary/long/missing states; lines with outgoing edges get markers by type (resolved import, external, HTTP
@@ -219,7 +227,7 @@ equals the API answer.
   commit`, confidence badge, `extractor@version`, snippet hash; outgoing and incoming lists from `/dependencies` and
   `/dependents` with confidence badges and, for heuristic incoming, the matched call/route text from the edge.
 - [ ] T040 [US1] Implement `frontend/src/code/CodePage.tsx`, `FileTree.tsx`, `CodeView.tsx`, `ProvenancePanel.tsx`,
-  `tokens.ts` (Shiki `codeToTokens`, languages python, typescript, tsx, javascript, csharp loaded lazily; tokens
+  `tokens.ts` (Shiki `codeToTokens` with `createJavaScriptRegexEngine()`, no WASM engine; languages python, typescript, tsx, javascript, csharp loaded lazily; tokens
   rendered as `<span>` text only; fall back to plain text on failure). Check: T039 passes; add these components to
   T031's table.
 - [ ] T041 [US1] Write `frontend/tests/e2e/us1-graph.spec.ts`: open `/`, pick `py-cycles`; System level shows the
@@ -242,8 +250,9 @@ equals the API answer.
   every 1 s shows stages in order (`queued`, `resolving`, `fetching`, `analyzing`, `storing`, `done`) with the current
   one active; `done` shows the pinned commit, coverage table (language, files, share bar, depth full / detected only /
   not code from `/overview`) and "Open graph"; `failed` shows the failure kind and message and "Try again"; 429
-  `too_many_jobs` message; safety limits panel shows the service limits (from the job status `limits` when present,
-  else the documented defaults 50 MB, 5,000 files, 5 min, skipped folders) and "never — static analysis only".
+  `too_many_jobs` message; safety limits panel shows `/info` `jobs.limits` (size, files, time, skipped folders) and
+  "never — static analysis only", and no limit numbers when `jobs.limits` is `null`; a job answered at once with `done`
+  (reused analysis, FR-013) shows "Open graph" without a progress phase.
 - [ ] T043 [US2] Implement `frontend/src/import/ImportPage.tsx`, `SourceForm.tsx`, `ZipDrop.tsx`, `JobProgress.tsx`,
   `Coverage.tsx`, `Limits.tsx`. Check: T042 passes.
 - [ ] T044 [US2] Write `frontend/tests/e2e/us2-import.spec.ts`: upload `fixtures` ZIP built in the test from
@@ -268,7 +277,8 @@ equals the API answer.
   that single link; a self-import → the self link; a group of 21 files → `greedy`; an exact search that exceeds the
   budget (monkeypatch the budget to 1) → `greedy`; removing `suggested_cut.links` always leaves the group acyclic;
   same input twice → same bytes; `level="project"` groups have no `suggested_cut`.
-- [ ] T046 [P] [US3] Add hand-written `suggested_cut` to every `cycles` entry of `fixtures/repos/*/queries.json` (as
+- [ ] T046 [P] [US3] Add hand-written `suggested_cut` to every file-level `cycles` entry (not those with
+  `"level": "project"`) of `fixtures/repos/*/queries.json` (as
   `{"method", "links": ["<source path>:<line> -> <target path>", …]}`) and project it in `project_answer` of
   `backend/tests/golden/test_queries.py`; extend `test_cited_edges_are_graph_edges_and_chains_connect` to check cut
   edges are graph edges.
@@ -372,7 +382,8 @@ equals the API answer.
 - [ ] T069 [US5] Add to `backend/tests/e2e_server.py` the 5,000-file graph stored as repository `large` (same builder
   as `test_query_performance.py`, contents `b"x = 1\n"`), and write `frontend/tests/e2e/us5-large.spec.ts`: overview
   of `large` visible in < 5 s; expanding a component and toggling impact each < 1 s (measured with `performance.now()`
-  around the action and a `data-ready` attribute set after layout); minimap drag pans the view.
+  around the action and a `data-ready` attribute set after layout); with impact on, collapsed components show their
+  impact count badge; minimap drag pans the view.
 
 **Checkpoint**: large graphs meet SC-003.
 
@@ -404,7 +415,8 @@ equals the API answer.
   serve`, tests) and to `CLAUDE.md` Commands (`make web`, `make web-build`, `make web-test`, `make e2e`, `serve --ui`,
   `query … components`).
 - [ ] T076 Run `specs/019-frontend/quickstart.md` by hand (dev and demo modes) and compare each screen with its mockup
-  in `docs/demo/`; note deliberate differences (Assumptions of spec.md) in the PR description.
+  in `docs/demo/`; note deliberate differences (Assumptions of spec.md) in the PR description; time the SC-001 path
+  (empty screen → impact of a file of an imported fixture) and record it (target < 2 min).
 - [ ] T077 Run the full suites: `cd backend && uv run pytest -m "not llm"`, `uv run pytest -m slow`, `make web-test`,
   `make e2e`; then mark the PR ready for review and retarget it to `main` if #39 is merged.
 
