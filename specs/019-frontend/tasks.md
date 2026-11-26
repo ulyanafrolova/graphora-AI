@@ -55,7 +55,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [X] T005 [P] Configure `frontend/playwright.config.ts`: Chromium only, `baseURL` `http://127.0.0.1:8765`,
   `webServer` = `cd ../backend && uv run python tests/e2e_server.py --port 8765` (reuse when running), `testDir:
   tests/e2e`, traces on first retry.
-- [ ] T006 [P] Add to `Makefile`: `web` (`cd frontend && npm run dev`), `web-build` (`cd frontend && npm ci && npm run
+- [X] T006 [P] Add to `Makefile`: `web` (`cd frontend && npm run dev`), `web-build` (`cd frontend && npm ci && npm run
   build`), `web-test` (`cd frontend && npm run lint && npm run typecheck && npm test`), `e2e` (`cd frontend && npm run
   build && npx playwright test`); add them to `.PHONY`.
 - [ ] T007 Add jobs to `.github/workflows/checks.yml`: `frontend` (ubuntu, `actions/setup-node@v4` with Node 22 and npm
