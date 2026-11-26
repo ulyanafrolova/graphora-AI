@@ -97,5 +97,38 @@
         "files_with_errors": 0
       }
     }
+  },
+  {
+    "question": "components",
+    "target": null,
+    "options": {},
+    "expected": {
+      "components": [
+        {
+          "name": "backend/app",
+          "files": [
+            "file:backend/app/__init__.py",
+            "file:backend/app/api.py",
+            "file:backend/app/models.py"
+          ],
+          "has_cycle": false
+        },
+        {
+          "name": "frontend/src",
+          "files": [
+            "file:frontend/src/api.ts",
+            "file:frontend/src/main.tsx"
+          ],
+          "has_cycle": false
+        }
+      ],
+      "links": [],
+      "total": 2,
+      "completeness": {
+        "unresolved_imports": 2,
+        "not_analyzed_files": 0,
+        "files_with_errors": 0
+      }
+    }
   }
 ]

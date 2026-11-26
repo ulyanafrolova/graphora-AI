@@ -359,6 +359,28 @@ make db                      # start PostgreSQL first if you need the HTTP API
 uv run graphora serve        # HTTP API on http://127.0.0.1:8000
 ```
 
+## Web UI
+
+The screens of `docs/demo` (§ 1–9 and § 12) on top of the HTTP API: import, dependency graph with components, code with
+edge provenance, cycles with a suggested cut, hotspots, ask agents with the live trace, MCP for agents. The UI shows
+the service answers and never computes graph facts itself. Needs Node.js 22 and a running PostgreSQL (`make db`).
+
+```
+make web-build                         # npm ci + build into frontend/dist
+cd backend && uv run graphora serve    # API and the built UI on http://127.0.0.1:8000
+```
+
+`serve` picks up `frontend/dist` when it was built; `--ui <dir>` or `$GRAPHORA_UI_DIR` name another folder. For
+development run the API with `uv run graphora serve` and the Vite dev server with `make web`
+(http://localhost:5173, `/api` is proxied to port 8000).
+
+```
+make web-test                          # lint, typecheck, unit tests (Vitest)
+make e2e                               # Playwright: needs GRAPHORA_TEST_DATABASE_URL, stores fixtures on port 8765
+```
+
+PR impact and Security are in the navigation but not available in this version.
+
 ## Authors
 
 This project was completed as part of the AI Agents class at Warsaw University of Technology.

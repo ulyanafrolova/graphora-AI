@@ -35,7 +35,7 @@ def _flags(options):
 def test_tool_equals_query(name, entry, tmp_path):
     graph = tmp_path / "g.json"
     graph.write_bytes(analyzed_graph(name))
-    options = ({} if entry["question"] == "projects" else {"limit": 500}) | entry["options"]
+    options = ({} if entry["question"] in ("projects", "components") else {"limit": 500}) | entry["options"]
     target = [] if entry["target"] is None else [entry["target"]]
     args = options | ({} if entry["target"] is None else {"target": entry["target"]})
 

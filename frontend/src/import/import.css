@@ -1,0 +1,80 @@
+.import-page h1 {
+  margin: 0;
+}
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
+}
+.import-left,
+.import-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.source {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.source label,
+.dropzone {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+.dropzone {
+  margin-top: 16px;
+  padding: 28px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.limits {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+}
+.limits dd {
+  margin: 0;
+}
+.stages {
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+.stages li {
+  padding: 4px 0;
+  color: var(--faint);
+}
+.stages li.done {
+  color: var(--resolved);
+}
+.stages li.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+.coverage {
+  width: 100%;
+  border-collapse: collapse;
+}
+.coverage td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.coverage i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+a.button {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+}
+a.button.primary {
+  background: var(--action);
+  color: #fff;
+  font-weight: 600;
+}

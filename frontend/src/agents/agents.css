@@ -1,0 +1,98 @@
+.ask-page {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+}
+.ask-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ask-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.answer-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.answer-head .muted {
+  margin-left: auto;
+}
+.summary {
+  font-size: 17px;
+}
+.fact {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.fact .check {
+  color: var(--resolved);
+}
+.fact .mono.muted {
+  margin-left: auto;
+}
+.hypothesis {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--heuristic);
+  border-radius: var(--radius);
+  background: var(--heuristic-bg);
+  color: var(--heuristic);
+}
+.suggested {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ask-box {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.ask-box textarea {
+  flex: 1;
+}
+.steps {
+  margin: 0;
+  padding-left: 20px;
+}
+.role-explorer strong,
+.pill.role-explorer {
+  color: var(--role-explorer);
+}
+.role-analyst strong,
+.pill.role-analyst {
+  color: var(--role-analyst);
+}
+.role-reviewer strong {
+  color: var(--role-reviewer);
+}
+.trace-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 20px;
+}
+.timeline {
+  margin: 0;
+  padding: 16px 16px 16px 36px;
+}
+.timeline li {
+  padding: 6px 0;
+}
+.revision {
+  color: var(--cycle);
+}
+.trace-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

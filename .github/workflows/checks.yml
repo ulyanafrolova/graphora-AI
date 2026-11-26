@@ -35,3 +35,70 @@ jobs:
         env:
           GRAPHORA_TEST_DATABASE_URL: postgresql://graphora:graphora@127.0.0.1:5432/graphora_test
         run: cd backend && uv run pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Generated types are up to date
+        run: npm run gen:types && git diff --exit-code src/api/graph.gen.ts
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: graphora
+          POSTGRES_PASSWORD: graphora
+          POSTGRES_DB: graphora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U graphora -d graphora_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      GRAPHORA_TEST_DATABASE_URL: postgresql://graphora:graphora@127.0.0.1:5432/graphora_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install backend
+        run: cd backend && uv sync --locked
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend
+        run: cd frontend && npm ci && npx playwright install --with-deps chromium
+      - name: Build
+        run: cd frontend && npm run build
+      - name: End-to-end tests
+        run: cd frontend && npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/

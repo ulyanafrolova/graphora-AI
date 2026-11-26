@@ -13,7 +13,16 @@ from graphora.graph.serialize import _edge_dict, history_dict
 
 LinkConfidence = Literal["resolved", "heuristic"]
 Question = Literal[
-    "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions", "projects", "hotspots"
+    "dependencies",
+    "dependents",
+    "impact",
+    "neighbors",
+    "cycles",
+    "key_files",
+    "definitions",
+    "projects",
+    "hotspots",
+    "components",
 ]
 
 
@@ -89,19 +98,34 @@ class Item:
 
 
 @dataclass(frozen=True)
+class CycleCut:
+    """The links suggested for removal: `exact` minimum set, or `greedy` (specs/019-frontend research § R4)."""
+
+    method: Literal["exact", "greedy"]
+    links: tuple[Link, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"method": self.method, "links": [link.to_dict() for link in self.links]}
+
+
+@dataclass(frozen=True)
 class CycleGroup:
     files: tuple[str, ...]
     cycle: tuple[Link, ...]
     type_only: bool
     confidence: LinkConfidence
+    suggested_cut: CycleCut | None = None  # 019: file level only
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "files": list(self.files),
             "cycle": [link.to_dict() for link in self.cycle],
             "type_only": self.type_only,
             "confidence": self.confidence,
         }
+        if self.suggested_cut is not None:
+            out["suggested_cut"] = self.suggested_cut.to_dict()
+        return out
 
 
 @dataclass(frozen=True)
@@ -164,6 +188,43 @@ class ProjectSummary:
 
 
 @dataclass(frozen=True)
+class Component:
+    """A group of files found by community detection (specs/019-frontend data-model.md)."""
+
+    id: str
+    name: str
+    files: tuple[str, ...]
+    has_cycle: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "files": list(self.files),
+            "file_count": len(self.files),
+            "has_cycle": self.has_cycle,
+        }
+
+
+@dataclass(frozen=True)
+class ComponentLink:
+    source: str
+    target: str
+    imports: int
+    heuristic: int
+    in_cycle: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "source": self.source,
+            "target": self.target,
+            "imports": self.imports,
+            "heuristic": self.heuristic,
+            "in_cycle": self.in_cycle,
+        }
+
+
+@dataclass(frozen=True)
 class Answer:
     """`None` marks a field the question does not use; it is left out of the JSON (contracts/answers.md)."""
 
@@ -183,6 +244,8 @@ class Answer:
     definitions: tuple[DefinitionMatch, ...] | None = None
     projects: tuple[ProjectSummary, ...] | None = None
     history: History | None = None
+    components: tuple[Component, ...] | None = None  # 019
+    links: tuple[ComponentLink, ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -193,7 +256,7 @@ class Answer:
             "total": self.total,
             "truncated": self.truncated,
         }
-        for name in ("items", "incoming", "outgoing", "groups", "definitions", "projects"):
+        for name in ("items", "incoming", "outgoing", "groups", "definitions", "projects", "components", "links"):
             value = getattr(self, name)
             if value is not None:
                 out[name] = [x.to_dict() for x in value]
@@ -323,6 +386,21 @@ def _group_lines(answer: Answer) -> list[str]:
         marks = (" (likely)" if group.confidence == "heuristic" else "") + (" (type-only)" if group.type_only else "")
         lines.append(f"cycle {n}: {', '.join(_name(f) for f in group.files)}{marks}")
         lines.append(f"  {_chain_text(group.cycle)}")
+        if group.suggested_cut is not None:
+            cut = ", ".join(f"{_name(link.edges[0].source)}:{link.edges[0].line} → {_name(link.target)}" for link in group.suggested_cut.links)
+            lines.append(f"  suggested cut ({group.suggested_cut.method}): {cut}")
+    return lines
+
+
+def _component_lines(answer: Answer) -> list[str]:
+    names = {c.id: c.name for c in answer.components or ()}
+    lines = [f"{c.name}  {_files(len(c.files))}{'  cycle' if c.has_cycle else ''}" for c in answer.components or ()]
+    if answer.links:
+        lines.append("links:")
+    for link in answer.links or ():
+        heuristic = f"  heuristic {link.heuristic}" if link.heuristic else ""
+        cycle = "  cycle" if link.in_cycle else ""
+        lines.append(f"  {names[link.source]} → {names[link.target]}  imports {link.imports}{heuristic}{cycle}")
     return lines
 
 
@@ -369,6 +447,7 @@ _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
     "key_files": _key_file_lines,
     "definitions": _definition_lines,
     "hotspots": _hotspot_lines,
+    "components": _component_lines,
 }
 
 

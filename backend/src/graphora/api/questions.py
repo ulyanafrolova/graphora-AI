@@ -39,6 +39,7 @@ QUESTIONS: tuple[Question, ...] = (
     Question("key_files", queries.key_files, None, ("include_type_only",), 10),
     Question("overview", queries.overview, None, (), None),
     Question("projects", queries.projects, None, (), None),
+    Question("components", queries.components, None, ("include_type_only",), None),
 )
 
 

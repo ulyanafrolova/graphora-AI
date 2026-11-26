@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections import Counter, defaultdict
+from itertools import combinations
 from typing import TypeVar
 
 import networkx as nx
@@ -25,6 +26,9 @@ from graphora.graph.project_view import ProjectLink, ProjectView
 from graphora.graph.results import (
     Answer,
     Completeness,
+    Component,
+    ComponentLink,
+    CycleCut,
     CycleGroup,
     DefinitionMatch,
     Item,
@@ -467,6 +471,54 @@ def _shortest_cycle(g: nx.DiGraph, start: str, members: set[str]) -> list[str]:
     raise AssertionError(f"{start} is in a loop but no cycle was found")
 
 
+CUT_BUDGET = 200_000  # acyclicity checks of the exact search before it falls back to greedy
+CUT_EXACT_FILES = 20
+
+
+def _greedy_cut(g: nx.DiGraph) -> list[tuple[str, str]]:
+    g = g.copy()
+    chosen = []
+    while not nx.is_directed_acyclic_graph(g):
+        on: Counter[tuple[str, str]] = Counter()
+        for n, cycle in enumerate(nx.simple_cycles(g)):
+            if n >= 10_000:
+                break
+            on.update(zip(cycle, cycle[1:] + cycle[:1], strict=True))
+        if not on:
+            on.update({(a, b): g.in_degree(a) * g.out_degree(b) for a, b in g.edges})
+        pick = min(on, key=lambda pair: (-on[pair], len(g.edges[pair]["edges"]), pair))
+        g.remove_edge(*pick)
+        chosen.append(pick)
+    return chosen
+
+
+def _exact_cut(g: nx.DiGraph) -> list[tuple[str, str]] | None:
+    """The fewest links that leave `g` acyclic, then fewest import edges, then path order; None over budget."""
+    links = sorted(g.edges, key=lambda pair: (len(g.edges[pair]["edges"]), pair))
+    checks = 0
+    for k in range(1, len(links) + 1):
+        best = None
+        for combo in combinations(links, k):
+            checks += 1
+            if checks > CUT_BUDGET:
+                return None
+            h = g.copy()
+            h.remove_edges_from(combo)
+            if nx.is_directed_acyclic_graph(h):
+                cost = (sum(len(g.edges[pair]["edges"]) for pair in combo), sorted(combo))
+                best = cost if best is None or cost < best else best
+        if best is not None:
+            return best[1]
+    return None
+
+
+def _suggested_cut(ix: GraphIndex, g: nx.DiGraph, include_type_only: bool) -> CycleCut:
+    exact = _exact_cut(g) if g.number_of_nodes() <= CUT_EXACT_FILES else None
+    pairs = exact if exact is not None else _greedy_cut(g)
+    links = tuple(ix.link(a, b, include_type_only) for a, b in sorted(pairs))
+    return CycleCut("exact" if exact is not None else "greedy", links)
+
+
 def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None = None, level: str = "file") -> Answer:
     """Every group of files that depend on each other in a loop, with one example cycle each (FR-008)."""
     _check_limit(limit)
@@ -485,6 +537,7 @@ def cycles(ix: GraphIndex, *, include_type_only: bool = True, limit: int | None 
                 cycle=cycle,
                 type_only=not _loops(runtime.subgraph(members)),
                 confidence=weakest(link.confidence for link in cycle),
+                suggested_cut=_suggested_cut(ix, files.subgraph(members), include_type_only),
             )
         )
     shown, total, truncated = _limit(groups, limit)
@@ -564,6 +617,112 @@ def hotspots(ix: GraphIndex, *, include_type_only: bool = True, limit: int | Non
     items.sort(key=lambda i: (-(i.score or 0), -(i.commits or 0), -(i.transitive_dependents or 0), i.node))
     options = {"include_type_only": include_type_only, "limit": limit}
     return _answer(ix, "hotspots", None, options, items, limit, history=dataclasses.replace(history, files=()))
+
+
+
+def _folder(path: str) -> tuple[str, ...]:
+    return tuple(path.split("/")[:-1])
+
+
+def _base_name(paths: list[str]) -> str:
+    """The longest common folder, else the most frequent top-level folder (ties by path order; root files are `.`)."""
+    common = _folder(paths[0])
+    for path in paths[1:]:
+        folder = _folder(path)
+        n = 0
+        while n < min(len(common), len(folder)) and common[n] == folder[n]:
+            n += 1
+        common = common[:n]
+    if common:
+        return "/".join(common)
+    tops = [_folder(p)[0] if _folder(p) else "." for p in paths]
+    counts = Counter(tops)
+    best = max(counts.values())
+    return next(top for top in tops if counts[top] == best)
+
+
+def _unique(names: list[str]) -> list[str]:
+    seen: Counter[str] = Counter()
+    out = []
+    for name in names:
+        seen[name] += 1
+        out.append(name if seen[name] == 1 else f"{name} · {seen[name]}")
+    return out
+
+
+def _component_names(groups: list[list[str]]) -> list[str]:
+    return _unique([_base_name(g) for g in groups])
+
+
+def components(ix: GraphIndex, *, include_type_only: bool = True) -> Answer:
+    """Files grouped by Louvain community detection with a fixed seed (specs/019-frontend research § R3)."""
+    g = _links(ix, include_type_only)
+    files = sorted(n for n in ix.nodes if n.startswith("file:"))
+    weights: Counter[tuple[str, str]] = Counter()
+    for source, target, data in g.edges(data=True):
+        if source != target and source.startswith("file:") and target.startswith("file:"):
+            weights[tuple(sorted((source, target)))] += len(data["edges"])  # type: ignore[index]
+    undirected = nx.Graph()
+    undirected.add_nodes_from(sorted({n for pair in weights for n in pair}))
+    for (a, b) in sorted(weights):
+        undirected.add_edge(a, b, weight=weights[(a, b)])
+    linked = sorted(
+        (sorted(c) for c in nx.community.louvain_communities(undirected, weight="weight", resolution=1, seed=0)),
+        key=lambda c: c[0],
+    )
+    paths = lambda ids: [i.removeprefix("file:") for i in ids]  # noqa: E731
+    bases = [_base_name(paths(c)) for c in linked]
+    groups: list[list[str]] = [list(c) for c in linked]
+    leftovers: dict[str, list[str]] = defaultdict(list)
+    for node in files:
+        if node in undirected:
+            continue
+        folder = "/".join(_folder(node.removeprefix("file:"))) or "."
+        homes = [i for i, b in enumerate(bases) if b == "." or folder == b or folder.startswith(b + "/")]
+        if homes:
+            groups[max(homes, key=lambda i: (len(bases[i]) if bases[i] != "." else 0, -i))].append(node)
+        else:
+            parts = _folder(node.removeprefix("file:"))
+            leftovers[parts[0] if parts else "."].append(node)
+    named = [(sorted(c), b) for c, b in zip(groups, bases, strict=True)]
+    named += [(sorted(c), _base_name(paths(c))) for c in leftovers.values()]
+    named.sort(key=lambda pair: pair[0][0])
+    names = _unique([b for _, b in named])
+    where = {f: i for i, (c, _) in enumerate(named) for f in c}
+    loops = [set(group.files) for group in cycles(ix, include_type_only=include_type_only).groups or ()]
+    comps = tuple(
+        Component(f"component:{i + 1}", names[i], tuple(c), any(loop <= set(c) for loop in loops))
+        for i, (c, _) in enumerate(named)
+    )
+    imports: Counter[tuple[int, int]] = Counter()
+    heuristic: Counter[tuple[int, int]] = Counter()
+    for source, target in g.edges():
+        if source in where and target in where and where[source] != where[target]:
+            pair = (where[source], where[target])
+            imports[pair] += 1
+            if ix.link(source, target, include_type_only).confidence == "heuristic":
+                heuristic[pair] += 1
+    links = tuple(
+        ComponentLink(
+            f"component:{a + 1}",
+            f"component:{b + 1}",
+            imports[(a, b)],
+            heuristic[(a, b)],
+            any(any(where[f] == a for f in loop) and any(where[f] == b for f in loop) for loop in loops),
+        )
+        for a, b in sorted(imports)
+    )
+    return Answer(
+        snapshot=ix.doc.snapshot,
+        question="components",
+        target=None,
+        options={"include_type_only": include_type_only},
+        total=len(comps),
+        truncated=False,
+        completeness=ix.completeness,
+        components=comps,
+        links=links,
+    )
 
 
 def overview(ix: GraphIndex) -> Overview:

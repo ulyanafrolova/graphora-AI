@@ -11,7 +11,7 @@ from graphora.api import create_app
 
 pytestmark = pytest.mark.db
 
-HTTP = {"dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "projects"}
+HTTP = {"dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "projects", "components"}
 
 CASES = [
     pytest.param(p.parent.name, entry, id=f"{p.parent.name}-{i}-{entry['question']}")
@@ -64,7 +64,7 @@ def ask(client, repo, snapshot, question, **params):
 def test_answer_equals_query(store, tmp_path, name, entry):
     snapshot, graph = stored(store, tmp_path, name)
     client = TestClient(create_app(store))
-    options = ({} if entry["question"] == "projects" else {"limit": 500}) | entry["options"]
+    options = ({} if entry["question"] in ("projects", "components") else {"limit": 500}) | entry["options"]
     target = [] if entry["target"] is None else [entry["target"]]
     params = {k: _param(v) for k, v in options.items()} | ({} if entry["target"] is None else {"target": entry["target"]})
 

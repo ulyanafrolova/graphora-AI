@@ -11,7 +11,19 @@ from graphora.mcp import Served, create_server
 from mcp_client import call, calls, canonical, instructions, list_tools, text
 from synthetic import SNAP, edge, make_doc
 
-GRAPH_TOOLS = ["graph_overview", "find_definitions", "dependencies", "dependents", "impact", "neighbors", "cycles", "projects", "key_files", "hotspots"]
+GRAPH_TOOLS = [
+    "graph_overview",
+    "find_definitions",
+    "dependencies",
+    "dependents",
+    "impact",
+    "neighbors",
+    "cycles",
+    "projects",
+    "key_files",
+    "hotspots",
+    "components",  # 019
+]
 
 
 def server(*edges, **doc):
@@ -45,6 +57,7 @@ def test_arguments_and_defaults():
         "level": "file",
     }
     assert defaults["key_files"] == {"include_type_only": True, "limit": 10}
+    assert defaults["components"] == {"include_type_only": True}
     assert defaults["cycles"] == {"include_type_only": True, "limit": 50, "level": "file"}
     assert schemas["dependencies"]["properties"]["level"]["enum"] == ["file", "project"]
     assert schemas["impact"]["required"] == ["target"]

@@ -1,0 +1,106 @@
+.insight-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.insight-head h1 {
+  margin: 0;
+}
+.cycles-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr 360px;
+  gap: 20px;
+  align-items: start;
+}
+.cycle-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.cycle-list button {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  text-align: left;
+  background: var(--panel);
+  padding: 14px 16px;
+}
+.cycle-list li[aria-current="true"] button {
+  border-color: var(--cycle);
+}
+.rows li.cut {
+  color: var(--cycle);
+  text-decoration: line-through dashed;
+}
+.cut-card pre {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  white-space: pre-wrap;
+}
+.recommend {
+  padding: 10px 12px;
+  border: 1px solid var(--heuristic);
+  border-radius: var(--radius);
+  background: var(--heuristic-bg);
+  color: var(--heuristic);
+}
+.hotspots-grid {
+  display: grid;
+  grid-template-columns: 1fr 460px;
+  gap: 20px;
+  align-items: start;
+}
+.treemap {
+  position: relative;
+  width: 100%;
+  margin-top: 12px;
+}
+.tile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  color: #fff;
+  text-align: left;
+}
+.risks {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.risks th {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.risks td,
+.risks th {
+  padding: 9px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.legend-ramp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.legend-ramp i {
+  display: inline-block;
+  width: 220px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #1f3d2b, #d29922, #da3633);
+}
