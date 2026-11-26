@@ -149,7 +149,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
 - [X] T021 [P] Write `frontend/tests/unit/api.test.ts` (MSW): `apiGet` builds `/api/v1/<path>?<params>` with
   `encodeURIComponent`, parses JSON, turns `{"error": {"kind", "message"}}` bodies into `ApiError` with `status`,
   `kind`, `message`, `retryAfter` (from `Retry-After`); network failure → `ApiError` kind `network`.
-- [ ] T022 Implement `frontend/src/api/client.ts` (`apiGet`, `apiPost`, `apiUpload`, `ApiError`) and
+- [X] T022 Implement `frontend/src/api/client.ts` (`apiGet`, `apiPost`, `apiUpload`, `ApiError`) and
   `frontend/src/api/types.ts` (hand-written types of Answer, Item, Link, Edge (from `graph.gen.ts`), CycleGroup with
   `suggested_cut`, Component, ComponentLink, Overview, Hotspot fields, Definitions, Job status (stages `queued`,
   `resolving`, `fetching`, `analyzing`, `storing`, `done`, `failed`), Ask step/answer events, Info, Files) per

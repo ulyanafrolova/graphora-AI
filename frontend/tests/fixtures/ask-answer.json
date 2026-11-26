@@ -1,0 +1,200 @@
+{
+  "answer": {
+    "counts": {
+      "model_calls": 8,
+      "revisions": 1,
+      "tool_calls": 1
+    },
+    "end": "answered",
+    "facts": [
+      {
+        "cite": "loop/c.py:1@content:485322f43c0d7bd4",
+        "claim": {
+          "kind": "dependency",
+          "snapshot": "content:485322f43c0d7bd4",
+          "statement": "loop/c.py imports loop/a.py",
+          "steps": [
+            {
+              "line": 1,
+              "name": "a",
+              "path": "loop/c.py",
+              "target": "file:loop/a.py"
+            }
+          ]
+        },
+        "text": "`loop/c.py` imports `loop/a.py` (name `a`)"
+      },
+      {
+        "cite": "user.py:1@content:485322f43c0d7bd4",
+        "claim": {
+          "kind": "dependency",
+          "snapshot": "content:485322f43c0d7bd4",
+          "statement": "user.py imports loop/a.py",
+          "steps": [
+            {
+              "line": 1,
+              "name": "a",
+              "path": "user.py",
+              "target": "file:loop/a.py"
+            }
+          ]
+        },
+        "text": "`user.py` imports `loop/a.py` (name `a`)"
+      }
+    ],
+    "hypotheses": [
+      {
+        "cite": "frontend.ts:1@content:485322f43c0d7bd4",
+        "claim": {
+          "kind": "dependency",
+          "snapshot": "content:485322f43c0d7bd4",
+          "statement": "the frontend calls loop/a.py",
+          "steps": [
+            {
+              "line": 1,
+              "path": "frontend.ts",
+              "target": "loop/a.py"
+            }
+          ]
+        },
+        "reason": "file_not_in_snapshot",
+        "text": "`frontend.ts` imports `loop/a.py`"
+      }
+    ],
+    "likely": [],
+    "question": "What breaks if I change loop/a.py?",
+    "snapshot": "content:485322f43c0d7bd4",
+    "summary": "Changing loop/a.py breaks loop/c.py and user.py.",
+    "summary_source": "model"
+  },
+  "trace": [
+    {
+      "detail": "round 0",
+      "kind": "role_start",
+      "n": 1,
+      "role": "explorer"
+    },
+    {
+      "args": {
+        "target": "loop/a.py"
+      },
+      "citation_ids": [
+        "c1",
+        "c2"
+      ],
+      "cut": false,
+      "kind": "tool_call",
+      "n": 2,
+      "role": "explorer",
+      "tool": "dependents"
+    },
+    {
+      "detail": "round 0",
+      "kind": "role_start",
+      "n": 3,
+      "role": "analyst"
+    },
+    {
+      "cite": "loop/c.py:1@content:485322f43c0d7bd4",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"name\":\"a\",\"path\":\"loop/c.py\",\"target\":\"file:loop/a.py\"}]}",
+      "kind": "claim",
+      "n": 4,
+      "role": "analyst"
+    },
+    {
+      "cite": "user.py:1@content:485322f43c0d7bd4",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"name\":\"a\",\"path\":\"user.py\",\"target\":\"file:loop/a.py\"}]}",
+      "kind": "claim",
+      "n": 5,
+      "role": "analyst"
+    },
+    {
+      "cite": "frontend.ts:1@content:485322f43c0d7bd4",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"path\":\"frontend.ts\",\"target\":\"loop/a.py\"}]}",
+      "kind": "claim",
+      "n": 6,
+      "role": "analyst"
+    },
+    {
+      "detail": "round 0",
+      "kind": "role_start",
+      "n": 7,
+      "role": "reviewer"
+    },
+    {
+      "cite": "loop/c.py:1@content:485322f43c0d7bd4",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"name\":\"a\",\"path\":\"loop/c.py\",\"target\":\"file:loop/a.py\"}]}",
+      "kind": "verdict",
+      "n": 8,
+      "role": "reviewer",
+      "status": "verified"
+    },
+    {
+      "cite": "user.py:1@content:485322f43c0d7bd4",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"name\":\"a\",\"path\":\"user.py\",\"target\":\"file:loop/a.py\"}]}",
+      "kind": "verdict",
+      "n": 9,
+      "role": "reviewer",
+      "status": "verified"
+    },
+    {
+      "cite": "frontend.ts:1@content:485322f43c0d7bd4",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"path\":\"frontend.ts\",\"target\":\"loop/a.py\"}]}",
+      "kind": "verdict",
+      "n": 10,
+      "reason": "file_not_in_snapshot",
+      "role": "reviewer",
+      "status": "rejected"
+    },
+    {
+      "cite": "frontend.ts:1@content:485322f43c0d7bd4",
+      "detail": "h1",
+      "key": "{\"kind\":\"dependency\",\"snapshot\":\"content:485322f43c0d7bd4\",\"steps\":[{\"line\":1,\"path\":\"frontend.ts\",\"target\":\"loop/a.py\"}]}",
+      "kind": "hypothesis",
+      "n": 11,
+      "reason": "file_not_in_snapshot",
+      "role": "reviewer"
+    },
+    {
+      "detail": "revision 1 of 2: 1 claims",
+      "kind": "revision",
+      "n": 12,
+      "role": "reviewer"
+    },
+    {
+      "detail": "round 1",
+      "kind": "role_start",
+      "n": 13,
+      "role": "explorer"
+    },
+    {
+      "detail": "round 1",
+      "kind": "role_start",
+      "n": 14,
+      "role": "analyst"
+    },
+    {
+      "detail": "round 1",
+      "kind": "role_start",
+      "n": 15,
+      "role": "reviewer"
+    },
+    {
+      "kind": "role_start",
+      "n": 16,
+      "role": "answer"
+    },
+    {
+      "detail": "model",
+      "kind": "summary",
+      "n": 17,
+      "role": "answer"
+    },
+    {
+      "detail": "answered",
+      "kind": "end",
+      "n": 18,
+      "role": "answer"
+    }
+  ]
+}

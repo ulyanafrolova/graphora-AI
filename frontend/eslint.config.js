@@ -56,7 +56,15 @@ export default tseslint.config(
         { selector: "MemberExpression[property.name='innerHTML']", message: "render text, never HTML (research R12)" },
         { selector: "MemberExpression[property.name='outerHTML']", message: "render text, never HTML (research R12)" },
       ],
-      "import/order": ["error", { "newlines-between": "always", alphabetize: { order: "asc" } }],
+      "import/order": [
+        "error",
+        {
+          "newlines-between": "always",
+          alphabetize: { order: "asc" },
+          pathGroups: [{ pattern: "@/**", group: "internal" }],
+          pathGroupsExcludedImportTypes: ["builtin"],
+        },
+      ],
     },
   },
 );
