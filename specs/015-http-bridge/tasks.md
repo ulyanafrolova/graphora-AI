@@ -101,7 +101,8 @@ with a spec reference, one-line docstrings where not obvious).
   gives nothing.
 - [ ] T011 [P] [US1] Extend `backend/tests/unit/test_http_extract.py` (JS/TS part): `HttpCallFact` for
   `fetch("/a")` (method `GET`), `fetch("/a", { method: "POST" })` (`POST`), `window.fetch("/a")`,
-  `axios.get("/a")`, `axios.delete('/a')`, `axios({ url: "/a", method: "put" })` (`PUT`), with `parts`
+  `globalThis.fetch("/a")`, `axios.get("/a")`, `axios.delete('/a')`, `axios({ url: "/a", method: "put" })`
+  (`PUT`), `axios.request({ url: "/a", method: "patch" })` (`PATCH`), with `parts`
   `(Part("text", "/a"),)`, line and column; `fetch("/a", { method: m })` has `method=None`; `getUser("/a")`
   and a member call `client.get("/a")` give nothing; works in `.ts`, `.tsx`, `.js`, `.jsx`.
 - [ ] T012 [P] [US1] Write `backend/tests/unit/test_http_match.py`: with hand-built `Route`s and calls,
@@ -111,7 +112,8 @@ with a spec reference, one-line docstrings where not obvious).
 - [ ] T013 [US1] Write the US1 part of the fixture: `fixtures/repos/http-bridge/repo/backend/app/items.py`
   (FastAPI `app = FastAPI()`, `@app.get("/api/items")`, `@app.post("/api/items")`),
   `backend/app/legacy.py` (Flask `app = Flask(__name__)`, `@app.route("/legacy/ping")`),
-  `frontend/src/items.ts` (`fetch("/api/items")`, `axios.post("/api/items", body)`, `fetch("/legacy/ping")`);
+  `frontend/src/items.ts` (`fetch("/api/items")`, `axios.post("/api/items", body)`, `fetch("/legacy/ping")`,
+  and `fetch("/api/items")` again on a later line: two edges, one per line);
   and its hand-written `fixtures/repos/http-bridge/expected.json` with all nodes, the import edges of these
   files and the three `http_call` edges (`heuristic`, `http_route`, symbols `GET /api/items`,
   `POST /api/items`, `GET /legacy/ping`, call lines, `route_line`s), plus coverage.
@@ -119,7 +121,9 @@ with a spec reference, one-line docstrings where not obvious).
   `dependents("backend/app/items.py")` lists `frontend/src/items.ts` with confidence `heuristic` and
   `(likely)` in the text; `impact` includes it as heuristic; `dependents(..., symbol="GET /api/items")` keeps
   only the `GET` call; a dependency `Claim` from `frontend/src/items.ts` at the `fetch` line to
-  `backend/app/items.py` verifies `heuristic` with `verify`; two analyses are byte-identical.
+  `backend/app/items.py` verifies `heuristic` with `verify`; a scripted 012 agent run (`tests/unit/scripted_model.py`)
+  that cites that call ends with the claim in `answer.likely`, never in `answer.facts` (SC-006); two analyses
+  are byte-identical.
 
 ### Implementation
 
@@ -195,16 +199,25 @@ and same-file base constants applied when literal; never guessed otherwise.
   (`""`), `app.register_blueprint(bp, url_prefix="/x")`, a non-literal prefix → `None`; JS `constants` for
   `const API = "/api"` at top level only (not inside a function, not `let`, not a template).
 - [ ] T026 [P] [US3] Extend `backend/tests/unit/test_http_match.py`: route prefixes compose router prefix +
-  mount prefix through an imported name (`from app.routers import items` + `items.router`, using the Python
-  import index); a router mounted twice gives two routes; a never-mounted router keeps its own prefix; a
+  mount prefix through an imported name (`from backend.app.routers import items` + `items.router`, using the
+  Python import index); FastAPI `include_router(prefix="/v1")` of a router with `prefix="/orders"` gives
+  `/v1/orders/…`; Flask `register_blueprint(bp, url_prefix="/x")` of a blueprint with `url_prefix="/b"` gives
+  `/x/…` (replaced, not `/x/b/…`), without `url_prefix` it gives `/b/…`; a router mounted twice gives two
+  routes; a never-mounted router keeps its own prefix; a
   non-literal prefix anywhere on the path makes the route match nothing; a call `` `${API}/items` `` with
   `const API = "/api"` reads `/api/items`; an imported `API` (not a same-file constant) makes the call dynamic.
-- [ ] T027 [US3] Add the US3 files to the fixture: `fixtures/repos/http-bridge/repo/backend/app/main.py`
-  (`app = FastAPI()`, `from app.routers import orders`, `app.include_router(orders.router, prefix="/v1")`),
+- [ ] T027 [US3] Add the US3 files to the fixture. Imports between backend files use the full dotted path from
+  the repository root (`backend.app…`; the Python resolver's source roots are the root and `src/`), and
+  `backend/`, `backend/app/` and `backend/app/routers/` get `__init__.py`:
+  `fixtures/repos/http-bridge/repo/backend/app/main.py` (`app = FastAPI()`,
+  `from backend.app.routers import orders`, `app.include_router(orders.router, prefix="/v1")`),
   `backend/app/routers/orders.py` (`router = APIRouter(prefix="/orders")`, `@router.get("/{order_id}")`),
   `backend/app/blueprints.py` (Flask `bp = Blueprint("admin", __name__, url_prefix="/admin")`,
-  `@bp.route("/stats")`, and `app.register_blueprint(bp)` in `legacy.py`), `frontend/src/orders.ts`
-  (`const API = "/v1"`; `` fetch(`${API}/orders/${id}`) ``; `axios.get("/admin/stats")`); update
+  `@bp.route("/stats")`; `report = Blueprint("report", __name__, url_prefix="/old")`, `@report.route("/daily")`),
+  and in `legacy.py` `from backend.app.blueprints import bp, report`, `app.register_blueprint(bp)`,
+  `app.register_blueprint(report, url_prefix="/reports")` (Flask replaces `/old` → route `/reports/daily`);
+  `frontend/src/orders.ts` (`const API = "/v1"`; `` fetch(`${API}/orders/${id}`) ``;
+  `axios.get("/admin/stats")`; `fetch("/reports/daily")`; `fetch("/old/daily")` → not found); update
   `fixtures/repos/http-bridge/expected.json` by hand.
 
 ### Implementation
@@ -255,7 +268,9 @@ and same-file base constants applied when literal; never guessed otherwise.
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T036 [P] Write `fixtures/repos/http-bridge/repo/README.md` final version listing each file → spec scenario,
-  and check `expected.json` once more against the source by hand (every call and route line).
+  and check `expected.json` once more against the source by hand (every call and route line). Say in the module
+  docstring of `backend/src/graphora/resolve/http.py` that calls are recognized by their form only (a local
+  function named `fetch` is not told apart), which is why every HTTP edge is heuristic.
 - [ ] T037 [P] Update `docs/product/project-context.md` §9 (bridge implemented for FastAPI/Flask and
   fetch/axios, heuristic) and `CLAUDE.md` § Repository layout or commands only if a command changed (none
   expected).

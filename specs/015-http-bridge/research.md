@@ -36,9 +36,14 @@ Prefix facts, per file:
 - `<app>.include_router(<expr>, prefix="<lit>")` and `<app>.register_blueprint(<expr>, url_prefix="<lit>")`
   where `<expr>` is a name or `module.name`.
 
-A router's full prefix = its own prefix + the prefix of the mount that includes it, followed through
+A route's full path differs by framework. FastAPI: mount `prefix` + router `prefix` + route path
+(`include_router` prepends). Flask: (`register_blueprint(url_prefix=…)` if given, else the blueprint's own
+`url_prefix`) + route path (Flask's register-time `url_prefix` replaces the blueprint's, it does not add to it).
+Mounts are followed through
 `module.name` / imported names with the existing 017 Python resolver index (the import edges already say which
-file a name comes from). Several mounts of one router give several routes. A router that is never mounted keeps its
+file a name comes from). Names in mounts are resolved through the Python resolver, whose source roots are the repository root and
+`src/` (001 research): code under another folder must import with the full dotted path from the root
+(`backend.app.routers`). Several mounts of one router give several routes. A router that is never mounted keeps its
 own prefix only. A mount (or a router declaration) whose prefix is not literal makes those routes "prefix
 unknown": they match nothing, and are never guessed (FR-002).
 

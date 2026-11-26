@@ -104,8 +104,9 @@ constant; check the matches against the expected result.
 4. **Given** `const API = "/api"` at the top level of a frontend file and `` fetch(`${API}/items`) `` in the same
    file, **When** analyzed, **Then** the call path is `/api/items`.
 5. **Given** a prefix or base that is not a literal string in the code (read from configuration or an
-   environment variable), **When** analyzed, **Then** the bridge does not guess it: routes keep the part it
-   knows and the call is recorded as not resolvable (US4).
+   environment variable), **When** analyzed, **Then** the bridge does not guess it: routes under that prefix
+   match nothing (no partial path is used), and calls that would have reached them are recorded as "not found"
+   (US4).
 
 ---
 
@@ -142,8 +143,9 @@ reason and that no edge points to a backend file for it.
 - The same call appears twice on different lines: two edges (one per call line), as for imports.
 - A route declared for several methods (`@app.route("/x", methods=["GET", "POST"])`, `@app.api_route`):
   matches calls of any listed method; Flask's default is `GET`.
-- A method written as a variable (`fetch(url, { method: m })`): the call is "dynamic" for the method and is
-  matched as any method only if exactly one route has that path; otherwise ambiguous.
+- A method written as a variable (`fetch(url, { method: m })`): the method is unknown; the call is matched
+  against routes of any method and gets an edge only if all best matches are in one file; otherwise
+  ambiguous.
 - Calls inside test files or mock servers are treated like any other code; the coverage report already shows
   which files are tests.
 - Text that looks like a route inside a comment or a string that is not passed to a call or decorator is
