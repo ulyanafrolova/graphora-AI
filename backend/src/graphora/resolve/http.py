@@ -14,6 +14,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
+from graphora.adapters.js.http import is_absolute
 from graphora.graph.model import Edge, UnresolvedNode
 from graphora.graph.serialize import snippet_hash
 from graphora.resolve import python as py_resolve
@@ -190,7 +191,7 @@ def _is_absolute(fact: Any, constants: dict[str, str]) -> bool:
         return True
     first = fact.parts[0] if fact.parts else None
     value = constants.get(first.value) if first is not None and first.kind == "expr" else None
-    return value is not None and (value.startswith(("http://", "https://", "//")) or "://" in value)
+    return value is not None and is_absolute(value)
 
 
 # --- matching ------------------------------------------------------------------------------------------------

@@ -3,6 +3,7 @@ research R3). A call is recognized by its form only; the URL is kept as literal 
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from tree_sitter import Node
@@ -11,7 +12,7 @@ from graphora.adapters.position import Positions
 
 _AXIOS_VERBS = ("get", "post", "put", "patch", "delete", "head", "options")
 _GLOBALS = ("window", "globalThis", "self")
-_SCHEMES = ("http://", "https://", "//")
+_ABSOLUTE = re.compile(r"^(?:[A-Za-z][A-Za-z0-9+.-]*:)?//")  # a scheme or `//` at the very start: another host
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,10 @@ class HttpCallFact:
     line: int
     column: int
     text: str
+
+
+def is_absolute(url: str) -> bool:
+    return _ABSOLUTE.match(url) is not None
 
 
 def _text(node: Node) -> str:
@@ -139,7 +144,7 @@ def _call(position: Positions, node: Node) -> HttpCallFact | None:
     parts = _parts(url) if url is not None else None
     merged = _merged(parts) if parts is not None else None
     first_text = merged[0].value if merged and merged[0].kind == "text" else ""
-    absolute = bool(first_text) and (first_text.startswith(_SCHEMES) or "://" in first_text)
+    absolute = is_absolute(first_text or "")
     line, column = position(node)
     return HttpCallFact(method, merged, absolute, line, column, _text(node))
 

@@ -159,3 +159,9 @@ const T = `/t/${x}`;
 function f() { const INNER = "/inner"; }
 """
     assert js_extract("a.ts", source.encode()).constants == {"API": "/api", "V2": "/v2"}
+
+
+def test_a_url_inside_the_query_is_not_another_host():
+    """Only a scheme or `//` at the start means another host (013 review)."""
+    assert calls('fetch("/api/proxy?u=https://x.com");') == [("GET", (T("/api/proxy?u=https://x.com"),), False, 1)]
+    assert calls('fetch("HTTPS://x.com/a");')[0][2] is True
