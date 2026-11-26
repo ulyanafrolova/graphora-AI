@@ -123,3 +123,29 @@ def test_no_commits_touch_paths(tmp_path):
 def test_repeatable(tmp_path):
     shas = make_repo(tmp_path, [{"files": {"a.py": b"0"}}, {"files": {"a.py": b"1", "b.py": b"1"}}])
     assert read(tmp_path, shas[-1], {"a.py", "b.py"}) == read(tmp_path, shas[-1], {"a.py", "b.py"})
+
+
+class Ticks:
+    """A deadline with time for `n` more commits."""
+
+    def __init__(self, n):
+        self.n = n
+
+    def remaining(self):
+        self.n -= 1
+        return 1.0 if self.n >= 0 else 0.0
+
+
+def test_partial_keeps_newest(tmp_path):
+    shas = make_repo(tmp_path, [{"files": {f"f{n}.py": b"x"}, "time": T0 + n * DAY} for n in range(5)])
+    history = read(tmp_path, shas[-1], {f"f{n}.py" for n in range(5)}, deadline=Ticks(3))
+    assert history.status == "partial"
+    assert history.commits_read == 3
+    assert counts(history) == {"f2.py": (1, 1), "f3.py": (1, 1), "f4.py": (1, 1)}
+    assert history.oldest == "2025-06-17T15:06:40Z"
+
+
+def test_no_time_at_all(tmp_path):
+    shas = make_repo(tmp_path, [{"files": {"a.py": b"x"}}])
+    history = read(tmp_path, shas[0], {"a.py"}, deadline=Ticks(0))
+    assert (history.status, history.reason) == ("not_available", "time_limit")

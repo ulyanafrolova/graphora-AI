@@ -247,7 +247,7 @@ with an expired deadline, and a repository served by a local git server; check s
   - an uncommitted change → `local_changes true`, HEAD's counts, and the note in the info line;
   - `make_shallow` on a middle commit → `shallow_skipped 1` and the shallow note;
   - in none of these cases `analyze` exits non-zero.
-- [ ] T019 [P] [US2] Add partial-history cases to `backend/tests/unit/test_history_reader.py` with a fake
+- [X] T019 [P] [US2] Add partial-history cases to `backend/tests/unit/test_history_reader.py` with a fake
   deadline whose `remaining()` drops to 0 after N commits:
   - status `partial`, `commits_read == N`, and the newest N commits in walk order;
   - `oldest` is the date of the N-th;
