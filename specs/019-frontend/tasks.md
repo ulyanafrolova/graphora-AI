@@ -175,7 +175,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `frontend/src/App.tsx`. Check: T027 passes.
 - [X] T029 [P] Write `frontend/tests/unit/errors.test.tsx`: `ErrorState` renders each row of contracts/ui.md § Error and
   empty states with its message and action; `Legend` renders the shared visual language rows.
-- [ ] T030 Implement `frontend/src/shell/ErrorState.tsx`, `Legend.tsx`, `Loading.tsx`, `Empty.tsx`. Check: T029 passes.
+- [X] T030 Implement `frontend/src/shell/ErrorState.tsx`, `Legend.tsx`, `Loading.tsx`, `Empty.tsx`. Check: T029 passes.
 - [ ] T031 [P] Write `frontend/tests/unit/hostile.test.tsx`: a shared `Text`/`Path`/`Code` component and every screen
   component written later receive `<script>alert(1)</script>`, `<img src=x onerror=alert(1)>`, `javascript:alert(1)`,
   `**md**` and `[a](javascript:x)` and render them literally (no element created, `textContent` equal to input);

@@ -141,3 +141,74 @@
 .muted {
   color: var(--muted);
 }
+
+.error-state {
+  max-width: 640px;
+  border-color: var(--cycle);
+}
+
+.error-state p {
+  margin: 6px 0 12px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.legend .swatch {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 2px solid var(--border-strong);
+}
+
+.legend .swatch.resolved {
+  border-color: var(--resolved);
+}
+
+.legend .swatch.heuristic {
+  border-top-style: dashed;
+  border-color: var(--heuristic);
+}
+
+.legend .swatch.unresolved {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--unresolved);
+  border-radius: 50%;
+}
+
+.legend .swatch.cycle {
+  border-color: var(--cycle);
+}
+
+.legend .swatch.impact {
+  border-color: var(--impact);
+}
+
+.legend .swatch.hypothesis {
+  height: 10px;
+  border: 1px solid var(--heuristic);
+  background: var(--heuristic-bg);
+}
+
+.legend .swatch.verified {
+  height: 10px;
+  border: 1px solid var(--resolved);
+  background: var(--resolved-bg);
+}
+
+.legend .swatch.external {
+  height: 10px;
+  border: 1px solid var(--unresolved);
+  border-radius: var(--radius-pill);
+}
