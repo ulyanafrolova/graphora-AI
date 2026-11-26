@@ -193,7 +193,7 @@ snapshot picker against a running `graphora serve`.
 **Independent Test**: e2e on `py-cycles` and `mixed-fullstack`: open, expand, select, impact, code view; every shown fact
 equals the API answer.
 
-- [ ] T032 [P] [US1] Write `frontend/tests/unit/graph-elements.test.ts` for `toElements(...)` (pure function): System
+- [X] T032 [P] [US1] Write `frontend/tests/unit/graph-elements.test.ts` for `toElements(...)` (pure function): System
   level → one node per component (label `name`, `file_count`) and one edge per component link (width from `imports`,
   class `heuristic` when `heuristic > 0`, class `cycle` when `in_cycle`); Component level → the expanded component's
   files as children, other components collapsed; File level → files and file links from the graph document (classes
