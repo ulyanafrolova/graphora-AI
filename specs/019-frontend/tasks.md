@@ -200,7 +200,7 @@ equals the API answer.
   `resolved`/`heuristic`, `type-only`; unresolved imports never become edges; externals only when not hidden);
   `hide=tests` removes paths matching `(^|/)(tests?|__tests__)/|(_test|\.test|\.spec)\.` ; selection and impact classes;
   a snapshot with files but no links and a one-file snapshot give valid elements (no edges, no error).
-- [ ] T033 [US1] Implement `frontend/src/graph/elements.ts` (`toElements`) and `frontend/src/graph/style.ts`
+- [X] T033 [US1] Implement `frontend/src/graph/elements.ts` (`toElements`) and `frontend/src/graph/style.ts`
   (Cytoscape stylesheet from tokens: dashed amber heuristic, red cycle, blue impact, dim others). Check: T032 passes.
 - [ ] T034 [US1] Implement `frontend/src/graph/GraphView.tsx`: Cytoscape instance, fcose layout (`randomize: false`,
   initial positions on a circle in node-id order so every load gives the same picture), level switch System / Component / File (Symbol tab opens search),

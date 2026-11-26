@@ -10,7 +10,13 @@ function doc(files: string[], edges: E[], externals: string[] = []): GraphDocume
     snapshot: "content:1",
     nodes: [
       ...files.map((path) => ({ id: `file:${path}`, kind: "file", path, language: "python", definitions: [] })),
-      ...externals.map((name) => ({ id: `ext:python:${name}`, kind: "external", name, ecosystem: "python", category: "third_party" })),
+      ...externals.map((name) => ({
+        id: `ext:python:${name}`,
+        kind: "external",
+        name,
+        ecosystem: "python",
+        category: "third_party",
+      })),
       { id: "unresolved:python:gone", kind: "unresolved", reference: "gone", ecosystem: "python" },
     ],
     edges: edges.map((e, i) => ({
@@ -21,7 +27,10 @@ function doc(files: string[], edges: E[], externals: string[] = []): GraphDocume
       type_only: e.type_only ?? false,
       ...e,
     })),
-    coverage: { files: files.map((path) => ({ path, language: "python", status: "analyzed", flags: [] })), skipped: [] },
+    coverage: {
+      files: files.map((path) => ({ path, language: "python", status: "analyzed", flags: [] })),
+      skipped: [],
+    },
   } as unknown as GraphDocument;
 }
 
@@ -63,7 +72,7 @@ const base: ElementsInput = {
 };
 
 const ids = (els: ReturnType<typeof toElements>, group: "nodes" | "edges") =>
-  els.filter((e) => (group === "edges") === ("source" in e.data)).map((e) => e.data.id);
+  els.filter((e) => (group === "edges") === "source" in e.data).map((e) => e.data.id);
 
 test("system level: components and component links", () => {
   const els = toElements(base);
@@ -86,6 +95,7 @@ test("component level: one component expanded, the others collapsed", () => {
   expect(els.find((e) => e.data.id === "component:1")?.classes).toContain("expanded");
   const edges = els.filter((e) => "source" in e.data).map((e) => [e.data.source, e.data.target, e.classes]);
   expect(edges).toEqual([
+    ["file:a/x.py", "file:a/x.py", "link type-only"],
     ["file:a/x.py", "file:a/y.py", "link"],
     ["file:a/y.py", "file:a/x.py", "link"],
     ["file:a/x.py", "component:2", "link"],
@@ -96,7 +106,13 @@ test("component level: one component expanded, the others collapsed", () => {
 
 test("file level: file links from the graph, unresolved never drawn, externals and tests can be hidden", () => {
   const els = toElements({ ...base, level: "file" });
-  expect(ids(els, "nodes")).toEqual(["file:a/x.py", "file:a/y.py", "file:b/tests/test_z.py", "file:b/z.py", "ext:python:requests"]);
+  expect(ids(els, "nodes")).toEqual([
+    "file:a/x.py",
+    "file:a/y.py",
+    "file:b/tests/test_z.py",
+    "file:b/z.py",
+    "ext:python:requests",
+  ]);
   const edges = els.filter((e) => "source" in e.data);
   expect(edges.map((e) => [e.data.source, e.data.target, e.classes])).toEqual([
     ["file:a/x.py", "file:a/x.py", "link type-only"],
@@ -110,7 +126,9 @@ test("file level: file links from the graph, unresolved never drawn, externals a
   expect(edges.find((e) => e.data.source === "file:a/x.py" && e.data.target === "file:b/z.py")?.data.imports).toBe(2);
   const hidden = toElements({ ...base, level: "file", hide: ["external", "tests"] });
   expect(ids(hidden, "nodes")).toEqual(["file:a/x.py", "file:a/y.py", "file:b/z.py"]);
-  expect(ids(hidden, "edges").some((id) => id.includes("requests") || id.includes("test_z"))).toBe(false);
+  expect(ids(hidden, "edges").some((id) => String(id).includes("requests") || String(id).includes("test_z"))).toBe(
+    false,
+  );
 });
 
 test("file nodes carry their component colour", () => {
@@ -129,7 +147,12 @@ test("selection and impact classes", () => {
 });
 
 test("collapsed components show their impact count", () => {
-  const els = toElements({ ...base, level: "component", component: "component:1", impact: new Set(["file:b/z.py", "file:b/tests/test_z.py"]) });
+  const els = toElements({
+    ...base,
+    level: "component",
+    component: "component:1",
+    impact: new Set(["file:b/z.py", "file:b/tests/test_z.py"]),
+  });
   expect(els.find((e) => e.data.id === "component:2")?.data.impacted).toBe(2);
 });
 
@@ -142,7 +165,10 @@ test("is test", () => {
 
 test("no links and one file", () => {
   const alone = doc(["main.py"], []);
-  const comps = { components: [{ id: "component:1", name: ".", files: ["file:main.py"], file_count: 1, has_cycle: false }], links: [] } as unknown as Answer;
+  const comps = {
+    components: [{ id: "component:1", name: ".", files: ["file:main.py"], file_count: 1, has_cycle: false }],
+    links: [],
+  } as unknown as Answer;
   for (const level of ["system", "component", "file"] as const) {
     const els = toElements({ ...base, graph: alone, components: comps, level, component: "component:1" });
     expect(ids(els, "edges")).toEqual([]);
