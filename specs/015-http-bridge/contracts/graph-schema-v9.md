@@ -1,11 +1,11 @@
-# Contract: Graph Schema v7 → v8
+# Contract: Graph Schema v8 → v9
 
 Changes to `schema/graph.schema.json` (the graph contract between backend and frontend). Everything not listed
-is unchanged. Model: [data-model.md](../data-model.md).
+is unchanged. Version 8 is 014's `history` section (merged first); the HTTP bridge comes on top of it as version 9. Model: [data-model.md](../data-model.md).
 
-| Place | v7 | v8 |
+| Place | v8 | v9 |
 |---|---|---|
-| `schema_version` | `const 7` | `const 8` |
+| `schema_version` | `const 8` | `const 9` |
 | edge `type` enum | `imports`, `reexports`, `project_reference`, `package_reference`, `type_reference`, `solution_member` | + `http_call` |
 | heuristic `reason` enum | `namespace_spread`, `partial_type`, `package_prefix`, `msbuild_condition` | + `http_route` |
 | `ecosystem` enum (unresolved nodes) | `python`, `npm`, `dotnet` (+ `nuget` for externals) | + `http` (unresolved nodes only) |

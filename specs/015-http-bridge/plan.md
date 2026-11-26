@@ -12,7 +12,7 @@ records FastAPI/Flask route decorators and router/blueprint prefixes (R2); the J
 prefixes, normalizes paths and matches calls to routes, with "literal beats parameter" and file-level ambiguity
 (R4). Matches become `http_call` edges, `heuristic` with reason `http_route`, carrying `METHOD path` as symbol and
 the route line; unmatched calls become `unresolved:http:` edges with reasons `dynamic`, `not_found`, `ambiguous`
-(R5). Graph schema goes to v8 with every consumer and fixture updated in this change (R6, R7).
+(R5). Graph schema goes to v9 with every consumer and fixture updated in this change (R6, R7).
 
 ## Technical Context
 
@@ -20,7 +20,7 @@ the route line; unmatched calls become `unresolved:http:` edges with reasons `dy
 
 **Primary Dependencies**: none new; Tree-sitter Python and TypeScript/JavaScript grammars already used
 
-**Storage**: unchanged; stored v7 analyses are not reused and are re-analyzed on demand (version check)
+**Storage**: unchanged; stored v8 analyses are not reused and are re-analyzed on demand (version check)
 
 **Testing**: pytest; unit tests for normalization, matching and extraction; golden tests over the new
 `http-bridge` fixture and all existing fixtures; schema contract tests; the existing performance test
@@ -47,7 +47,7 @@ the route line; unmatched calls become `unresolved:http:` edges with reasons `dy
 | IV. Honest confidence | Pass | matches are only `heuristic`; dynamic, unmatched and ambiguous calls are `unresolved` with a reason; no edge to a guessed file |
 | V. Facts by code, words by LLM | Pass | matching is code; agents see HTTP links as likely; the verifier marks them `heuristic` |
 | VI. Analyzed content is data | Pass | unchanged |
-| VII. One graph query layer | Pass | no new query code; schema v8 with all consumers and fixtures in this PR |
+| VII. One graph query layer | Pass | no new query code; schema v9 with all consumers and fixtures in this PR |
 | VIII. Golden tests | Pass | new `http-bridge` fixture with hand-written `expected.json`; existing fixtures re-checked |
 
 Post-design re-check: still passes. Complexity Tracking is empty.
@@ -63,16 +63,16 @@ specs/015-http-bridge/
 ├── data-model.md
 ├── quickstart.md
 ├── contracts/
-│   └── graph-schema-v8.md
+│   └── graph-schema-v9.md
 └── tasks.md             # /speckit-tasks
 ```
 
 ### Source Code (repository root)
 
 ```text
-schema/graph.schema.json                     # v7 → v8
+schema/graph.schema.json                     # v8 → v9
 fixtures/repos/http-bridge/                  # new: repo/backend, repo/frontend, expected.json (by hand)
-fixtures/repos/*/expected.json               # schema_version 8; mixed-fullstack gains its not_found call
+fixtures/repos/*/expected.json               # mixed-fullstack gains its not_found call (version 9 comes from the serializer)
 backend/
 ├── src/graphora/
 │   ├── adapters/python/extract.py           # + RouteFact, RouterFact, MountFact
@@ -81,14 +81,14 @@ backend/
 │   ├── adapters/js/__init__.py              # VERSION bump
 │   ├── resolve/http.py                      # new: routes, normalize, call_path, match, HTTP_VERSION
 │   ├── graph/model.py                       # http_call, http_route, http ecosystem, Edge.route_line
-│   ├── graph/serialize.py                   # SCHEMA_VERSION = 8, route_line
+│   ├── graph/serialize.py                   # SCHEMA_VERSION = 9, route_line
 │   ├── graph/load.py                        # route_line
 │   └── graph/build.py                       # _http_graph, extractors
 └── tests/
     ├── unit/test_http_normalize.py
     ├── unit/test_http_extract.py
     ├── unit/test_http_match.py
-    ├── contract/test_schema.py              # v8 samples
+    ├── contract/test_schema.py              # v9 samples
     └── golden/test_fixtures.py              # picks up the new fixture
 ```
 

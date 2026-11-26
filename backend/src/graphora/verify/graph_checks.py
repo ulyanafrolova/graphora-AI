@@ -18,6 +18,7 @@ _ASK = {
     "neighbors": queries.neighbors,
     "cycles": queries.cycles,
     "key_files": queries.key_files,
+    "hotspots": queries.hotspots,
 }
 
 
@@ -129,6 +130,10 @@ def _counted(answer: Answer) -> list[str]:
 
 def check_query(ix: queries.GraphIndex, claim: Claim, checks: list[Check]) -> Verdict:
     """Re-run the question with the claim's options and no limit, then compare (FR-012a)."""
+    history = ix.doc.history
+    if claim.question == "hotspots" and history.status == "not_available":
+        checks.append(Check("history", False, f"not available: {history.reason}"))
+        return Verdict("rejected", tuple(checks), "history_unavailable", history.reason)
     ask = _ASK[claim.question]
     args = () if claim.target is None else (claim.target,)
     try:
@@ -140,6 +145,8 @@ def check_query(ix: queries.GraphIndex, claim: Claim, checks: list[Check]) -> Ve
         checks.append(Check("query", False, str(exc)))
         return Verdict("rejected", tuple(checks), "invalid_claim")
     checks.append(Check("query", True, f"{claim.question} total {answer.total}"))
+    if claim.question == "hotspots":
+        return _hotspot(ix, claim, answer, checks)
 
     if claim.count is not None:
         if answer.total != claim.count:
@@ -184,3 +191,45 @@ def _rank(ix: queries.GraphIndex, claim: Claim, member: str, answer: Answer, che
     dependents = queries.impact(ix, member, include_type_only=include_type_only).items or ()
     status = "heuristic" if any(i.confidence == "heuristic" for i in dependents) else "verified"
     return Verdict(status, tuple(checks))
+
+
+def _hotspot(ix: queries.GraphIndex, claim: Claim, answer: Answer, checks: list[Check]) -> Verdict:
+    """Count, rank and metric claims on hotspots (014 contracts/verifier.md)."""
+    history = ix.doc.history
+    heuristic = history.status == "partial"
+    if claim.count is not None:
+        if answer.total != claim.count:
+            checks.append(Check("count", False, f"{claim.count} != {answer.total}"))
+            return Verdict("rejected", tuple(checks), "count_mismatch", f"actual {answer.total}")
+        checks.append(Check("count", True, str(claim.count)))
+    else:
+        try:
+            member = queries.resolve(ix, claim.member)
+        except queries.NodeNotFound as exc:
+            checks.append(Check("member", False, exc.message))
+            return Verdict("rejected", tuple(checks), "target_not_found", exc.message)
+        ranked = [i.node for i in answer.items or ()]
+        if member not in ranked:
+            checks.append(Check("member", False, f"{member} is not a hotspot"))
+            if claim.rank is not None:
+                return Verdict("rejected", tuple(checks), "rank_mismatch", "not ranked")
+            return Verdict("rejected", tuple(checks), "not_in_result")
+        checks.append(Check("member", True, member))
+        position = ranked.index(member) + 1
+        if claim.rank is not None:
+            if position > claim.rank:
+                checks.append(Check("rank", False, f"{member} at rank {position}, not within {claim.rank}"))
+                return Verdict("rejected", tuple(checks), "rank_mismatch", f"rank {position}")
+            checks.append(Check("rank", True, f"{member} at rank {position}"))
+        if claim.metric is not None:
+            actual = getattr((answer.items or ())[position - 1], claim.metric)
+            if actual != claim.value:
+                checks.append(Check("metric", False, f"{claim.metric} {claim.value} != {actual}"))
+                return Verdict("rejected", tuple(checks), "count_mismatch", f"actual {actual}")
+            checks.append(Check("metric", True, f"{claim.metric} {claim.value}"))
+        include_type_only = claim.options.get("include_type_only", True)
+        dependents = queries.impact(ix, member, include_type_only=include_type_only).items or ()
+        heuristic = heuristic or any(i.confidence == "heuristic" for i in dependents)
+    note = f"partial: {history.commits_read} commits read" if history.status == "partial" else history.status
+    checks.append(Check("history", True, note))
+    return Verdict("heuristic" if heuristic else "verified", tuple(checks))

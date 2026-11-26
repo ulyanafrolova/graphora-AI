@@ -37,9 +37,9 @@ def test_link_equals_clone(name, tmp_path, monkeypatch):
     )
     monkeypatch.setattr(github, "_open", fake)
 
-    local = run_analyze(clone)
-    first = run_analyze("https://github.com/o/r")
-    second = run_analyze("https://github.com/o/r")
+    local = run_analyze(clone, "--no-history")  # history from a link: tests/integration/test_history_github.py
+    first = run_analyze("https://github.com/o/r", "--no-history")
+    second = run_analyze("https://github.com/o/r", "--no-history")
     assert local[0] == first[0] == 0, first[2]
     assert f'"snapshot": "{sha}"'.encode() in local[1]
     assert first[1] == local[1]
@@ -62,8 +62,10 @@ def test_zip_equals_folder(name, prefix, tmp_path):
     second = run_analyze(archive)
     assert local[0] == first[0] == 0, first[2]
     assert re.fullmatch(r"content:[0-9a-f]{16}", _snapshot(first[1]))
+    assert json.loads(local[1])["history"]["reason"] == "no_git"
+    assert json.loads(first[1])["history"]["reason"] == "zip"
     expected = local[1].replace(_snapshot(local[1]).encode(), _snapshot(first[1]).encode())
-    assert first[1] == expected
+    assert first[1] == expected.replace(b'"reason": "no_git"', b'"reason": "zip"')
     assert second[1] == first[1]
 
 

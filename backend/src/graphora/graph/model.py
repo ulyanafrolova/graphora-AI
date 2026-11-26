@@ -1,9 +1,11 @@
 """In-memory graph model. Field meanings are defined in specs/001-python-graph-cli/data-model.md and the v2
 changes in specs/003-ts-js-analysis/data-model.md. v3 adds the `unreadable_dir` skip reason (issue #10). v4 adds C#
-(specs/007-csharp-analysis/data-model.md), v5 C# type references (specs/008-csharp-type-references/data-model.md)."""
+(specs/007-csharp-analysis/data-model.md), v5 C# type references (specs/008-csharp-type-references/data-model.md).
+v8 adds history (specs/014-hotspots/data-model.md)."""
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Literal, Union, get_args
 
@@ -33,9 +35,13 @@ EdgeType = Literal[
     "imports", "reexports", "project_reference", "package_reference", "type_reference", "solution_member", "http_call"
 ]
 Directive = Literal["using", "using_static", "using_alias"]
+HistoryStatus = Literal["available", "partial", "not_available"]
+HistoryReason = Literal["no_git", "zip", "unreadable", "skipped", "fetch_failed", "too_large", "time_limit", "not_collected"]
 
 UNRESOLVED_REASONS: frozenset[str] = frozenset(get_args(UnresolvedReason))
 HEURISTIC_REASONS: frozenset[str] = frozenset(get_args(HeuristicReason))
+FINAL_HISTORY_REASONS = frozenset({"no_git", "zip", "unreadable"})
+_SHA = re.compile(r"[0-9a-f]{40}")
 
 
 @dataclass(frozen=True)
@@ -202,6 +208,71 @@ class Skipped:
 
 
 @dataclass(frozen=True)
+class FileHistory:
+    path: str
+    commits: int
+    authors: int  # bus factor
+
+
+@dataclass(frozen=True)
+class History:
+    """Counts from the git history of the snapshot commit; no names or e-mail addresses."""
+
+    status: HistoryStatus
+    reason: HistoryReason | None
+    commit: str | None
+    window_start: str | None
+    newest: str | None
+    oldest: str | None
+    commits_read: int
+    merges_skipped: int
+    shallow_skipped: int
+    local_changes: bool
+    files: tuple[FileHistory, ...]
+
+    def __post_init__(self) -> None:
+        if self.status not in get_args(HistoryStatus):
+            raise ValueError(f"unknown history status: {self.status!r}")
+        if min(self.commits_read, self.merges_skipped, self.shallow_skipped) < 0:
+            raise ValueError("history counts are 0 or more")
+        if self.status == "not_available":
+            if self.reason not in get_args(HistoryReason):
+                raise ValueError("history 'not_available' needs a reason")
+            if (
+                any(v is not None for v in (self.commit, self.window_start, self.newest, self.oldest))
+                or self.commits_read or self.merges_skipped or self.shallow_skipped or self.local_changes or self.files
+            ):
+                raise ValueError("history 'not_available' has no commit, dates, counts or files")
+            return
+        if self.reason is not None:
+            raise ValueError(f"history '{self.status}' has no reason")
+        if self.commit is None or not _SHA.fullmatch(self.commit) or self.window_start is None:
+            raise ValueError(f"history '{self.status}' needs a commit and a window start")
+        if (self.newest is None or self.oldest is None) != (self.commits_read == 0):
+            raise ValueError("newest and oldest are set exactly when commits were read")
+        if self.status == "partial" and self.commits_read == 0:
+            raise ValueError("a partial history has read at least one commit")
+        paths = [f.path for f in self.files]
+        if paths != sorted(set(paths)):
+            raise ValueError("history files are unique and sorted by path")
+        for f in self.files:
+            if not 1 <= f.authors <= f.commits:
+                raise ValueError(f"history of {f.path}: 1 <= authors <= commits")
+
+    @property
+    def final(self) -> bool:
+        """Retrying the analysis cannot give a better history (research § R6)."""
+        return self.status == "available" or (self.status == "not_available" and self.reason in FINAL_HISTORY_REASONS)
+
+
+def not_available(reason: HistoryReason) -> History:
+    return History("not_available", reason, None, None, None, None, 0, 0, 0, False, ())
+
+
+NOT_COLLECTED = not_available("not_collected")
+
+
+@dataclass(frozen=True)
 class GraphDocument:
     snapshot: str
     extractors: dict[str, str]
@@ -209,3 +280,4 @@ class GraphDocument:
     edges: tuple[Edge, ...]
     files: tuple[CoverageFile, ...]
     skipped: tuple[Skipped, ...]
+    history: History = NOT_COLLECTED

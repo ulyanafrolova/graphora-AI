@@ -30,6 +30,7 @@ Reason = Literal[
     "count_mismatch",
     "not_in_result",
     "rank_mismatch",
+    "history_unavailable",
 ]
 
 KINDS = ("dependency", "chain", "definition", "mention", "query")
@@ -40,11 +41,13 @@ ALLOWED_OPTIONS: dict[str, frozenset[str]] = {
     "neighbors": frozenset({"include_type_only"}),
     "cycles": frozenset({"include_type_only", "level"}),
     "key_files": frozenset({"include_type_only"}),
+    "hotspots": frozenset({"include_type_only"}),
 }
+METRICS = ("commits", "authors", "score", "transitive_dependents", "direct_dependents")
 _STEP_KINDS = ("dependency", "chain")
 _TEXT_KINDS = ("definition", "mention")
 _TEXT_FIELDS = ("path", "line", "symbol")
-_QUERY_FIELDS = ("question", "target", "count", "member", "distance", "rank")
+_QUERY_FIELDS = ("question", "target", "count", "member", "distance", "rank", "metric", "value")
 
 
 @dataclass(frozen=True)
@@ -74,6 +77,8 @@ class Claim:
     member: str | None = None
     distance: int | None = None
     rank: int | None = None
+    metric: str | None = None  # 014: hotspots only, with value
+    value: int | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Claim:
@@ -214,7 +219,7 @@ def _query_problem(claim: Claim) -> str | None:
     q = claim.question
     if q not in ALLOWED_OPTIONS:
         return f"unknown question: {q}"
-    if q in ("cycles", "key_files"):
+    if q in ("cycles", "key_files", "hotspots"):
         if claim.target is not None:
             return f"{q} takes no target"
     elif not _is_text(claim.target):
@@ -230,6 +235,12 @@ def _query_problem(claim: Claim) -> str | None:
         return "member is empty"
     if claim.distance is not None and (q != "impact" or claim.member is None or not _is_line(claim.distance)):
         return "distance is 1 or more, with member, for impact only"
-    if claim.rank is not None and (q != "key_files" or claim.member is None or not _is_line(claim.rank)):
-        return "rank is 1 or more, with member, for key_files only"
+    if claim.rank is not None and (q not in ("key_files", "hotspots") or claim.member is None or not _is_line(claim.rank)):
+        return "rank is 1 or more, with member, for key_files and hotspots only"
+    if (claim.metric is None) != (claim.value is None):
+        return "metric and value go together"
+    if claim.metric is not None:
+        whole = isinstance(claim.value, int) and not isinstance(claim.value, bool)
+        if q != "hotspots" or claim.member is None or claim.metric not in METRICS or not whole or claim.value < 0:
+            return f"metric is one of {', '.join(METRICS)}, with member and a value of 0 or more, for hotspots only"
     return None

@@ -1,3 +1,4 @@
+import dataclasses
 import hashlib
 import json
 
@@ -10,8 +11,10 @@ from graphora.graph.model import (
     Edge,
     Export,
     ExternalNode,
+    FileHistory,
     FileNode,
     GraphDocument,
+    History,
     ProjectNode,
     Skipped,
     UnresolvedNode,
@@ -77,8 +80,41 @@ def _node(d, node_id):
     return next(n for n in d["nodes"] if n["id"] == node_id)
 
 
-def test_schema_version_8():
-    assert to_dict(_doc())["schema_version"] == 8
+def test_schema_version_9():
+    assert to_dict(_doc())["schema_version"] == 9
+
+
+def test_history_not_collected_by_default():
+    assert to_dict(_doc())["history"] == {
+        "status": "not_available",
+        "reason": "not_collected",
+        "commit": None,
+        "window_start": None,
+        "newest": None,
+        "oldest": None,
+        "commits_read": 0,
+        "merges_skipped": 0,
+        "shallow_skipped": 0,
+        "local_changes": False,
+        "files": [],
+    }
+
+
+def test_history_fields():
+    history = History(
+        "partial", None, "b" * 40, "2025-01-01T00:00:00Z", "2026-01-01T00:00:00Z", "2025-06-01T00:00:00Z",
+        7, 2, 1, True, (FileHistory("a.py", 3, 2), FileHistory("b.py", 1, 1)),
+    )
+    out = to_dict(dataclasses.replace(_doc(), history=history))["history"]
+    assert out["status"] == "partial" and out["commit"] == "b" * 40 and out["local_changes"] is True
+    assert (out["commits_read"], out["merges_skipped"], out["shallow_skipped"]) == (7, 2, 1)
+    assert out["files"] == [{"path": "a.py", "commits": 3, "authors": 2}, {"path": "b.py", "commits": 1, "authors": 1}]
+
+
+def test_extractors_include_history_reader():
+    from graphora.graph.build import current_extractors
+
+    assert current_extractors()["history-reader"] == "1.0.0"
 
 
 def test_sort_orders():
@@ -264,7 +300,7 @@ def test_http_call_route_line_round_trip():
     from graphora.graph.load import loads
     from graphora.graph.serialize import SCHEMA_VERSION
 
-    assert SCHEMA_VERSION == 8
+    assert SCHEMA_VERSION == 9
     http = Edge("file:a.ts", "file:b.py", "GET /x", 2, 1, SNAP, "heuristic", "http_route", "http-bridge@0.1.0",
                 "sha256:0000000000000000", type="http_call", route_line=8)
     doc = GraphDocument(

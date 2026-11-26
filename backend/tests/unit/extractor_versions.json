@@ -9,6 +9,7 @@
   "dotnet-namespaces@10.0.0": "40b472df9cf289d3",
   "dotnet-types@10.0.0": "34b613bf273fdc37",
   "http-bridge@0.1.0": "e9faf8427c442aea",
+  "history-reader@1.0.0": "e760a7c7cb5f1735",
   "js-adapter@0.2.0": "304728d2dfb0086c",
   "js-adapter@0.3.0": "a046826277e80e6a",
   "js-resolver@0.2.0": "9649adb21d4b1e91",

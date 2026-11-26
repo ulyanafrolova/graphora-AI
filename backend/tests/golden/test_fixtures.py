@@ -31,7 +31,7 @@ def _analyze(path):
 
 
 @pytest.mark.parametrize("name", FIXTURE_NAMES)
-@pytest.mark.parametrize("section", ["nodes", "edges", "coverage", "skipped", "snapshot_kind"])
+@pytest.mark.parametrize("section", ["nodes", "edges", "coverage", "skipped", "snapshot_kind", "history"])
 def test_matches_expected(name, section, validator):
     expected = json.loads((FIXTURES / name / "expected.json").read_text(encoding="utf-8"))
     if section not in expected:

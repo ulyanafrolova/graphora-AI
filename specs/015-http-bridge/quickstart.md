@@ -1,6 +1,6 @@
 # Quickstart: HTTP Bridge
 
-Validation guide for 015. Contract: [contracts/graph-schema-v8.md](contracts/graph-schema-v8.md).
+Validation guide for 015. Contract: [contracts/graph-schema-v9.md](contracts/graph-schema-v9.md).
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ uv run pytest tests/integration/test_performance.py    # SC-004, compare with ma
 Expected: all pass. They cover normalization and matching (unit), extraction of routes and calls (unit), the
 `http-bridge` fixture against its hand-written `expected.json` (golden: every edge, every unresolved call),
 `mixed-fullstack` with its `not_found` call, every other fixture unchanged except the version, schema accept and
-reject samples for v8, and determinism (two runs byte-identical).
+reject samples for v9, and determinism (two runs byte-identical).
 
 ## 2. By hand
 

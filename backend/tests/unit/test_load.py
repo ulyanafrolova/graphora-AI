@@ -55,7 +55,7 @@ def test_not_an_object():
     _invalid(b"[1, 2]", "object")
 
 
-@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6, 7, 9])
+@pytest.mark.parametrize("version", [1, 2, 3, 4, 5, 6, 7, 8, 10])
 def test_schema_version(version):
     doc = _doc()
     doc["schema_version"] = version
@@ -173,3 +173,94 @@ def test_solution_round_trip_and_source_check():
     doc["edges"][0]["source"] = "project:A/A.csproj"
     _rehash(doc["edges"][0])
     _invalid(_bytes(doc), "not a solution node")
+
+
+SHA = "c" * 40
+
+
+def _history_doc() -> dict:
+    """py-flat moved to a commit snapshot, with an available history over two of its files."""
+    doc = _doc()
+    doc["snapshot"] = SHA
+    for e in doc["edges"]:
+        e["snapshot"] = SHA
+    doc["history"].update(
+        status="available",
+        reason=None,
+        commit=SHA,
+        window_start="2025-01-01T00:00:00Z",
+        newest="2026-01-01T00:00:00Z",
+        oldest="2025-02-01T00:00:00Z",
+        commits_read=4,
+        files=[{"path": "main.py", "commits": 3, "authors": 2}, {"path": "pkg/a.py", "commits": 1, "authors": 1}],
+    )
+    return doc
+
+
+def test_history_round_trip():
+    data = serialize.dumps(loads(_bytes(_history_doc())))
+    assert serialize.dumps(loads(data)) == data
+    assert loads(data).history.files[0].commits == 3
+
+
+def test_history_missing():
+    doc = _doc()
+    del doc["history"]
+    _invalid(_bytes(doc), "history")
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "word"),
+    [
+        ("status", "done", "done"),
+        ("reason", "lost", "lost"),
+        ("commits_read", "4", "commits_read"),
+        ("local_changes", 0, "local_changes"),
+    ],
+)
+def test_history_field_values(field, value, word):
+    doc = _history_doc()
+    if field == "reason":
+        doc["history"].update(status="not_available", commit=None, window_start=None, newest=None, oldest=None,
+                              commits_read=0, files=[])
+    doc["history"][field] = value
+    _invalid(_bytes(doc), word)
+
+
+def test_history_rule_broken():
+    doc = _history_doc()
+    doc["history"]["reason"] = "zip"
+    _invalid(_bytes(doc), "history")
+
+
+def test_history_files_unsorted():
+    doc = _history_doc()
+    doc["history"]["files"].reverse()
+    _invalid(_bytes(doc), "sorted")
+
+
+def test_history_file_not_a_node():
+    doc = _history_doc()
+    doc["history"]["files"][0]["path"] = "README.md"
+    _invalid(_bytes(doc), "README.md")
+
+
+def test_history_authors_over_commits():
+    doc = _history_doc()
+    doc["history"]["files"][1]["authors"] = 2
+    _invalid(_bytes(doc), "authors")
+
+
+def test_history_commit_differs_from_snapshot():
+    doc = _history_doc()
+    doc["history"]["commit"] = "d" * 40
+    _invalid(_bytes(doc), "commit")
+
+
+def test_history_commit_of_dirty_snapshot():
+    doc = _history_doc()
+    doc["snapshot"] = SHA + "+dirty:0123456789abcdef"
+    for e in doc["edges"]:
+        e["snapshot"] = doc["snapshot"]
+    doc["history"]["local_changes"] = True
+    assert loads(_bytes(doc)).history.local_changes

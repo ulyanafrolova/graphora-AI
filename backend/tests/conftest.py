@@ -134,6 +134,8 @@ def project(doc: dict[str, Any], sections: set[str]) -> dict[str, Any]:
         out["skipped"] = doc["coverage"]["skipped"]
     if "snapshot_kind" in sections:
         out["snapshot_kind"] = _snapshot_kind(doc["snapshot"])
+    if "history" in sections:
+        out["history"] = doc["history"]
     return out
 
 
@@ -182,10 +184,16 @@ def analyze_fixture(name: str):
 
 
 def analyze_dir(root: Path):
+    """As `graphora analyze` without `--store`: the analysis plus the folder's history (014)."""
+    import dataclasses
+
     from graphora.graph.build import analyze
+    from graphora.history import collect_history
     from graphora.ingest.walk import Deadline
 
-    return analyze(root, *DEFAULT_LIMITS, Deadline(300))
+    result = analyze(root, *DEFAULT_LIMITS, Deadline(300))
+    history = collect_history(root, result.doc, deadline=Deadline(300))
+    return dataclasses.replace(result, doc=dataclasses.replace(result.doc, history=history))
 
 
 # --- 010 end-to-end pipeline (specs/010-end-to-end-pipeline tasks T002) ------------------------------------

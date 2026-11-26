@@ -15,13 +15,14 @@ from graphora.graph.model import (
     ExternalNode,
     FileNode,
     GraphDocument,
+    History,
     Node,
     ProjectNode,
     SolutionNode,
     UnresolvedNode,
 )
 
-SCHEMA_VERSION = 8  # 8: http_call edges (015)
+SCHEMA_VERSION = 9  # 8: history (014); 9: http_call edges (015)
 
 
 def _sha16(text: str) -> str:
@@ -112,6 +113,24 @@ def _coverage_file(f: CoverageFile) -> dict[str, Any]:
     return out
 
 
+def history_dict(h: History, files: bool = True) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "status": h.status,
+        "reason": h.reason,
+        "commit": h.commit,
+        "window_start": h.window_start,
+        "newest": h.newest,
+        "oldest": h.oldest,
+        "commits_read": h.commits_read,
+        "merges_skipped": h.merges_skipped,
+        "shallow_skipped": h.shallow_skipped,
+        "local_changes": h.local_changes,
+    }
+    if files:
+        out["files"] = [{"path": f.path, "commits": f.commits, "authors": f.authors} for f in h.files]
+    return out
+
+
 def to_dict(doc: GraphDocument) -> dict[str, Any]:
     files = sorted(doc.files, key=lambda f: f.path)
     skipped = sorted(doc.skipped, key=lambda s: s.path)
@@ -134,6 +153,7 @@ def to_dict(doc: GraphDocument) -> dict[str, Any]:
                 "by_language": dict(sorted(languages.items())),
             },
         },
+        "history": history_dict(doc.history),
     }
 
 

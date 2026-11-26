@@ -33,7 +33,7 @@ Functions: `normalize(text) -> tuple[str, ...]`, `routes(py_facts, import_index)
 Reasons: `dynamic` (no path), `not_found` (no candidate), `ambiguous` (best matches in ≥ 2 files, or unknown
 method matching in ≥ 2 files).
 
-## Graph (schema v8)
+## Graph (schema v9)
 
 `Edge` gains `route_line: int | None` (set exactly for `http_call` edges to a `file:` node).
 

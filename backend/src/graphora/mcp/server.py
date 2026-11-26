@@ -74,6 +74,10 @@ DESCRIPTIONS = {
     "Use a project path from it as target with level=\"project\". Empty for repositories without C# projects.",
     "key_files": "The files most depended on, ranked by transitive and then direct dependents. "
     + _TYPE_ONLY + "limit (default 10, at most 500) caps the files.",
+    "hotspots": "Files that change often and that many files depend on: risk = commits in the 12 months before the "
+    "snapshot commit × transitive dependents. Each item has commits, authors (bus factor: how many people changed "
+    "it), score and dependents. The history note says how much history was read; when history is not available the "
+    "list is empty and the note gives the reason. " + _TYPE_ONLY + "limit (default 10, at most 500) caps the items.",
 }
 
 
@@ -183,6 +187,10 @@ def create_server(served: Served) -> MCPServer:
     @server.tool(description=DESCRIPTIONS["key_files"], annotations=READ_ONLY)
     def key_files(include_type_only: bool = True, limit: int = 10) -> CallToolResult:
         return ask(queries.key_files, include_type_only=include_type_only, limit=limit)
+
+    @server.tool(description=DESCRIPTIONS["hotspots"], annotations=READ_ONLY)
+    def hotspots(include_type_only: bool = True, limit: int = 10) -> CallToolResult:
+        return ask(queries.hotspots, include_type_only=include_type_only, limit=limit)
 
     if served.store is not None:
         store, repository = served.store, served.repository

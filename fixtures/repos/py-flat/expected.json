@@ -61,5 +61,10 @@
     {"path": "pkg/sub/deep.py", "language": "python", "status": "analyzed", "flags": []},
     {"path": "top.py", "language": "python", "status": "analyzed", "flags": []}
   ],
-  "skipped": []
+  "skipped": [],
+  "history": {
+    "status": "not_available", "reason": "no_git", "commit": null, "window_start": null, "newest": null,
+    "oldest": null, "commits_read": 0, "merges_skipped": 0, "shallow_skipped": 0, "local_changes": false,
+    "files": []
+  }
 }

@@ -98,7 +98,7 @@ and `/users/{id}`; file-level ambiguity is the only kind that changes the graph.
 **Alternatives**: regex matching of raw strings — rejected (parameter syntaxes differ); emitting edges to all
 candidates — rejected by constitution IV (no guessing).
 
-## R5. Graph representation (schema v8)
+## R5. Graph representation (schema v9)
 
 **Decision**:
 
@@ -110,9 +110,9 @@ candidates — rejected by constitution IV (no guessing).
   dynamic path, e.g. `unresolved:http:GET ?`) with `confidence: unresolved` and `reason` `dynamic`,
   `not_found` or `ambiguous` (existing unresolved reasons); the node is an `UnresolvedNode` with ecosystem
   `http`.
-- Schema v7 → v8: add `http_call` to edge types, `http_route` to heuristic reasons, `http` to unresolved-node
+- Schema v8 → v9: add `http_call` to edge types, `http_route` to heuristic reasons, `http` to unresolved-node
   ecosystems and the `unresolved:http:` id pattern, optional `route_line` (integer ≥ 1, required exactly for
-  `http_call` edges with a `file:` target). `SCHEMA_VERSION = 8`.
+  `http_call` edges with a `file:` target). `SCHEMA_VERSION = 9`.
 
 **Rationale**: `symbol` already takes part in edge ids, sorting and the `dependents(symbol=…)` filter, so
 `dependents("backend/app/api.py", symbol="GET /api/items")` works with no query change; `route_line` gives the
@@ -128,7 +128,7 @@ code; a node per route — rejected for this slice (spec: file-level edges).
 
 - `graph/model.py`: `EdgeType` + `http_call`, `HeuristicReason` + `http_route`, `Ecosystem` + `http`,
   `Edge.route_line: int | None = None`;
-- `graph/serialize.py` / `graph/load.py`: v8, `route_line` written when set and read back;
+- `graph/serialize.py` / `graph/load.py`: v9, `route_line` written when set and read back;
 - `graph/queries.py`: no logic change — `dependents`, `impact`, `neighbors`, `cycles` already follow every
   file-to-file edge and keep its confidence; tests prove HTTP edges appear as heuristic. The `symbol` filter
   applies as is. Project-level views (C#) ignore `http_call` like other non-project edges.
@@ -138,7 +138,7 @@ code; a node per route — rejected for this slice (spec: file-level edges).
   link the graph could not establish. Renaming the field would change the query contract for MCP and the HTTP API,
   so the name stays; `mixed-fullstack/queries.json` goes from 1 to 2 (its `app` import and its `/api/items` call).
   Found while implementing; raised for review.
-- `store`: stored v7 analyses are not reused (version check) and are re-analyzed on the next `--store` run; the
+- `store`: stored v8 analyses are not reused (version check) and are re-analyzed on the next `--store` run; the
   HTTP API serves stored bytes as stored. `mcp`, `agents`: no change.
 
 Spec FR-012 says HTTP edges can be excluded "the same way" as other heuristic edges: there is no such option for
@@ -151,7 +151,7 @@ and `include_router(prefix)`, a Flask blueprint with `url_prefix`, parameter rou
 `/users/{id}`, a multi-method route, the same path in two files for ambiguity) and `frontend/` (fetch and
 axios calls in every URL form, a base constant, a dynamic URL, an absolute URL, an unmatched path), and a
 hand-written `expected.json`. `mixed-fullstack/expected.json` gets its `GET /api/items` as `not_found`. Every
-`expected.json` and golden file moves to `schema_version: 8`; no other change is allowed (FR-016).
+`expected.json` and golden file moves to `schema_version: 9`; no other change is allowed (FR-016).
 
 ## R8. Performance
 

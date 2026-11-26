@@ -125,3 +125,42 @@ def test_start_is_fast_while_a_job_runs(job_app, github):
     finally:
         release.set()
     wait_for_job(client, first["id"])
+
+
+def test_history_flag(job_app, github):
+    client, _ = job_app
+    started = _start(client, github=LINK, history=False)
+    assert started["history"] is False
+    done = wait_for_job(client, started["id"])
+    graph = client.get("/api/v1/graph", params={"repository": "github.com/o/ts-app", "snapshot": SHA})
+    assert done["stage"] == "done"
+    assert json.loads(graph.content)["history"]["reason"] == "skipped"
+    assert _start(client, github=LINK)["history"] is True
+
+
+@pytest.mark.parametrize("value", ["no", 0, None, [True]])
+def test_history_must_be_boolean(job_app, value):
+    client, _ = job_app
+    response = client.post("/api/v1/jobs", json={"github": LINK, "history": value})
+    assert response.status_code == 400
+    assert response.json()["error"]["message"] == "history must be true or false"
+
+
+def test_history_flag_not_deduplicated(job_app, github):
+    client, runner = job_app
+    first = _start(client, github=LINK)
+    second = _start(client, github=LINK, history=False)
+    assert first["id"] != second["id"]
+    wait_for_job(client, first["id"])
+    wait_for_job(client, second["id"])
+
+
+def test_zip_history_parameter(job_app):
+    from jobs_helpers import fixture_zip
+
+    client, _ = job_app
+    response = client.post("/api/v1/jobs/zip", params={"name": "app.zip", "history": "false"}, content=fixture_zip("py-flat"))
+    assert response.status_code == 202, response.text
+    assert response.json()["history"] is False
+    bad = client.post("/api/v1/jobs/zip", params={"name": "app.zip", "history": "maybe"}, content=fixture_zip("py-flat"))
+    assert bad.status_code == 400
