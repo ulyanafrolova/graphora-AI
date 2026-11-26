@@ -106,11 +106,24 @@ def _object(node: Node | None) -> dict[str, Node] | None:
     return out
 
 
-def _method(options: dict[str, Node] | None, default: str) -> str | None:
-    if options is None or "method" not in options:
+def _method(node: Node | None, default: str) -> str | None:
+    """The method of an options object: `default` when there is no options argument or no `method` in it; None
+    (unknown) when the options are not an object literal, or a spread may set the method after the last literal."""
+    if node is None:
         return default
-    value = string_value(options["method"])
-    return value.upper() if value else None
+    if node.type != "object":
+        return None
+    method: str | None = default
+    for child in node.named_children:
+        if child.type == "spread_element":
+            method = None
+        elif child.type in ("pair", "shorthand_property_identifier"):
+            key = child.child_by_field_name("key") if child.type == "pair" else child
+            name = (string_value(key) if key.type == "string" else _text(key)) if key is not None else None
+            if name == "method":
+                value = string_value(child.child_by_field_name("value")) if child.type == "pair" else None
+                method = value.upper() if value else None
+    return method
 
 
 def _call(position: Positions, node: Node) -> HttpCallFact | None:
@@ -123,22 +136,22 @@ def _call(position: Positions, node: Node) -> HttpCallFact | None:
     url: Node | None
     if name == "fetch" or (function.type == "member_expression" and name.split(".")[0] in _GLOBALS and name.endswith(".fetch")):
         url = args[0] if args else None
-        method = _method(_object(args[1]) if len(args) > 1 else None, "GET")
+        method = _method(args[1] if len(args) > 1 else None, "GET")
     elif function.type == "member_expression" and name.startswith("axios.") and name.count(".") == 1:
         verb = name.split(".", 1)[1]
         if verb in _AXIOS_VERBS:
             url, method = (args[0] if args else None), verb.upper()
         elif verb == "request":
             config = _object(args[0]) if args else None
-            url, method = (config or {}).get("url"), _method(config, "GET")
+            url, method = (config or {}).get("url"), _method(args[0] if args else None, "GET")
         else:
             return None
     elif name == "axios":
         first = _object(args[0]) if args else None
         if first is not None:
-            url, method = first.get("url"), _method(first, "GET")
+            url, method = first.get("url"), _method(args[0], "GET")
         else:
-            url, method = (args[0] if args else None), _method(_object(args[1]) if len(args) > 1 else None, "GET")
+            url, method = (args[0] if args else None), _method(args[1] if len(args) > 1 else None, "GET")
     else:
         return None
     parts = _parts(url) if url is not None else None

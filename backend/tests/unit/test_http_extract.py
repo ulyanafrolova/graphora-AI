@@ -165,3 +165,17 @@ def test_a_url_inside_the_query_is_not_another_host():
     """Only a scheme or `//` at the start means another host (013 review)."""
     assert calls('fetch("/api/proxy?u=https://x.com");') == [("GET", (T("/api/proxy?u=https://x.com"),), False, 1)]
     assert calls('fetch("HTTPS://x.com/a");')[0][2] is True
+
+
+def test_options_that_are_not_a_literal_leave_the_method_unknown():
+    """A variable or a spread in the options may set any method (013 review)."""
+    source = """\
+fetch("/a", opts);
+fetch("/a", { ...opts });
+fetch("/a", { method: "PUT", ...opts });
+fetch("/a", { ...opts, method: "PUT" });
+fetch("/a", { headers: h });
+axios("/a", config);
+axios.request(config);
+"""
+    assert [c[0] for c in calls(source)] == [None, None, None, "PUT", "GET", None, None]
