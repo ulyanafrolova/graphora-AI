@@ -262,13 +262,13 @@ changes are large)
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T021 [P] Write `backend/tests/integration/test_verify_performance.py` marked `slow`: 100 claims (mixed
+- [X] T021 [P] Write `backend/tests/integration/test_verify_performance.py` marked `slow`: 100 claims (mixed
   kinds, built from `expected.json` of the fixture with the most edges) verified against the stored snapshot
   in under 1 second, excluding storing (SC-005); marked `db` too.
-- [ ] T022 [P] Add a determinism test to `backend/tests/golden/test_verify_fixtures.py`: verdicts for all
+- [X] T022 [P] Add a determinism test to `backend/tests/golden/test_verify_fixtures.py`: verdicts for all
   fixture claims serialized with `dumps` are byte-identical across two runs in separate processes
   (`subprocess` running `python -c` over one fixture) (SC-004, FR-013).
-- [ ] T023 [P] Add the Reviewer example to `backend/tests/unit/test_verify_graph.py`: a synthetic graph with
+- [X] T023 [P] Add the Reviewer example to `backend/tests/unit/test_verify_graph.py`: a synthetic graph with
   `frontend/login.ts` and `auth/service.py` and no edge between them; the claim "frontend depends on
   auth/service.py" → `no_edge` (SC-007).
 - [ ] T024 Run `make check` from the repository root (with `make db` and `GRAPHORA_TEST_DATABASE_URL`); fix

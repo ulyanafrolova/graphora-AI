@@ -2,11 +2,13 @@
 spec US1, FR-020, SC-001–SC-003)."""
 
 import json
+import subprocess
+import sys
 from functools import cache
 
 import pytest
 
-from conftest import FIXTURES, analyze_fixture
+from conftest import FIXTURES, REPO_ROOT, analyze_fixture
 from graphora.graph import queries
 from graphora.verify import Claim, Step, verify
 
@@ -120,3 +122,28 @@ def test_hand_written_answers_verify(name, entry):
             assert v.status == expect, (node, v.to_dict())
     if outside is not None:
         assert verdicts[-1].reason == "not_in_result", verdicts[-1].to_dict()
+
+
+SCRIPT = """
+import json, sys
+sys.path.insert(0, "tests")
+from conftest import FIXTURES, REPO_ROOT, analyze_fixture
+from graphora.graph import queries
+from graphora.verify import Claim, Step, dumps, verify
+name = sys.argv[1]
+ix = queries.index(analyze_fixture(name).doc)
+edges = json.loads((FIXTURES / name / "expected.json").read_text())["edges"]
+claims = [Claim("dependency", "", ix.doc.snapshot, steps=(Step(e["source"].split(":", 1)[1], e["line"], e["target"], e["symbol"]),)) for e in edges]
+claims += [Claim("query", "", ix.doc.snapshot, question="cycles", count=0)]
+sys.stdout.buffer.write(dumps(verify(claims, ix)))
+"""
+
+
+def test_verdicts_are_identical_across_processes():
+    """SC-004, FR-013."""
+    runs = [
+        subprocess.run([sys.executable, "-c", SCRIPT, "ts-app"], cwd=REPO_ROOT / "backend", capture_output=True, check=True).stdout
+        for _ in range(2)
+    ]
+    assert runs[0] == runs[1]
+    assert json.loads(runs[0])[0]["status"] in ("verified", "heuristic", "rejected")
