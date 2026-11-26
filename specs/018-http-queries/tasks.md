@@ -64,7 +64,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   - `symbol`: absent → `None`;
   - the returned kwargs contain only the row's options (plus `limit`), so a row without `level` never passes
     `level`.
-- [ ] T004 Implement in `backend/src/graphora/api/questions.py`:
+- [X] T004 Implement in `backend/src/graphora/api/questions.py`:
   - `_allowed(row) -> tuple[tuple[str, ...], tuple[str, ...]]` (required, optional) for `_params`;
   - `_arguments(row, params) -> tuple[tuple[str, ...], dict]` (positional target, keyword options) per research R2
     and data-model.md § Option kinds, reusing `_params` and `_INT` from `api/routes.py`;
