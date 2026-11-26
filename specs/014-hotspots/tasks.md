@@ -48,7 +48,7 @@ of the group. Push at the end of each phase.
 
 **Purpose**: the `history` section that every document carries (data-model.md, contracts/graph-schema-v8.md).
 
-- [ ] T003 [P] Write `backend/tests/unit/test_history_model.py`.
+- [X] T003 [P] Write `backend/tests/unit/test_history_model.py`.
   - **Rules** (data-model.md § History): every rule raises `ValueError` when broken:
     - `not_available` needs a `reason`, and `commit`, `window_start`, `newest`, `oldest` None, all counts 0,
       `files` empty, `local_changes` false;
@@ -59,7 +59,7 @@ of the group. Push at the end of each phase.
   - **`History.final`**: true for `available` and for `not_available` with `no_git`, `zip`, `unreadable`; false
     otherwise.
   - **Default**: `GraphDocument` without `history` gets `NOT_COLLECTED`.
-- [ ] T004 Add to `backend/src/graphora/graph/model.py`:
+- [X] T004 Add to `backend/src/graphora/graph/model.py`:
   - `HistoryStatus = Literal["available", "partial", "not_available"]`;
   - `HistoryReason = Literal["no_git", "zip", "unreadable", "skipped", "fetch_failed", "too_large",
     "time_limit", "not_collected"]`;
