@@ -23,7 +23,7 @@ from graphora.pipeline import LIMIT_KEYS, PipelineLimits
 from graphora.pipeline.jobs import JobRunner, JobStatus
 
 _SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
-_BODY_KEYS = ("github", "ref", "limits")
+_BODY_KEYS = ("github", "ref", "limits", "history")
 _INTEGER = re.compile(r"[0-9]{1,15}")
 _NUMBER = re.compile(r"[0-9]{1,15}(\.[0-9]{1,6})?")
 _ZIP_SIGNATURES = (b"PK\x03\x04", b"PK\x05\x06")  # as `parse_source` (002)
@@ -123,11 +123,16 @@ def router(runner: JobRunner) -> APIRouter:
             raise bad_request("limits must be a JSON object")
         source = parse_github(body)
         limits = parse_limits(limits_given, runner.limits)
-        return _accepted(runner.submit_github(source, limits))
+        history = body.get("history", True)
+        if not isinstance(history, bool):
+            raise bad_request("history must be true or false")
+        return _accepted(runner.submit_github(source, limits, history))
 
     @api.post("/jobs/zip")
     async def start_zip(request: Request) -> Response:
-        params = _params(request, ("name",), LIMIT_KEYS)
+        params = _params(request, ("name",), (*LIMIT_KEYS, "history"))
+        if params.get("history", "true") not in ("true", "false"):
+            raise bad_request("history must be true or false")
         name = params["name"]
         check_zip_name(name)
         limits = query_limits(params, runner.limits)
@@ -148,7 +153,7 @@ def router(runner: JobRunner) -> APIRouter:
             with open(upload, "rb") as fh:
                 if fh.read(4) not in _ZIP_SIGNATURES:
                     raise bad_request(f"not a ZIP archive: {name}")
-            return _accepted(runner.submit_zip(upload, limits))
+            return _accepted(runner.submit_zip(upload, limits, params.get("history", "true") == "true"))
         except BaseException:
             runner.discard_upload(upload)
             raise

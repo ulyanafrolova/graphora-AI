@@ -30,6 +30,7 @@ from psycopg import conninfo
 from graphora.adapters.text import text_lines
 from graphora.graph.build import Analysis, current_extractors
 from graphora.graph.serialize import SCHEMA_VERSION, dumps
+from graphora.history import history_final
 
 STORE_VERSION = "1"
 MAX_REPOSITORY_LENGTH = 300
@@ -176,9 +177,10 @@ class Store:
             with conn.transaction():
                 conn.execute("SELECT pg_advisory_xact_lock(%s)", (_lock_key(*key),))
                 row = conn.execute(
-                    "SELECT schema_version, extractors FROM analyses WHERE repository = %s AND snapshot = %s", key
+                    "SELECT schema_version, extractors, graph FROM analyses WHERE repository = %s AND snapshot = %s", key
                 ).fetchone()
-                if row is not None and _reusable(*row):
+                better = row is not None and doc.history.final and not history_final(bytes(row[2]))  # 014 FR-018
+                if row is not None and _reusable(row[0], row[1]) and not better:
                     action: Action = "reused"
                 else:
                     action = "stored" if row is None else "replaced"

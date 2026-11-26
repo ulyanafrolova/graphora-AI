@@ -8,11 +8,13 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from graphora.graph.model import Edge
-from graphora.graph.serialize import _edge_dict
+from graphora.graph.model import Edge, History
+from graphora.graph.serialize import _edge_dict, history_dict
 
 LinkConfidence = Literal["resolved", "heuristic"]
-Question = Literal["dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions", "projects"]
+Question = Literal[
+    "dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "definitions", "projects", "hotspots"
+]
 
 
 def strongest(confidences: Iterable[str]) -> LinkConfidence:
@@ -60,6 +62,9 @@ class Item:
     transitive_dependents: int | None = None
     direct_dependents: int | None = None
     declared_only: bool = False  # 009: a declared reference that no code uses
+    commits: int | None = None  # 014: hotspots only
+    authors: int | None = None
+    score: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -77,6 +82,9 @@ class Item:
             out["direct_dependents"] = self.direct_dependents
         if self.declared_only:
             out["declared_only"] = True
+        for name in ("commits", "authors", "score"):
+            if getattr(self, name) is not None:
+                out[name] = getattr(self, name)
         return out
 
 
@@ -174,6 +182,7 @@ class Answer:
     completeness: Completeness | None = None
     definitions: tuple[DefinitionMatch, ...] | None = None
     projects: tuple[ProjectSummary, ...] | None = None
+    history: History | None = None
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -194,6 +203,8 @@ class Answer:
             out["cut"] = self.cut
         if self.completeness is not None:
             out["completeness"] = self.completeness.to_dict()
+        if self.history is not None:
+            out["history"] = history_dict(self.history, files=False)
         return out
 
 
@@ -209,9 +220,10 @@ class Overview:
     nodes: dict[str, int]
     edges: int
     unresolved_imports: int
+    history: History | None = None  # 014
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "snapshot": self.snapshot,
             "schema_version": self.schema_version,
             "extractors": dict(self.extractors),
@@ -221,6 +233,9 @@ class Overview:
             "edges": self.edges,
             "unresolved_imports": self.unresolved_imports,
         }
+        if self.history is not None:
+            out["history"] = {"status": self.history.status, "reason": self.history.reason}
+        return out
 
 
 def dumps(answer: Answer | Overview) -> bytes:
@@ -274,6 +289,34 @@ def _key_file_lines(answer: Answer) -> list[str]:
     ]
 
 
+def _hotspot_lines(answer: Answer) -> list[str]:
+    return [
+        f"{_name(i.node)}  score {i.score}  commits {i.commits}  authors {i.authors}  "
+        f"transitive {i.transitive_dependents}  direct {i.direct_dependents}"
+        for i in answer.items or ()
+    ]
+
+
+def history_line(h: History) -> str:
+    """One line on what the hotspot numbers are based on (contracts/interfaces.md)."""
+    if h.status == "not_available":
+        return f"history: not available ({'skipped by request' if h.reason == 'skipped' else h.reason})"
+    day = lambda stamp: (stamp or "")[:10]  # noqa: E731
+    if h.status == "partial":
+        line = f"history: partial (time limit), {h.commits_read} commits read back to {day(h.oldest)}"
+    elif h.commits_read == 0:
+        line = f"history: no commits in the window from {day(h.window_start)}"
+    else:
+        line = f"history: {h.commits_read} commits from {day(h.oldest)} to {day(h.newest)} (window from {day(h.window_start)})"
+    if h.merges_skipped:
+        line += f", {h.merges_skipped} merges not counted"
+    if h.local_changes:
+        line += "; uncommitted changes not counted"
+    if h.shallow_skipped:
+        line += f"; {h.shallow_skipped} commits not counted (shallow history)"
+    return line
+
+
 def _group_lines(answer: Answer) -> list[str]:
     lines = []
     for n, group in enumerate(answer.groups or (), start=1):
@@ -325,11 +368,13 @@ _RENDERERS: dict[str, Callable[[Answer], list[str]]] = {
     "neighbors": _neighbor_lines,
     "key_files": _key_file_lines,
     "definitions": _definition_lines,
+    "hotspots": _hotspot_lines,
 }
 
 
 def _footer(answer: Answer) -> list[str]:
-    lines = [f"total: {answer.total}"]
+    lines = [] if answer.history is None else [history_line(answer.history)]
+    lines.append(f"total: {answer.total}")
     if answer.truncated:
         lines.append(f"truncated (limit {answer.options.get('limit')})")
     if answer.cut:
@@ -358,6 +403,9 @@ def _overview_text(o: Overview) -> str:
         f"{n['project']} project, {n['solution']} solution",
         f"edges: {o.edges} ({o.unresolved_imports} unresolved imports)",
     ]
+    if o.history is not None:
+        h = o.history
+        lines.append(f"history: not available ({h.reason})" if h.status == "not_available" else f"history: {h.status}")
     return "\n".join(lines) + "\n"
 
 

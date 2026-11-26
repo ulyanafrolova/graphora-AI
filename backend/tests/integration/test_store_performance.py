@@ -50,10 +50,10 @@ def test_github_reuse_under_two_seconds(store, database_url, monkeypatch):
     fake.serve("https://api.github.com/repos/o/r/commits/HEAD", body=sha.encode())
     entries = [("o-r-0", "dir")] + [(f"o-r-0/m{i}.py", "file", f"import m{(i + 1) % 2000}\n") for i in range(2000)]
     fake.serve(f"https://codeload.github.com/o/r/tar.gz/{sha}", body=make_tar_gz(entries, sha))
-    assert run_analyze("https://github.com/o/r", "--store")[0] == 0
+    assert run_analyze("https://github.com/o/r", "--store", "--no-history")[0] == 0
 
-    start = time.monotonic()
-    code, _, err = run_analyze("https://github.com/o/r", "--store")
+    start = time.monotonic()  # without history: a failed history would be fetched again (014 FR-018)
+    code, _, err = run_analyze("https://github.com/o/r", "--store", "--no-history")
     seconds = time.monotonic() - start
     assert code == 0 and "reused" in err
     assert seconds < 2, f"reuse took {seconds:.2f}s"

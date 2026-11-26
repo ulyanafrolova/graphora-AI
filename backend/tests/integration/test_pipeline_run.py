@@ -31,14 +31,14 @@ def github(fake_gh):
     return fake_gh
 
 
-def _run(source, store, workdir=None):
+def _run(source, store, workdir=None, history=True):
     stages = []
-    result = run_pipeline(source, PipelineLimits(), store, Deadline(300), stages.append, workdir=workdir)
+    result = run_pipeline(source, PipelineLimits(), store, Deadline(300), stages.append, workdir=workdir, history=history)
     return result, stages
 
 
-def _cli(argument):
-    code, out, err = run_analyze(argument)
+def _cli(argument, *args):
+    code, out, err = run_analyze(argument, *args)
     assert code == 0, err
     return out
 
@@ -63,14 +63,19 @@ def test_zip(store, tmp_path):
 
 
 def test_github_then_reuse(store, github):
-    first, stages = _run(GitHubSource("o", "r", None), store)
+    """Without history: a failed or skipped history makes the next run with history fetch again (014 FR-018)."""
+    first, stages = _run(GitHubSource("o", "r", None), store, history=False)
     assert stages == ["resolving", "fetching", "analyzing", "storing"]
     assert (first.action, first.fetched) == ("stored", f"fetched github.com/o/r at {SHA}")
     assert first.analysis.snapshot == SHA
 
-    second, stages = _run(GitHubSource("o", "r", None), store)
+    second, stages = _run(GitHubSource("o", "r", None), store, history=False)
     assert stages == ["resolving"]
     assert (second.action, second.fetched) == ("reused", None)
     assert second.analysis.graph == first.analysis.graph
     assert len(github.urls("codeload.github.com")) == 1
-    assert _cli("https://github.com/o/r") == first.analysis.graph
+    assert _cli("https://github.com/o/r", "--no-history") == first.analysis.graph
+
+    third, stages = _run(GitHubSource("o", "r", None), store)
+    assert stages == ["resolving", "fetching", "analyzing", "storing"]
+    assert len(github.urls("codeload.github.com")) == 3  # first run, the plain CLI run, this run

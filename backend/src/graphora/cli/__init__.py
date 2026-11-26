@@ -15,7 +15,9 @@ import threading
 from pathlib import Path
 
 from graphora.graph.build import build
+from graphora.graph.results import history_line
 from graphora.graph.serialize import dumps
+from graphora.history import with_history
 from graphora.ingest.errors import BadInput, InvalidArchive, RemoteError, UnsafeArchive
 from graphora.ingest.fetch import IngestLimits, fetch_snapshot, with_skipped
 from graphora.ingest.source import GitHubSource, LocalSource, Source, ZipSource, parse_source
@@ -51,13 +53,17 @@ class _Report:
     edges: int
     unresolved: int
     snapshot: str
+    history: str
 
 
 def _report_from_bytes(info: tuple[str, ...], warnings: tuple[str, ...], data: bytes) -> _Report:
-    doc = json.loads(data)
-    files = sum(1 for f in doc["coverage"]["files"] if f["status"] == "analyzed")
-    unresolved = sum(1 for e in doc["edges"] if e["confidence"] == "unresolved")
-    return _Report(info, warnings, files, len(doc["edges"]), unresolved, doc["snapshot"])
+    from graphora.graph.load import loads
+    from graphora.graph.results import history_line
+
+    doc = loads(data)
+    files = sum(1 for f in doc.files if f.status == "analyzed")
+    unresolved = sum(1 for e in doc.edges if e.confidence == "unresolved")
+    return _Report(info, warnings, files, len(doc.edges), unresolved, doc.snapshot, history_line(doc.history))
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -75,6 +81,7 @@ def _parser() -> argparse.ArgumentParser:
     analyze.add_argument("--max-entries", type=int, default=IngestLimits.max_entries)
     analyze.add_argument("--store", action="store_true", help="save the analysis in the store, or reuse a stored one")
     analyze.add_argument("--database", help="PostgreSQL URL (default: $GRAPHORA_DATABASE_URL); only with --store")
+    analyze.add_argument("--no-history", action="store_true", help="do not read the git history (no hotspots)")
     serve = commands.add_parser("serve", help="serve stored analyses over a read-only HTTP API")
     serve.add_argument("--database", help="PostgreSQL URL (default: $GRAPHORA_DATABASE_URL)")
     serve.add_argument("--host", default="127.0.0.1")
@@ -124,7 +131,9 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-_QUESTIONS = ("dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "overview", "definitions", "projects")
+_QUESTIONS = (
+    "dependencies", "dependents", "impact", "neighbors", "cycles", "key-files", "hotspots", "overview", "definitions", "projects"
+)
 _WITH_TARGET = ("dependencies", "dependents", "impact", "neighbors", "definitions")
 _LEVEL_QUESTIONS = ("dependencies", "dependents", "impact", "cycles")
 _OPTION_QUESTIONS = {"symbol": ("dependents",), "max_depth": ("impact",), "follow_barrels": ("dependents", "impact")}
@@ -222,8 +231,9 @@ def _query(args: argparse.Namespace) -> int:
         "cycles": queries.cycles,
         "neighbors": queries.neighbors,
         "key-files": queries.key_files,
+        "hotspots": queries.hotspots,
     }
-    if question == "key-files" and args.limit is None:
+    if question in ("key-files", "hotspots") and args.limit is None:
         options["limit"] = 10
 
     try:
@@ -427,7 +437,7 @@ def _analyze_and_store(
             args.max_files, args.max_bytes, args.max_seconds, limits.max_archive_bytes, limits.max_extract_bytes,
             limits.max_entries,
         )
-        result = run_pipeline(source, pipeline_limits, store, deadline)
+        result = run_pipeline(source, pipeline_limits, store, deadline, history=not args.no_history)
         saved = result.analysis
         info = () if result.fetched is None else (result.fetched,)
         info += (f"{result.action} {saved.repository} {saved.snapshot}",)
@@ -460,6 +470,7 @@ def _analyze(args: argparse.Namespace) -> int:
             with fetch_snapshot(source, limits, deadline) as fetched:
                 doc, warnings = build(fetched.root, args.max_files, args.max_bytes, deadline, snapshot=fetched.snapshot)
                 doc = with_skipped(doc, fetched.skipped)
+                doc = with_history(doc, fetched, deadline, not args.no_history, limits.max_archive_bytes)
                 data = dumps(doc)
             info: tuple[str, ...] = ()
             if isinstance(source, GitHubSource):
@@ -468,7 +479,7 @@ def _analyze(args: argparse.Namespace) -> int:
                 info = (f"extracted {source.path.name}",)
             files = sum(1 for f in doc.files if f.status == "analyzed")
             unresolved = sum(1 for e in doc.edges if e.confidence == "unresolved")
-            report = _Report(info, tuple(warnings), files, len(doc.edges), unresolved, doc.snapshot)
+            report = _Report(info, tuple(warnings), files, len(doc.edges), unresolved, doc.snapshot, history_line(doc.history))
     except _StoreFailed as exc:
         _log("error", exc.message)
         return exc.status
@@ -511,4 +522,5 @@ def _analyze(args: argparse.Namespace) -> int:
         "info",
         f"analyzed {report.files} files, {report.edges} edges ({report.unresolved} unresolved), snapshot {report.snapshot}",
     )
+    _log("info", report.history)
     return EXIT_OK

@@ -30,12 +30,13 @@ def _start(client, **body):
 
 
 def test_stored_commit_is_reused(job_app, github):
+    """Without history: a history that is not final would be fetched again (014 FR-018)."""
     client, _ = job_app
-    first = wait_for_job(client, _start(client, github=LINK)["id"])
+    first = wait_for_job(client, _start(client, github=LINK, history=False)["id"])
     assert first["result"]["action"] == "stored"
 
     begin = time.monotonic()
-    second_id = _start(client, github=LINK)["id"]
+    second_id = _start(client, github=LINK, history=False)["id"]
     seen = stages_seen(client, second_id)
     assert time.monotonic() - begin < 2  # SC-003
     second = wait_for_job(client, second_id)

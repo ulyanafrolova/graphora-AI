@@ -27,6 +27,7 @@ from graphora.graph.model import (
     UnresolvedNode,
 )
 from graphora.graph.serialize import snippet_hash
+from graphora.history import HISTORY_READER_VERSION
 from graphora.ingest.snapshot import snapshot_id
 from graphora.ingest.walk import Deadline, read_file, walk
 from graphora.resolve import csharp as cs_resolve
@@ -54,6 +55,7 @@ def current_extractors() -> dict[str, str]:
         "csharp-resolver": cs_resolve.RESOLVER_VERSION,
         "dotnet-namespaces": cs_resolve.NAMESPACES_VERSION,
         "dotnet-types": cs_resolve.TYPES_VERSION,
+        "history-reader": HISTORY_READER_VERSION,
         "dotnet-implicit-usings": cs_resolve.IMPLICIT_USINGS_VERSION,
         "js-adapter": js.VERSION,
         "js-resolver": js_resolve.RESOLVER_VERSION,

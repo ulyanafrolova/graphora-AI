@@ -12,7 +12,11 @@ import re
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
-from graphora.api.errors import bad_request, json_response, not_found
+from graphora.api.errors import ApiError, bad_request, json_response, not_found
+from graphora.graph import queries
+from graphora.graph.load import loads
+from graphora.graph.results import dumps
+from graphora.graph.serialize import SCHEMA_VERSION
 from graphora.store import Store
 
 _INT = re.compile(r"-?[0-9]{1,9}")
@@ -63,6 +67,25 @@ def router(store: Store) -> APIRouter:
         if stored is None:
             raise _missing(store, params["repository"], params["snapshot"])
         return Response(stored.graph, media_type="application/json")
+
+    @api.get("/hotspots")
+    def hotspots(request: Request) -> Response:
+        params = _params(request, ("repository", "snapshot"), ("limit", "include_type_only"))
+        limit = 10 if "limit" not in params else _int(params, "limit")
+        flag = params.get("include_type_only", "true")
+        if flag not in ("true", "false"):
+            raise bad_request("include_type_only must be true or false")
+        stored = store.get_analysis(params["repository"], params["snapshot"])
+        if stored is None:
+            raise _missing(store, params["repository"], params["snapshot"])
+        if stored.schema_version != SCHEMA_VERSION:
+            message = f"{stored.repository} {stored.snapshot} was analyzed with graph schema {stored.schema_version}"
+            raise ApiError("stale", 409, message + "; analyze it again")
+        try:
+            answer = queries.hotspots(queries.index(loads(stored.graph)), include_type_only=flag == "true", limit=limit)
+        except ValueError as exc:
+            raise bad_request(str(exc)) from None
+        return Response(dumps(answer), media_type="application/json")
 
     @api.get("/file")
     def file(request: Request) -> Response:

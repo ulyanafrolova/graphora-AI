@@ -94,6 +94,7 @@ class _Job:
     source_body: dict[str, Any]
     limits: PipelineLimits
     key: tuple[Any, ...] | None
+    history: bool = True  # 014: read the git history
     stage: str = "queued"
     result: dict[str, Any] | None = None
     error: dict[str, str] | None = None
@@ -106,6 +107,7 @@ class _Job:
                 "stage": self.stage,
                 "source": dict(self.source_body),
                 "limits": self.limits.as_dict(),
+                "history": self.history,
                 "result": None if self.result is None else dict(self.result),
                 "error": None if self.error is None else dict(self.error),
             }
@@ -228,14 +230,14 @@ class JobRunner:
 
     # --- submitting and reading ------------------------------------------------------------------------------
 
-    def submit_github(self, source: GitHubSource, limits: PipelineLimits) -> JobStatus:
-        key = ("github", source.owner, source.repo, source.ref or "", limits)
+    def submit_github(self, source: GitHubSource, limits: PipelineLimits, history: bool = True) -> JobStatus:
+        key = ("github", source.owner, source.repo, source.ref or "", limits, history)
         body = {"kind": "github", "repository": f"github.com/{source.owner}/{source.repo}", "ref": source.ref}
         with self._wake:
             existing = self._active.get(key)
             if existing is not None:  # FR-011
                 return self._jobs[existing].status()
-            return self._enqueue(_Job(self._new_id(), source, body, limits, key))
+            return self._enqueue(_Job(self._new_id(), source, body, limits, key, history))
 
     def can_accept(self) -> None:
         """Raise `Stopping` or `QueueFull` now, before an upload is read."""
@@ -262,14 +264,14 @@ class JobRunner:
         with self._lock:
             self._reserved.discard(job_dir.name)
 
-    def submit_zip(self, upload: Path, limits: PipelineLimits) -> JobStatus:
+    def submit_zip(self, upload: Path, limits: PipelineLimits, history: bool = True) -> JobStatus:
         """Queue a job for an upload from `new_upload`; the repository is named after the uploaded name."""
         job_id, name = upload.parent.parent.name, upload.name
         body = {"kind": "zip", "name": name, "repository": name.rsplit(".", 1)[0] if "." in name else name}
         with self._wake:
             if job_id not in self._reserved:
                 raise ValueError(f"not an upload of this runner: {upload}")
-            status = self._enqueue(_Job(job_id, ZipSource(upload), body, limits, None))
+            status = self._enqueue(_Job(job_id, ZipSource(upload), body, limits, None, history))
             self._reserved.discard(job_id)
             return status
 
@@ -332,7 +334,8 @@ class JobRunner:
             workdir.mkdir(parents=True, exist_ok=True)
             store = self._open_store(self.database_url)
             outcome = self._pipeline(
-                job.source, job.limits, store, deadline, lambda stage: self._set_stage(job, stage), workdir=workdir
+                job.source, job.limits, store, deadline, lambda stage: self._set_stage(job, stage), workdir=workdir,
+                history=job.history,
             )
             self._finish(job, _result(outcome), None)
         except BaseException as exc:  # noqa: BLE001 — every failure becomes a status (FR-008)
