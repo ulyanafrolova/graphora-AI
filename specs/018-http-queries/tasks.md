@@ -117,7 +117,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
   `symbol`, `include_type_only`, `follow_barrels`, `level`; 50), `impact` (`target`; `max_depth`,
   `include_type_only`, `follow_barrels`, `level`; 50), `neighbors` (`target`; `include_type_only`; 50). Check: T005,
   T006 pass.
-- [ ] T008 [US1] In `backend/tests/integration/test_api.py`, extend `test_only_read_endpoints` with
+- [X] T008 [US1] In `backend/tests/integration/test_api.py`, extend `test_only_read_endpoints` with
   `/api/v1/dependencies`, `/api/v1/dependents`, `/api/v1/impact`, `/api/v1/neighbors` (`["get"]`), and add them to
   the `path` list of `test_only_get` (405 for other methods).
 

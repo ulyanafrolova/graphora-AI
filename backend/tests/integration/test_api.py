@@ -215,8 +215,11 @@ def test_internal_error_hides_details(client, monkeypatch):
     assert b"secret" not in response.content and b"/Users" not in response.content
 
 
+QUESTION_PATHS = ["/api/v1/dependencies", "/api/v1/dependents", "/api/v1/impact", "/api/v1/neighbors"]  # 018
+
+
 @pytest.mark.parametrize("method", ["post", "put", "delete", "patch"])
-@pytest.mark.parametrize("path", ["/api/v1/repositories", "/api/v1/graph", "/api/v1/file"])
+@pytest.mark.parametrize("path", ["/api/v1/repositories", "/api/v1/graph", "/api/v1/file", *QUESTION_PATHS])
 def test_only_get(client, method, path):
     _error(getattr(client, method)(path), 405, "method_not_allowed")
 
@@ -228,7 +231,7 @@ def test_only_read_endpoints(client):
         "/api/v1/graph": ["get"],
         "/api/v1/hotspots": ["get"],  # 014
         "/api/v1/file": ["get"],
-    }
+    } | {p: ["get"] for p in QUESTION_PATHS}
     _error(client.get("/api/v1/import"), 404, "not_found")
 
 
