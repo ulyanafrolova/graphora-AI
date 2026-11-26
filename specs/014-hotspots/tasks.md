@@ -121,7 +121,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
 
 ### Tests
 
-- [ ] T010 [P] [US1] Write `backend/tests/unit/test_history_reader.py` against `reader.read_history(store,
+- [X] T010 [P] [US1] Write `backend/tests/unit/test_history_reader.py` against `reader.read_history(store,
   commit_sha, paths, shallow, deadline)`, on repositories from `history_repos`. Hand-written expectations:
   - a file changed in 5 commits by one author → `commits 5, authors 1`;
   - two authors with the same e-mail in different case and different names count as 1; different e-mails count
@@ -157,7 +157,7 @@ query … hotspots`, and compare commits, authors, dependents, score and order w
 
 ### Implementation
 
-- [ ] T013 [US1] Implement `backend/src/graphora/history/reader.py`: `read_history(store, commit_sha,
+- [X] T013 [US1] Implement `backend/src/graphora/history/reader.py`: `read_history(store, commit_sha,
   paths: frozenset[str], shallow: frozenset[bytes], deadline) -> History`, per research R3, R4.
   - **Walk**: a heap of `(-commit_time, sha)`; the window start is the snapshot commit time − 365 × 86,400.
   - **Counting**: merges are skipped and counted in `merges_skipped`; shallow commits are skipped and counted in
