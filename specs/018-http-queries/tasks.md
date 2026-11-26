@@ -131,7 +131,7 @@ Messages are short, lowercase and English. Push at the end of each phase.
 
 **Independent Test**: for each fixture, compare these four answers with the CLI bytes.
 
-- [ ] T009 [P] [US2] In `backend/tests/golden/test_http_queries.py`, extend `HTTP` with `cycles`, `key_files`,
+- [X] T009 [P] [US2] In `backend/tests/golden/test_http_queries.py`, extend `HTTP` with `cycles`, `key_files`,
   `projects` (no `limit` for `projects`, as in the MCP golden test), and add `test_overview` parametrized over every
   fixture: GET `/api/v1/overview` equals `run_query(graph, "overview", "--format", "json")` bytes, twice.
 - [ ] T010 [P] [US2] In `backend/tests/integration/test_http_queries_api.py` add: `key_files` default limit 10;

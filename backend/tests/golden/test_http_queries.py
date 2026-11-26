@@ -11,7 +11,7 @@ from graphora.api import create_app
 
 pytestmark = pytest.mark.db
 
-HTTP = {"dependencies", "dependents", "impact", "neighbors"}
+HTTP = {"dependencies", "dependents", "impact", "neighbors", "cycles", "key_files", "projects"}
 
 CASES = [
     pytest.param(p.parent.name, entry, id=f"{p.parent.name}-{i}-{entry['question']}")
@@ -72,3 +72,13 @@ def test_answer_equals_query(store, tmp_path, name, entry):
     assert (code, err) == (0, "")
     assert ask(client, name, snapshot, entry["question"], **params) == as_json
     assert ask(client, name, snapshot, entry["question"], **params) == as_json
+
+
+@pytest.mark.parametrize("name", sorted(p.name for p in FIXTURES.iterdir() if (p / "repo").is_dir()))
+def test_overview(store, tmp_path, name):
+    snapshot, graph = stored(store, tmp_path, name)
+    client = TestClient(create_app(store))
+    code, as_json, err = run_query(graph, "overview", "--format", "json")
+    assert (code, err) == (0, "")
+    assert ask(client, name, snapshot, "overview") == as_json
+    assert ask(client, name, snapshot, "overview") == as_json
