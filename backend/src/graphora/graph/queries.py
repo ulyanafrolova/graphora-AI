@@ -222,7 +222,8 @@ def dependencies(
     return _answer(ix, "dependencies", node, options, items, limit, unresolved=unresolved)
 
 
-def _matches(e: Edge, symbol: str) -> bool:
+def matches_symbol(e: Edge, symbol: str) -> bool:
+    """The `symbol` rule of dependents, shared with the claim verifier (specs/011-claim-verifier research § R5)."""
     if e.type == "type_reference" and e.symbol is not None and e.symbol.endswith("." + symbol):
         return True  # 008: C# types are stored by full name; `--symbol Mailer` finds `App.Services.Mailer`
     return e.symbol == symbol or (e.type == "reexports" and e.alias == symbol)
@@ -249,7 +250,7 @@ def dependents(
     for dep in g.predecessors(node):
         edges = g.edges[dep, node]["edges"]
         if symbol is not None:
-            edges = tuple(e for e in edges if _matches(e, symbol))
+            edges = tuple(e for e in edges if matches_symbol(e, symbol))
             if not edges:
                 continue
         found[dep] = _make_link(dep, node, edges)
