@@ -200,6 +200,7 @@ ROUTES = {
     "definitions": {"name": "helper"},
     "overview": {},
     "projects": {},
+    "components": {},
 }
 
 
@@ -242,6 +243,7 @@ PARAMETERS = {
     "definitions": ["name", "limit"],
     "overview": [],
     "projects": [],
+    "components": ["include_type_only"],
 }
 
 

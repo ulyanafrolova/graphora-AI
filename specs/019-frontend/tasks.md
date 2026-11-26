@@ -109,7 +109,7 @@ messages; push at the end of each phase. Draft PR #41 is already open.
   `backend/src/graphora/mcp/server.py`; extend `backend/tests/golden/test_mcp_queries.py` `_flags`/CASES so the new
   queries.json entries compare tool = CLI (no `--limit` for `components`, like `projects`); update the tool list
   assertions in `backend/tests/unit/test_mcp_tools.py`.
-- [ ] T015 Add the row `Question("components", queries.components, None, ("include_type_only",), None)` in
+- [X] T015 Add the row `Question("components", queries.components, None, ("include_type_only",), None)` in
   `backend/src/graphora/api/questions.py`; add `components` to `HTTP` in `backend/tests/golden/test_http_queries.py`,
   to `QUESTION_PATHS` in `backend/tests/integration/test_api.py`, and to `ROUTES`/`PARAMETERS` in
   `backend/tests/integration/test_http_queries_api.py`.
