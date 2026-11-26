@@ -93,6 +93,7 @@ limit is capped by `MAX_LIMIT`. Description (fixed text):
 |---|---|
 | Found | `200` with the answer JSON above, bytes equal to `results.dumps` |
 | Unknown repository or snapshot | `404`, same messages as `/graph` |
+| Stored with an older graph schema (before v8) | `409`, kind `stale`: `<repository> <snapshot> was analyzed with graph schema N; analyze it again` |
 | Bad `limit` (not an integer, negative), bad `include_type_only` (not `true`/`false`), unknown or repeated parameter | `400` |
 | History not available | `200` with an empty `items` and `history.reason` |
 
