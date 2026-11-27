@@ -51,10 +51,17 @@
   color: var(--heuristic);
 }
 .hotspots-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 460px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
-  align-items: start;
+  align-items: flex-start;
+}
+.hotspots-grid > .panel {
+  flex: 2 1 440px;
+  min-width: 0;
+}
+.hotspots-grid > .panel + .panel {
+  flex: 1 1 400px;
 }
 .treemap {
   position: relative;
