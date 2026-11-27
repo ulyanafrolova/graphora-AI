@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import type { Answer, History, Item } from "@/api/types";
 import { splitPath } from "@/graph/names";
 import { TopRisks } from "@/insights/TopRisks";
-import { historyLine, riskColor, tiles, Treemap } from "@/insights/Treemap";
+import { historyLine, mapHeight, riskColor, tileLabels, tiles, Treemap } from "@/insights/Treemap";
 
 const item = (node: string, score: number, commits: number, authors: number, transitive: number): Item =>
   ({
@@ -113,4 +113,17 @@ test("treemap: a tile shows the file name and is named by the full path and scor
   );
   const tile = screen.getByRole("button", { name: "src/a/__init__.py, score 9" });
   expect(tile.querySelector(".name")).toHaveTextContent(/^__init__\.py$/);
+});
+
+test("treemap: a tile shows only the labels that fit, never a few cut letters", () => {
+  expect(tileLabels(200, 80)).toEqual({ name: true, score: true });
+  expect(tileLabels(60, 30)).toEqual({ name: true, score: false });
+  expect(tileLabels(40, 80)).toEqual({ name: false, score: false });
+  expect(tileLabels(200, 20)).toEqual({ name: false, score: false });
+});
+
+test("treemap: the map height follows the width within bounds", () => {
+  expect(mapHeight(300)).toBe(280);
+  expect(mapHeight(800)).toBe(496);
+  expect(mapHeight(2000)).toBe(560);
 });
