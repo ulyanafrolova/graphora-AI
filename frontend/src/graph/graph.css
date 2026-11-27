@@ -97,6 +97,7 @@ button.link {
 .side-panel h2 {
   margin: 8px 0 4px;
   font-size: 22px;
+  overflow-wrap: anywhere;
 }
 
 .side-panel .label {
