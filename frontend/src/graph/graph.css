@@ -14,6 +14,7 @@
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
@@ -21,6 +22,7 @@
 
 .tabs {
   display: inline-flex;
+  flex-shrink: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   overflow: hidden;
@@ -31,6 +33,7 @@
   border-radius: 0;
   background: var(--panel);
   padding: 8px 18px;
+  white-space: nowrap;
 }
 
 .tabs button[aria-selected="true"] {
@@ -51,6 +54,7 @@
   border-radius: var(--radius);
   padding: 7px 12px;
   background: var(--panel);
+  white-space: nowrap;
 }
 
 .canvas {
@@ -187,9 +191,11 @@ button.link {
 
 .search {
   position: relative;
+  flex: 0 1 320px;
+  min-width: 200px;
 }
 .search input {
-  width: 320px;
+  width: 100%;
 }
 .search-results {
   position: absolute;
