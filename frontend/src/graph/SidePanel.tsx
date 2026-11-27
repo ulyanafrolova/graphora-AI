@@ -1,5 +1,3 @@
-import { useNavigate } from "react-router";
-
 import { ComponentPanel } from "./ComponentPanel";
 import { FilePanel } from "./FilePanel";
 import { ImpactPanel } from "./ImpactPanel";
@@ -8,7 +6,8 @@ import { nodeName } from "./names";
 
 import { useCycles, useFiles, useHotspots, useKeyFiles, useNeighbors } from "@/api/queries";
 import type { Answer } from "@/api/types";
-import { snapshotOf, toPath, type RouteState } from "@/state/route";
+import { snapshotOf, type RouteState } from "@/state/route";
+import { useAsk } from "@/state/useRoute";
 
 export interface SidePanelProps {
   route: RouteState;
@@ -18,7 +17,7 @@ export interface SidePanelProps {
 }
 
 export function SidePanel({ route, components, impact, onChange }: SidePanelProps) {
-  const navigate = useNavigate();
+  const askAbout = useAsk();
   const snapshot = snapshotOf(route);
   const keyFiles = useKeyFiles(snapshot);
   const cycles = useCycles(snapshot);
@@ -26,7 +25,6 @@ export function SidePanel({ route, components, impact, onChange }: SidePanelProp
   const hotspots = useHotspots(snapshot);
   const file = route.node?.startsWith("file:") ? route.node : null;
   const neighbors = useNeighbors(snapshot, file);
-  const ask = (question: string) => void navigate(toPath({ ...route, screen: "ask" }), { state: { question } });
 
   if (file !== null) {
     return (
@@ -56,7 +54,7 @@ export function SidePanel({ route, components, impact, onChange }: SidePanelProp
       cycles={cycles.data}
       files={files.data}
       onExpand={() => component && onChange({ level: "component", component: component.id, node: null })}
-      onAsk={ask}
+      onAsk={(question) => askAbout(route, question)}
       onSelect={(id) => onChange({ node: id })}
     />
   );

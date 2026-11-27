@@ -1,5 +1,3 @@
-import { useNavigate } from "react-router";
-
 import { CutCard } from "./CutCard";
 import { CycleList } from "./CycleList";
 import "./insights.css";
@@ -8,12 +6,12 @@ import { useCycles, useLineTexts } from "@/api/queries";
 import { nodeName } from "@/graph/names";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import { snapshotOf, toPath, type RouteState } from "@/state/route";
-import { useGo } from "@/state/useRoute";
+import { snapshotOf, type RouteState } from "@/state/route";
+import { useAsk, useGo } from "@/state/useRoute";
 
 export function CyclesPage({ route }: { route: RouteState }) {
   const go = useGo();
-  const navigate = useNavigate();
+  const askAbout = useAsk();
   const snapshot = snapshotOf(route);
   const cycles = useCycles(snapshot);
   const groups = cycles.data?.groups ?? [];
@@ -70,13 +68,7 @@ export function CyclesPage({ route }: { route: RouteState }) {
             </ul>
           </section>
         )}
-        {group && (
-          <CutCard
-            group={group}
-            lines={lines}
-            onAsk={(question) => void navigate(toPath({ ...route, screen: "ask" }), { state: { question } })}
-          />
-        )}
+        {group && <CutCard group={group} lines={lines} onAsk={(question) => askAbout(route, question)} />}
       </div>
     </div>
   );
