@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 
+import { ItemLinks } from "./ItemLinks";
 import { nodeName } from "./names";
 
-import type { Answer, Files, Item } from "@/api/types";
+import type { Answer, Files } from "@/api/types";
 
 export interface FilePanelProps {
   node: string;
@@ -16,38 +17,6 @@ export interface FilePanelProps {
   onOpenCode: () => void;
   onSelect: (id: string) => void;
   children?: ReactNode;
-}
-
-function Links({
-  items,
-  testId,
-  onSelect,
-}: {
-  items: Item[] | undefined;
-  testId: string;
-  onSelect: (id: string) => void;
-}) {
-  // while the answer is on its way nothing is claimed, not even "none"
-  if (items === undefined) return <p className="muted">loading…</p>;
-  return (
-    <ul className="rows" data-testid={testId}>
-      {items.map((i) => (
-        <li key={i.node}>
-          {i.node.startsWith("file:") ? (
-            <button type="button" className="link mono" onClick={() => onSelect(i.node)}>
-              {nodeName(i.node)}
-            </button>
-          ) : (
-            <span className="mono">{nodeName(i.node)}</span>
-          )}
-          <span className={`pill ${i.kind === "external" ? "" : i.confidence}`}>
-            {i.kind === "external" ? "external" : i.confidence}
-          </span>
-        </li>
-      ))}
-      {items.length === 0 && <li className="muted">none</li>}
-    </ul>
-  );
 }
 
 export function FilePanel(props: FilePanelProps) {
@@ -78,9 +47,9 @@ export function FilePanel(props: FilePanelProps) {
       </div>
       {props.children}
       <div className="label">Imports{neighbors && ` · ${neighbors.outgoing?.length ?? 0}`}</div>
-      <Links items={neighbors && (neighbors.outgoing ?? [])} testId="dependencies" onSelect={props.onSelect} />
+      <ItemLinks items={neighbors && (neighbors.outgoing ?? [])} testId="dependencies" onOpen={props.onSelect} />
       <div className="label">Imported by{neighbors && ` · ${neighbors.incoming?.length ?? 0}`}</div>
-      <Links items={neighbors && (neighbors.incoming ?? [])} testId="dependents" onSelect={props.onSelect} />
+      <ItemLinks items={neighbors && (neighbors.incoming ?? [])} testId="dependents" onOpen={props.onSelect} />
       {loops.map((g) => (
         <p key={g.files.join("|")} className="issue">
           Cycle: {g.files.map(nodeName).join(g.files.length === 2 ? " ⇄ " : " → ")}
