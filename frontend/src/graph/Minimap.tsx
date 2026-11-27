@@ -1,6 +1,8 @@
 import type { BoundingBox12, BoundingBoxWH, Core } from "cytoscape";
 import { useEffect, useRef, useState } from "react";
 
+import { COLOR } from "./style";
+
 interface Frame {
   image: string;
   x: number;
@@ -27,7 +29,7 @@ export function Minimap({ cy, ready }: { cy: Core | null; ready: boolean }) {
     };
     // the picture waits until the main view has been drawn
     const later = window.setTimeout(() => {
-      image = cy.png({ full: true, maxWidth: 240, maxHeight: 150, bg: "#0b0e14" });
+      image = cy.png({ full: true, maxWidth: 240, maxHeight: 150, bg: COLOR.bg });
       update();
     }, 300);
     update();

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { download, Minimap } from "./Minimap";
 import { createGraph, placeAndLayout, WEBGL_FROM } from "./cy";
 import { toElements } from "./elements";
+import { COLOR } from "./style";
 
 import type { Answer, GraphDocument } from "@/api/types";
 import { Legend } from "@/shell/Legend";
@@ -155,7 +156,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
         <Minimap cy={instance} ready={ready} />
         <button
           type="button"
-          onClick={() => cy.current && download("graph.png", cy.current.png({ full: true, bg: "#0b0e14" }))}
+          onClick={() => cy.current && download("graph.png", cy.current.png({ full: true, bg: COLOR.bg }))}
         >
           Export PNG
         </button>
@@ -166,7 +167,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
             if (g)
               download(
                 "graph.svg",
-                `data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg({ full: true, bg: "#0b0e14" }))}`,
+                `data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg({ full: true, bg: COLOR.bg }))}`,
               );
           }}
         >

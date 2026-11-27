@@ -18,6 +18,7 @@ export const PALETTE = [
   "#e3b341",
 ];
 export const COLOR = {
+  bg: "#0b0e14", // --bg in styles/tokens.css: the background of exported and minimap images
   text: "#e6edf3",
   muted: "#8b949e",
   edge: "#4b5563",
