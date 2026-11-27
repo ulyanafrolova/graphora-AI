@@ -21,6 +21,8 @@ export function CyclesPage({ route }: { route: RouteState }) {
     l.edges[0] ? [{ path: nodeName(l.edges[0].source), line: l.edges[0].line }] : [],
   );
   const lines = useLineTexts(snapshot, wanted);
+  const isCut = (l: { source: string; target: string }) =>
+    group?.suggested_cut?.links.some((c) => c.source === l.source && c.target === l.target) ?? false;
 
   if (cycles.error) return <ErrorState error={cycles.error} onRetry={() => void cycles.refetch()} />;
   if (!cycles.data) return <Loading what="cycles" />;
@@ -44,22 +46,19 @@ export function CyclesPage({ route }: { route: RouteState }) {
           <section className="panel">
             <div className="label">Before</div>
             <ul className="rows">
-              {group.cycle.map((l) => {
-                const cut = group.suggested_cut?.links.some((c) => c.source === l.source && c.target === l.target);
-                return (
-                  <li key={`${l.source}->${l.target}`} className={cut ? "cut" : ""}>
-                    <span className="mono">{`${nodeName(l.source)} → ${nodeName(l.target)}`}</span>
-                    <span className="mono muted">
-                      {l.edges[0] ? `${nodeName(l.edges[0].source)}:${l.edges[0].line}` : ""}
-                    </span>
-                  </li>
-                );
-              })}
+              {group.cycle.map((l) => (
+                <li key={`${l.source}->${l.target}`} className={isCut(l) ? "cut" : ""}>
+                  <span className="mono">{`${nodeName(l.source)} → ${nodeName(l.target)}`}</span>
+                  <span className="mono muted">
+                    {l.edges[0] ? `${nodeName(l.edges[0].source)}:${l.edges[0].line}` : ""}
+                  </span>
+                </li>
+              ))}
             </ul>
             <div className="label">After (suggested)</div>
             <ul className="rows">
               {group.cycle
-                .filter((l) => !group.suggested_cut?.links.some((c) => c.source === l.source && c.target === l.target))
+                .filter((l) => !isCut(l))
                 .map((l) => (
                   <li key={`${l.source}->${l.target}`}>
                     <span className="mono">{`${nodeName(l.source)} → ${nodeName(l.target)}`}</span>
