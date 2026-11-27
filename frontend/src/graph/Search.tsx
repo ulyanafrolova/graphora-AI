@@ -1,9 +1,10 @@
 import { useDeferredValue, useState } from "react";
 
-import { nodeName, splitPath } from "./names";
+import { nodeName } from "./names";
 
 import { useDefinitions, type Snapshot } from "@/api/queries";
 import type { GraphDocument } from "@/api/types";
+import { PathLabel } from "@/shell/PathLabel";
 
 export function matchFiles(graph: GraphDocument, text: string): string[] {
   const needle = text.trim().toLowerCase();
@@ -48,12 +49,10 @@ export function Search({
         <ul className="search-results panel">
           {files.map((f) => {
             const path = nodeName(f);
-            const { name, dir } = splitPath(path);
             return (
               <li key={f}>
                 <button type="button" className="mono" title={path} aria-label={path} onClick={() => choose(f)}>
-                  <span className="name">{name}</span>
-                  {dir && <span className="dir">{dir}</span>}
+                  <PathLabel path={path} />
                 </button>
               </li>
             );
@@ -64,8 +63,8 @@ export function Search({
             return (
               <li key={`${where}:${d.name}`}>
                 <button type="button" className="mono" title={label} aria-label={label} onClick={() => choose(d.file)}>
-                  <span className="name">{`${d.kind} ${d.name}`}</span>
-                  <span className="dir">{where}</span>
+                  <span className="path-name">{`${d.kind} ${d.name}`}</span>
+                  <span className="path-dir">{where}</span>
                 </button>
               </li>
             );

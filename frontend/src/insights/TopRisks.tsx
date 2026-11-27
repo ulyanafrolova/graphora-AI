@@ -1,5 +1,6 @@
 import type { Answer } from "@/api/types";
-import { nodeName, splitPath } from "@/graph/names";
+import { nodeName } from "@/graph/names";
+import { PathLabel } from "@/shell/PathLabel";
 
 export function TopRisks({ answer, onOpen }: { answer: Answer; onOpen?: (node: string) => void }) {
   return (
@@ -21,7 +22,6 @@ export function TopRisks({ answer, onOpen }: { answer: Answer; onOpen?: (node: s
       <tbody>
         {(answer.items ?? []).slice(0, 10).map((i) => {
           const path = nodeName(i.node);
-          const { name, dir } = splitPath(path);
           return (
             <tr key={i.node}>
               <td className="file">
@@ -32,9 +32,8 @@ export function TopRisks({ answer, onOpen }: { answer: Answer; onOpen?: (node: s
                   aria-label={path}
                   onClick={() => onOpen?.(i.node)}
                 >
-                  {name}
+                  <PathLabel path={path} />
                 </button>
-                {dir && <span className="dir mono">{dir}</span>}
               </td>
               <td>{i.commits}</td>
               <td>{i.transitive_dependents}</td>

@@ -96,11 +96,11 @@ test("top risks: a nested file shows its name over its folder, named by the full
   const nested = [item("file:src/a/__init__.py", 9, 3, 1, 3), item("file:src/b/__init__.py", 8, 2, 2, 4)];
   render(<TopRisks answer={{ items: nested } as unknown as Answer} />);
   const first = screen.getByRole("button", { name: "src/a/__init__.py" });
-  expect(first).toHaveTextContent(/^__init__\.py$/);
+  expect(first.querySelector(".path-name")).toHaveTextContent(/^__init__\.py$/);
   expect(first).toHaveAttribute("title", "src/a/__init__.py");
   expect(screen.getByRole("button", { name: "src/b/__init__.py" })).toBeInTheDocument();
-  expect(screen.getByText("src/a")).toHaveClass("dir");
-  expect(screen.getByText("src/b")).toHaveClass("dir");
+  expect(screen.getByText("src/a")).toHaveClass("path-dir");
+  expect(screen.getByText("src/b")).toHaveClass("path-dir");
 });
 
 test("treemap: a tile shows the file name and is named by the full path and score", () => {

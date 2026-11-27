@@ -110,18 +110,10 @@
 .risks td.file {
   overflow: hidden;
 }
-.risks td.file button,
-.risks td.file .dir {
+.risks td.file button {
   display: block;
   max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   text-align: left;
-}
-.risks td.file .dir {
-  color: var(--muted);
-  font-size: 12px;
 }
 .risks th {
   color: var(--muted);

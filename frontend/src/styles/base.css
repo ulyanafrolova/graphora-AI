@@ -110,3 +110,17 @@ textarea {
   color: var(--accent);
   border-color: var(--accent);
 }
+
+.path-name,
+.path-dir {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.path-dir {
+  color: var(--muted);
+  font-size: 12px;
+}
