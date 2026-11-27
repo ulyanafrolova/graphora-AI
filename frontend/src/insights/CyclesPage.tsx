@@ -1,13 +1,10 @@
-import { useQueries } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 
 import { CutCard } from "./CutCard";
 import { CycleList } from "./CycleList";
 import "./insights.css";
 
-import { apiGet } from "@/api/client";
-import { useCycles } from "@/api/queries";
-import type { FileLines } from "@/api/types";
+import { useCycles, useLineTexts } from "@/api/queries";
 import { nodeName } from "@/graph/names";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
@@ -25,13 +22,7 @@ export function CyclesPage({ route }: { route: RouteState }) {
   const wanted = (group?.suggested_cut?.links ?? []).flatMap((l) =>
     l.edges[0] ? [{ path: nodeName(l.edges[0].source), line: l.edges[0].line }] : [],
   );
-  const texts = useQueries({
-    queries: wanted.map((w) => ({
-      queryKey: ["file", { ...snapshot, path: w.path, start: w.line, end: w.line }],
-      queryFn: () => apiGet<FileLines>("file", { ...snapshot, path: w.path, start: w.line, end: w.line }),
-    })),
-  });
-  const lines = new Map(wanted.map((w, i) => [`${w.path}:${w.line}`, texts[i]?.data?.lines[0]?.text ?? ""]));
+  const lines = useLineTexts(snapshot, wanted);
 
   if (cycles.error) return <ErrorState error={cycles.error} onRetry={() => void cycles.refetch()} />;
   if (!cycles.data) return <Loading what="cycles" />;

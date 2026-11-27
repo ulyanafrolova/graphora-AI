@@ -1,4 +1,4 @@
-import { QueryClient, useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { QueryClient, useQueries, useQuery, type UseQueryResult } from "@tanstack/react-query";
 
 import { ApiError, apiGet, type Params } from "./client";
 import type { Answer, Files, FileLines, GraphDocument, Info, Overview, Repositories } from "./types";
@@ -54,3 +54,17 @@ export const useDefinitions = (s: Snapshot | null, name: string | null) =>
   useApi<Answer>("definitions", name === null || name === "" ? null : of(s, { name }));
 export const useFileLines = (s: Snapshot | null, path: string | null) =>
   useApi<FileLines>("file", path === null ? null : of(s, { path }));
+
+/** The text of single lines, keyed "path:line"; "" while a line is on its way or when it cannot be read. */
+export function useLineTexts(s: Snapshot, wanted: { path: string; line: number }[]): Map<string, string> {
+  const texts = useQueries({
+    queries: wanted.map((w) => {
+      const params = { ...s, path: w.path, start: w.line, end: w.line };
+      return {
+        queryKey: ["file", params],
+        queryFn: ({ signal }: { signal: AbortSignal }) => apiGet<FileLines>("file", params, signal),
+      };
+    }),
+  });
+  return new Map(wanted.map((w, i) => [`${w.path}:${w.line}`, texts[i]?.data?.lines[0]?.text ?? ""]));
+}
