@@ -203,6 +203,8 @@ button.link {
   top: 110%;
   left: 0;
   width: 460px;
+  max-width: calc(100vw - 342px); /* sidebar 270px + content padding 2 × 36px */
+  min-width: 100%;
   max-height: 360px;
   overflow: auto;
   margin: 0;
