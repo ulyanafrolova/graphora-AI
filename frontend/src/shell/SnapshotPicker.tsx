@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { shortSnapshot } from "./Header";
@@ -14,6 +14,24 @@ export function SnapshotPicker({ route }: { route: RouteState | null }) {
   const repositories = useRepositories();
   const client = useQueryClient();
   const navigate = useNavigate();
+  const root = useRef<HTMLSpanElement>(null);
+
+  // a click anywhere outside the picker, or Escape, closes the list
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
 
   async function pick(repository: string, snapshot: string) {
     setOpen(false);
@@ -29,7 +47,7 @@ export function SnapshotPicker({ route }: { route: RouteState | null }) {
   }
 
   return (
-    <span className="picker">
+    <span className="picker" ref={root}>
       <button
         type="button"
         className="snapshot mono"
