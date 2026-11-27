@@ -8,13 +8,13 @@ import { useCycles, useLineTexts } from "@/api/queries";
 import { nodeName } from "@/graph/names";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import { toPath, type RouteState } from "@/state/route";
+import { snapshotOf, toPath, type RouteState } from "@/state/route";
 import { useGo } from "@/state/useRoute";
 
 export function CyclesPage({ route }: { route: RouteState }) {
   const go = useGo();
   const navigate = useNavigate();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const snapshot = snapshotOf(route);
   const cycles = useCycles(snapshot);
   const groups = cycles.data?.groups ?? [];
   const index = route.group !== null && route.group <= groups.length ? route.group - 1 : groups.length ? 0 : null;

@@ -1,6 +1,6 @@
 import { Link, NavLink } from "react-router";
 
-import { DEFAULT, toPath, type RouteState, type Screen } from "@/state/route";
+import { DEFAULT, snapshotOf, toPath, type RouteState, type Screen } from "@/state/route";
 
 const SECTIONS: { title: string; items: { label: string; screen: Screen | "import" }[] }[] = [
   {
@@ -52,7 +52,7 @@ export function Sidebar({ route, current }: { route: RouteState | null; current:
                   </span>
                 );
               }
-              const to = toPath({ ...DEFAULT, repository: route.repository, snapshot: route.snapshot, screen });
+              const to = toPath({ ...DEFAULT, ...snapshotOf(route), screen });
               return (
                 <Link key={label} to={to} className="item" aria-current={current === screen ? "page" : undefined}>
                   {label}

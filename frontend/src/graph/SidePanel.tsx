@@ -8,7 +8,7 @@ import { nodeName } from "./names";
 
 import { useCycles, useFiles, useHotspots, useKeyFiles, useNeighbors } from "@/api/queries";
 import type { Answer } from "@/api/types";
-import { toPath, type RouteState } from "@/state/route";
+import { snapshotOf, toPath, type RouteState } from "@/state/route";
 
 export interface SidePanelProps {
   route: RouteState;
@@ -19,7 +19,7 @@ export interface SidePanelProps {
 
 export function SidePanel({ route, components, impact, onChange }: SidePanelProps) {
   const navigate = useNavigate();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const snapshot = snapshotOf(route);
   const keyFiles = useKeyFiles(snapshot);
   const cycles = useCycles(snapshot);
   const files = useFiles(snapshot);

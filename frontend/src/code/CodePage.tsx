@@ -11,7 +11,7 @@ import { ItemLinks } from "@/graph/ItemLinks";
 import { nodeName } from "@/graph/names";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import type { RouteState } from "@/state/route";
+import { snapshotOf, type RouteState } from "@/state/route";
 import { useGo } from "@/state/useRoute";
 
 function Links({
@@ -35,7 +35,7 @@ function Links({
 
 export function CodePage({ route }: { route: RouteState }) {
   const go = useGo();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const snapshot = snapshotOf(route);
   const graph = useGraph(snapshot);
   const lines = useFileLines(snapshot, route.path);
   const target = route.path === null ? null : `file:${route.path}`;
