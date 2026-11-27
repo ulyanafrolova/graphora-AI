@@ -56,14 +56,7 @@ export function placeAndLayout(cy: Core, elements: ElementDefinition[], onDone: 
   const finish = () => {
     cy.resize();
     cy.style(big ? BIG_STYLE : STYLE); // a fresh stylesheet after the elements exist; the first one leaves edges undrawn
-    if (leaves.length > GRID_FROM) fitLeaves(cy, leaves);
-    else {
-      cy.fit(undefined, 24);
-      if (cy.zoom() > 1.5) {
-        cy.zoom(1.5);
-        cy.center();
-      }
-    }
+    refit(cy);
     scaleClusterLabels(cy);
     onDone();
   };
@@ -220,4 +213,19 @@ function scaleClusterLabels(cy: Core): void {
       });
     });
   });
+}
+
+/** The whole graph in view, never zoomed in past 1.5×: after a layout and whenever the canvas changes size. */
+export function refit(cy: Core): void {
+  const leaves = cy.nodes().filter((n) => n.isChildless());
+  if (leaves.empty()) return;
+  if (leaves.length > GRID_FROM) {
+    fitLeaves(cy, leaves);
+    return;
+  }
+  cy.fit(undefined, 24);
+  if (cy.zoom() > 1.5) {
+    cy.zoom(1.5);
+    cy.center();
+  }
 }

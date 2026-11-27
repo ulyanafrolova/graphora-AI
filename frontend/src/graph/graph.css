@@ -200,10 +200,15 @@ button.link {
   position: relative;
   display: flex;
   flex: 1;
+  min-width: 0;
   min-height: 480px;
 }
+/* min-width 0: Cytoscape's own canvas keeps its last width, and as a flex item's content it would stop the
+   graph from shrinking back when the window narrows or full screen ends */
 .canvas-wrap .canvas {
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 /* over the bottom right corner of the canvas, so the graph gets the height */
 .minimap {

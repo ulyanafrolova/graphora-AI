@@ -2,7 +2,7 @@ import type { Core, NodeSingular } from "cytoscape";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { download, Minimap } from "./Minimap";
-import { createGraph, placeAndLayout, WEBGL_FROM } from "./cy";
+import { createGraph, placeAndLayout, refit, WEBGL_FROM } from "./cy";
 import { toElements } from "./elements";
 import { COLOR } from "./style";
 
@@ -90,7 +90,19 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     const g = createGraph(box.current, webgl);
     cy.current = g;
     setInstance(g);
-    const resize = new ResizeObserver(() => g.resize());
+    // a new canvas size (window, side panel, full screen) fits the graph again instead of leaving it off-centre
+    let frame = 0;
+    let last = { w: box.current.clientWidth, h: box.current.clientHeight };
+    const resize = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const el = box.current;
+        if (el === null || (el.clientWidth === last.w && el.clientHeight === last.h)) return;
+        last = { w: el.clientWidth, h: el.clientHeight };
+        g.resize();
+        refit(g);
+      });
+    });
     resize.observe(box.current);
     g.on("tap", "node", (event) => {
       const id = event.target.id() as string;
@@ -116,6 +128,7 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     g.on("mouseover", "node", (event) => focus(g, event.target as NodeSingular));
     g.on("mouseout", "node", () => focus(g, selection()));
     return () => {
+      cancelAnimationFrame(frame);
       resize.disconnect();
       g.destroy();
       cy.current = null;
