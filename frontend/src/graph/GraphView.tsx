@@ -1,4 +1,4 @@
-import type { Core } from "cytoscape";
+import type { Core, NodeSingular } from "cytoscape";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { download, Minimap } from "./Minimap";
@@ -20,6 +20,19 @@ export interface GraphViewProps {
   onChange: (next: Partial<RouteState>) => void;
   search?: React.ReactNode;
 }
+
+/** The node, its neighbours and their links stand out; everything else fades. null clears the focus. */
+function focus(g: Core, node: NodeSingular | null): void {
+  g.batch(() => {
+    g.elements().removeClass("focus faded");
+    if (node === null || node.empty() || node.data("kind") === "cluster") return;
+    const hood = node.closedNeighborhood();
+    hood.addClass("focus");
+    g.elements().not(hood).addClass("faded");
+  });
+}
+
+const MINIMAP_FROM = 150;
 
 const LEVEL_LABELS: [Level, string][] = [
   ["system", "System"],
@@ -54,9 +67,22 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
   );
   const structure = useMemo(() => elements.map((e) => e.data.id).join("|"), [elements]);
   const webgl = level === "file" && (components.components?.reduce((n, c) => n + c.file_count, 0) ?? 0) > WEBGL_FROM;
-  const handlers = useRef({ onChange, level });
+  const view = useRef<HTMLElement>(null);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const changed = () => setFull(document.fullscreenElement === view.current);
+    document.addEventListener("fullscreenchange", changed);
+    return () => document.removeEventListener("fullscreenchange", changed);
+  }, []);
+  const toggleFull = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void view.current?.requestFullscreen();
+  };
+  // the selection keeps its neighbourhood in focus, except in impact mode, which paints its own
+  const focused = route.impact ? null : route.node;
+  const handlers = useRef({ onChange, level, focused });
   useLayoutEffect(() => {
-    handlers.current = { onChange, level };
+    handlers.current = { onChange, level, focused };
   });
 
   useEffect(() => {
@@ -73,6 +99,9 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
       if (kind === "component") {
         if (current === "component" && event.target.isParent()) return;
         change(current === "system" ? { node: id } : { level: "component", component: id, node: null });
+      } else if (kind === "cluster") {
+        const component = event.target.data("component") as string | undefined;
+        if (component !== undefined) change({ node: component });
       } else {
         change({ node: id });
       }
@@ -80,6 +109,12 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     g.on("tap", (event) => {
       if (event.target === g) handlers.current.onChange({ node: null, impact: false });
     });
+    const selection = () => {
+      const id = handlers.current.focused;
+      return id === null ? null : g.getElementById(id);
+    };
+    g.on("mouseover", "node", (event) => focus(g, event.target as NodeSingular));
+    g.on("mouseout", "node", () => focus(g, selection()));
     return () => {
       resize.disconnect();
       g.destroy();
@@ -91,10 +126,15 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
     const g = cy.current;
     if (g === null) return;
     setReady(false);
-    placeAndLayout(g, elements, () => {
-      setCounts([g.nodes().length, g.edges().length]);
-      setReady(true);
-    });
+    placeAndLayout(
+      g,
+      elements,
+      () => {
+        setCounts([g.nodes().length, g.edges().length]);
+        setReady(true);
+      },
+      level === "file",
+    );
     // classes are refreshed below; the layout runs only when the set of elements changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structure]);
@@ -108,13 +148,15 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
         el.classes(e.classes ?? "");
         if (el.isNode() && e.data.caption !== undefined)
           el.data({ impacted: e.data.impacted, caption: e.data.caption });
+        if (el.isNode() && e.data.major !== undefined) el.data({ major: e.data.major });
       }
     }
-  }, [elements]);
+    focus(g, focused === null ? null : g.getElementById(focused));
+  }, [elements, focused, ready]);
 
   const shown = component === null ? 0 : component.files.length;
   return (
-    <section className="graph-view">
+    <section className="graph-view" ref={view}>
       <div className="toolbar">
         {search}
         <div className="tabs" role="tablist">
@@ -144,16 +186,22 @@ export function GraphView({ route, graph, components, impact, cycles, hot, onCha
           </label>
         ))}
       </div>
-      <div
-        className="canvas"
-        ref={box}
-        data-ready={ready ? "true" : "false"}
-        data-nodes={counts[0]}
-        data-edges={counts[1]}
-        data-testid="graph"
-      />
+      <div className="canvas-wrap">
+        <div
+          className="canvas"
+          ref={box}
+          data-ready={ready ? "true" : "false"}
+          data-nodes={counts[0]}
+          data-edges={counts[1]}
+          data-testid="graph"
+        />
+        {/* over the canvas it would hide part of a small graph, which fits the view anyway */}
+        {(counts[0] ?? 0) > MINIMAP_FROM && <Minimap cy={instance} ready={ready} />}
+      </div>
       <div className="graph-tools">
-        <Minimap cy={instance} ready={ready} />
+        <button type="button" aria-pressed={full} onClick={toggleFull}>
+          {full ? "Exit full screen" : "Full screen"}
+        </button>
         <button
           type="button"
           onClick={() => cy.current && download("graph.png", cy.current.png({ full: true, bg: COLOR.bg }))}

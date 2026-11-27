@@ -105,9 +105,11 @@ test("component level: one component expanded, the others collapsed", () => {
   ]);
 });
 
+const notClusters = (els: ReturnType<typeof toElements>) => els.filter((e) => e.data.kind !== "cluster");
+
 test("file level: file links from the graph, unresolved never drawn, externals and tests can be hidden", () => {
   const els = toElements({ ...base, level: "file" });
-  expect(ids(els, "nodes")).toEqual([
+  expect(ids(notClusters(els), "nodes")).toEqual([
     "file:a/x.py",
     "file:a/y.py",
     "file:b/tests/test_z.py",
@@ -126,7 +128,8 @@ test("file level: file links from the graph, unresolved never drawn, externals a
   ]);
   expect(edges.find((e) => e.data.source === "file:a/x.py" && e.data.target === "file:b/z.py")?.data.imports).toBe(2);
   const hidden = toElements({ ...base, level: "file", hide: ["external", "tests"] });
-  expect(ids(hidden, "nodes")).toEqual(["file:a/x.py", "file:a/y.py", "file:b/z.py"]);
+  expect(ids(notClusters(hidden), "nodes")).toEqual(["file:a/x.py", "file:a/y.py", "file:b/z.py"]);
+  expect(ids(hidden, "nodes")).not.toContain("cluster:external");
   expect(ids(hidden, "edges").some((id) => String(id).includes("requests") || String(id).includes("test_z"))).toBe(
     false,
   );
@@ -198,4 +201,21 @@ test("long component names are shortened from the left on the graph", () => {
   expect(componentLabel("a-very-long-single-folder-name-without-any-slash-in-it")).toBe(
     "a-very-long-single-folder-name-without-any-slash-in-it",
   );
+});
+
+test("file level: files sit in a cluster per component, sized by their importers", () => {
+  const els = toElements({ ...base, level: "file" });
+  const data = (id: string) => els.find((e) => e.data.id === id)?.data ?? {};
+  expect(els.filter((e) => e.data.kind === "cluster").map((e) => [e.data.id, e.data.label])).toEqual([
+    ["cluster:component:1", "a (2)"],
+    ["cluster:component:2", "b (2)"],
+    ["cluster:external", "external (1)"],
+  ]);
+  expect(data("file:a/x.py").parent).toBe("cluster:component:1");
+  expect(data("ext:python:requests").parent).toBe("cluster:external");
+  // b/z.py is imported by three files, a/y.py by one: the dot of the most imported file is the biggest
+  expect(Number(data("file:b/z.py").size)).toBeGreaterThan(Number(data("file:a/y.py").size));
+  expect(data("file:b/z.py").major).toBe(true);
+  expect(els.find((e) => e.data.id === "file:a/x.py->file:b/z.py")?.data.cross).toBe(true);
+  expect(els.find((e) => e.data.id === "file:a/x.py->file:a/y.py")?.data.cross).toBe(false);
 });

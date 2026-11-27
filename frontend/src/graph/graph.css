@@ -11,6 +11,10 @@
   flex-direction: column;
   min-width: 0;
 }
+.graph-view:fullscreen {
+  padding: 20px 24px;
+  background: var(--bg);
+}
 
 .toolbar {
   display: flex;
@@ -188,14 +192,28 @@ button.link {
 
 .graph-tools {
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
 }
-.minimap {
+.canvas-wrap {
   position: relative;
-  width: 240px;
-  height: 150px;
+  display: flex;
+  flex: 1;
+  min-height: 480px;
+}
+.canvas-wrap .canvas {
+  min-height: 0;
+}
+/* over the bottom right corner of the canvas, so the graph gets the height */
+.minimap {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  width: 200px;
+  height: 125px;
+  opacity: 0.9;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
