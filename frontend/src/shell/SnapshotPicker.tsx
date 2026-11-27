@@ -30,12 +30,19 @@ export function SnapshotPicker({ route }: { route: RouteState | null }) {
 
   return (
     <span className="picker">
-      <button type="button" className="snapshot mono" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button
+        type="button"
+        className="snapshot mono"
+        title={route === null ? undefined : `${route.repository} @ ${route.snapshot}`}
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
         {route === null ? (
           "choose a snapshot"
         ) : (
           <>
-            <span>{route.repository}</span> @ <span>{shortSnapshot(route.snapshot)}</span>
+            <span className="repo">{route.repository}</span> <span className="at">@</span>{" "}
+            <span>{shortSnapshot(route.snapshot)}</span>
           </>
         )}
       </button>

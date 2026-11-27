@@ -30,15 +30,30 @@
   background: var(--panel);
   color: var(--muted);
   white-space: nowrap;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .snapshot span {
   color: var(--text);
 }
 
+.snapshot .repo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snapshot .at {
+  margin: 0 1ch;
+  color: var(--muted);
+}
+
 .picker {
   position: relative;
-  flex-shrink: 0;
+  display: flex;
+  min-width: 0;
 }
 
 .picker .menu {

@@ -69,8 +69,9 @@ export function Header({ repository, snapshot, files, ask, picker }: HeaderProps
       </span>
       {picker ??
         (repository !== null && snapshot !== null && (
-          <span className="snapshot mono">
-            <span>{repository}</span> @ <span>{shortSnapshot(snapshot)}</span>
+          <span className="snapshot mono" title={`${repository} @ ${snapshot}`}>
+            <span className="repo">{repository}</span> <span className="at">@</span>{" "}
+            <span>{shortSnapshot(snapshot)}</span>
           </span>
         ))}
       <span className="badges">
