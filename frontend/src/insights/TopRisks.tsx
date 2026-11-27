@@ -25,7 +25,13 @@ export function TopRisks({ answer, onOpen }: { answer: Answer; onOpen?: (node: s
           return (
             <tr key={i.node}>
               <td className="file">
-                <button type="button" className="link mono" title={path} onClick={() => onOpen?.(i.node)}>
+                <button
+                  type="button"
+                  className="link mono"
+                  title={path}
+                  aria-label={path}
+                  onClick={() => onOpen?.(i.node)}
+                >
                   {name}
                 </button>
                 {dir && <span className="dir mono">{dir}</span>}

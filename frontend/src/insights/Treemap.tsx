@@ -92,6 +92,7 @@ export function Treemap({
           type="button"
           className="tile"
           title={nodeName(t.node)}
+          aria-label={`${nodeName(t.node)}, score ${t.score}`}
           onClick={() => onOpen(t.node)}
           style={{
             left: `${(100 * t.x0) / W}%`,
