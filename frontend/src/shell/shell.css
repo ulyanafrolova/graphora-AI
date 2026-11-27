@@ -91,6 +91,10 @@
   min-width: 0;
 }
 
+.badges .pill {
+  white-space: nowrap;
+}
+
 .pill.analyzed {
   color: var(--resolved);
   border-color: var(--action);

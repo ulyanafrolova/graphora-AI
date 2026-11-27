@@ -11,6 +11,7 @@
 }
 .mcp-head > .pill {
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .mcp-head h1,
 .not-available h1 {
