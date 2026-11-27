@@ -39,8 +39,8 @@ test("files and definitions; choosing selects the file", async () => {
     </QueryClientProvider>,
   );
   await userEvent.type(screen.getByRole("searchbox"), "Auth");
-  expect(await screen.findByText("src/Auth.py:3 · class Auth")).toBeInTheDocument();
-  await userEvent.click(screen.getByText("src/auth_util.py"));
+  expect(await screen.findByRole("button", { name: "src/Auth.py:3 · class Auth" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "src/auth_util.py" }));
   expect(pick).toHaveBeenCalledWith("file:src/auth_util.py");
   await userEvent.clear(screen.getByRole("searchbox"));
   await userEvent.type(screen.getByRole("searchbox"), "Nope");

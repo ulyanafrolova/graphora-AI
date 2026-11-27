@@ -217,6 +217,16 @@ button.link {
   background: none;
   text-align: left;
 }
+.search-results button span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.search-results .dir {
+  color: var(--muted);
+  font-size: 12px;
+}
 
 .stats.two {
   grid-template-columns: repeat(2, 1fr);
