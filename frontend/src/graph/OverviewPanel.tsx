@@ -1,7 +1,7 @@
 import { useComponents, useCycles, useOverview, type Snapshot } from "@/api/queries";
 import { shortSnapshot } from "@/shell/Header";
+import { thousands } from "@/shell/format";
 
-const thousands = (n: number | undefined) => (n === undefined ? "…" : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "));
 
 export function OverviewPanel({ snapshot }: { snapshot: Snapshot }) {
   const overview = useOverview(snapshot);

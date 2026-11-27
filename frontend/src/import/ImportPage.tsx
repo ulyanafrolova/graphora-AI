@@ -9,6 +9,7 @@ import { useGraph, useInfo } from "@/api/queries";
 import type { Job, Limits, Stage } from "@/api/types";
 import { ErrorState } from "@/shell/ErrorState";
 import { languageName, shortSnapshot } from "@/shell/Header";
+import { thousands } from "@/shell/format";
 import { DEFAULT, rememberSnapshot, toPath } from "@/state/route";
 
 const STAGES: [Stage, string][] = [
@@ -19,7 +20,6 @@ const STAGES: [Stage, string][] = [
   ["storing", "Build graph and store"],
 ];
 
-const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 const megabytes = (n: number) => `${Math.round(n / 1024 / 1024)} MB`;
 const minutes = (s: number) => (s % 60 === 0 ? `${s / 60} min` : `${s} s`);
 
