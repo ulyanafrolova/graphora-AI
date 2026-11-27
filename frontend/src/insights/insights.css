@@ -52,7 +52,7 @@
 }
 .hotspots-grid {
   display: grid;
-  grid-template-columns: 1fr 460px;
+  grid-template-columns: minmax(0, 1fr) 460px;
   gap: 20px;
   align-items: start;
 }
@@ -73,11 +73,48 @@
   overflow: hidden;
   color: #fff;
   text-align: left;
+  container-type: size;
+}
+.tile span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+@container (max-height: 52px) {
+  .tile .score {
+    display: none;
+  }
+}
+@container (max-width: 44px) or (max-height: 26px) {
+  .tile span {
+    display: none;
+  }
 }
 .risks {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin-top: 8px;
+}
+.risks col.num {
+  width: 72px;
+}
+.risks td.file {
+  overflow: hidden;
+}
+.risks td.file button,
+.risks td.file .dir {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.risks td.file .dir {
+  color: var(--muted);
+  font-size: 12px;
 }
 .risks th {
   color: var(--muted);

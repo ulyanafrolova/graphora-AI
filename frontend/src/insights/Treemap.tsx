@@ -1,7 +1,7 @@
 import { hierarchy, treemap, treemapSquarify } from "d3-hierarchy";
 
 import type { History, Item } from "@/api/types";
-import { nodeName } from "@/graph/names";
+import { nodeName, splitPath } from "@/graph/names";
 
 const STOPS: [number, [number, number, number]][] = [
   [0, [0x1f, 0x3d, 0x2b]],
@@ -101,8 +101,8 @@ export function Treemap({
             background: t.color,
           }}
         >
-          <span className="mono">{nodeName(t.node)}</span>
-          <span>score {t.score}</span>
+          <span className="name mono">{splitPath(nodeName(t.node)).name}</span>
+          <span className="score">score {t.score}</span>
         </button>
       ))}
     </div>
