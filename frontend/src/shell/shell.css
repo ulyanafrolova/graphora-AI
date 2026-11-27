@@ -53,7 +53,7 @@
 .picker {
   position: relative;
   display: flex;
-  min-width: 0;
+  min-width: min(320px, 30vw);
 }
 
 .picker .menu {
