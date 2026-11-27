@@ -1,23 +1,18 @@
-import { useQueries } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
-
 import { CutCard } from "./CutCard";
 import { CycleList } from "./CycleList";
 import "./insights.css";
 
-import { apiGet } from "@/api/client";
-import { useCycles } from "@/api/queries";
-import type { FileLines } from "@/api/types";
+import { useCycles, useLineTexts } from "@/api/queries";
 import { nodeName } from "@/graph/names";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import { toPath, type RouteState } from "@/state/route";
-import { useGo } from "@/state/useRoute";
+import { snapshotOf, type RouteState } from "@/state/route";
+import { useAsk, useGo } from "@/state/useRoute";
 
 export function CyclesPage({ route }: { route: RouteState }) {
   const go = useGo();
-  const navigate = useNavigate();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const askAbout = useAsk();
+  const snapshot = snapshotOf(route);
   const cycles = useCycles(snapshot);
   const groups = cycles.data?.groups ?? [];
   const index = route.group !== null && route.group <= groups.length ? route.group - 1 : groups.length ? 0 : null;
@@ -25,13 +20,9 @@ export function CyclesPage({ route }: { route: RouteState }) {
   const wanted = (group?.suggested_cut?.links ?? []).flatMap((l) =>
     l.edges[0] ? [{ path: nodeName(l.edges[0].source), line: l.edges[0].line }] : [],
   );
-  const texts = useQueries({
-    queries: wanted.map((w) => ({
-      queryKey: ["file", { ...snapshot, path: w.path, start: w.line, end: w.line }],
-      queryFn: () => apiGet<FileLines>("file", { ...snapshot, path: w.path, start: w.line, end: w.line }),
-    })),
-  });
-  const lines = new Map(wanted.map((w, i) => [`${w.path}:${w.line}`, texts[i]?.data?.lines[0]?.text ?? ""]));
+  const lines = useLineTexts(snapshot, wanted);
+  const isCut = (l: { source: string; target: string }) =>
+    group?.suggested_cut?.links.some((c) => c.source === l.source && c.target === l.target) ?? false;
 
   if (cycles.error) return <ErrorState error={cycles.error} onRetry={() => void cycles.refetch()} />;
   if (!cycles.data) return <Loading what="cycles" />;
@@ -55,22 +46,19 @@ export function CyclesPage({ route }: { route: RouteState }) {
           <section className="panel">
             <div className="label">Before</div>
             <ul className="rows">
-              {group.cycle.map((l) => {
-                const cut = group.suggested_cut?.links.some((c) => c.source === l.source && c.target === l.target);
-                return (
-                  <li key={`${l.source}->${l.target}`} className={cut ? "cut" : ""}>
-                    <span className="mono">{`${nodeName(l.source)} → ${nodeName(l.target)}`}</span>
-                    <span className="mono muted">
-                      {l.edges[0] ? `${nodeName(l.edges[0].source)}:${l.edges[0].line}` : ""}
-                    </span>
-                  </li>
-                );
-              })}
+              {group.cycle.map((l) => (
+                <li key={`${l.source}->${l.target}`} className={isCut(l) ? "cut" : ""}>
+                  <span className="mono">{`${nodeName(l.source)} → ${nodeName(l.target)}`}</span>
+                  <span className="mono muted">
+                    {l.edges[0] ? `${nodeName(l.edges[0].source)}:${l.edges[0].line}` : ""}
+                  </span>
+                </li>
+              ))}
             </ul>
             <div className="label">After (suggested)</div>
             <ul className="rows">
               {group.cycle
-                .filter((l) => !group.suggested_cut?.links.some((c) => c.source === l.source && c.target === l.target))
+                .filter((l) => !isCut(l))
                 .map((l) => (
                   <li key={`${l.source}->${l.target}`}>
                     <span className="mono">{`${nodeName(l.source)} → ${nodeName(l.target)}`}</span>
@@ -79,13 +67,7 @@ export function CyclesPage({ route }: { route: RouteState }) {
             </ul>
           </section>
         )}
-        {group && (
-          <CutCard
-            group={group}
-            lines={lines}
-            onAsk={(question) => void navigate(toPath({ ...route, screen: "ask" }), { state: { question } })}
-          />
-        )}
+        {group && <CutCard group={group} lines={lines} onAsk={(question) => askAbout(route, question)} />}
       </div>
     </div>
   );

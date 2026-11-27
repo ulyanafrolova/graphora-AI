@@ -37,6 +37,11 @@ export const DEFAULT: RouteState = {
   run: null,
 };
 
+/** The repository and snapshot of a route, the key of every query about it. */
+export function snapshotOf(state: { repository: string; snapshot: string }): { repository: string; snapshot: string } {
+  return { repository: state.repository, snapshot: state.snapshot };
+}
+
 const LAST = "graphora.last";
 
 function positive(value: string | null): number | null {

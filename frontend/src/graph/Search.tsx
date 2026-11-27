@@ -4,6 +4,7 @@ import { nodeName } from "./names";
 
 import { useDefinitions, type Snapshot } from "@/api/queries";
 import type { GraphDocument } from "@/api/types";
+import { PathLabel } from "@/shell/PathLabel";
 
 export function matchFiles(graph: GraphDocument, text: string): string[] {
   const needle = text.trim().toLowerCase();
@@ -46,20 +47,28 @@ export function Search({
       />
       {query && (
         <ul className="search-results panel">
-          {files.map((f) => (
-            <li key={f}>
-              <button type="button" className="mono" onClick={() => choose(f)}>
-                {nodeName(f)}
-              </button>
-            </li>
-          ))}
-          {defs.map((d) => (
-            <li key={`${d.path}:${d.line}:${d.name}`}>
-              <button type="button" className="mono" onClick={() => choose(d.file)}>
-                {`${d.path}:${d.line} · ${d.kind} ${d.name}`}
-              </button>
-            </li>
-          ))}
+          {files.map((f) => {
+            const path = nodeName(f);
+            return (
+              <li key={f}>
+                <button type="button" className="mono" title={path} aria-label={path} onClick={() => choose(f)}>
+                  <PathLabel path={path} />
+                </button>
+              </li>
+            );
+          })}
+          {defs.map((d) => {
+            const where = `${d.path}:${d.line}`;
+            const label = `${where} · ${d.kind} ${d.name}`;
+            return (
+              <li key={`${where}:${d.name}`}>
+                <button type="button" className="mono" title={label} aria-label={label} onClick={() => choose(d.file)}>
+                  <span className="path-name">{`${d.kind} ${d.name}`}</span>
+                  <span className="path-dir">{where}</span>
+                </button>
+              </li>
+            );
+          })}
           {IDENTIFIER.test(query) && definitions.isSuccess && defs.length === 0 && (
             <li className="muted">no definitions</li>
           )}

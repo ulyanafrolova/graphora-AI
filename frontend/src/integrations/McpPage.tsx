@@ -1,5 +1,7 @@
 import "./integrations.css";
 
+import { Fragment } from "react";
+
 import { useInfo } from "@/api/queries";
 import type { Info } from "@/api/types";
 import { ErrorState } from "@/shell/ErrorState";
@@ -34,6 +36,20 @@ export const cursorConfig = (repository: string, snapshot: string) =>
     null,
     2,
   );
+
+/** A tool name may wrap after an underscore, never inside a word. */
+function breakAfterUnderscores(name: string) {
+  return name.split("_").map((part, i, parts) => (
+    <Fragment key={i}>
+      {part}
+      {i < parts.length - 1 && (
+        <>
+          _<wbr />
+        </>
+      )}
+    </Fragment>
+  ));
+}
 
 function Snippet({ title, text, copy }: { title: string; text: string; copy: string }) {
   return (
@@ -90,7 +106,7 @@ export function McpView({
                 {tools.map((t) => (
                   <tr key={t.name} data-testid="mcp-tool">
                     <td>
-                      <code>{t.name}</code>
+                      <code>{breakAfterUnderscores(t.name)}</code>
                     </td>
                     <td className="muted">{t.description}</td>
                   </tr>

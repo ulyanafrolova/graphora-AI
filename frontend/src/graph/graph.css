@@ -11,36 +11,17 @@
   flex-direction: column;
   min-width: 0;
 }
+.graph-view:fullscreen {
+  padding: 20px 24px;
+  background: var(--bg);
+}
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-}
-
-.tabs {
-  display: inline-flex;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.tabs button {
-  border: 0;
-  border-radius: 0;
-  background: var(--panel);
-  padding: 8px 18px;
-}
-
-.tabs button[aria-selected="true"] {
-  background: var(--accent-strong);
-  color: #fff;
-}
-
-.tabs button:disabled {
-  color: var(--faint);
-  cursor: default;
 }
 
 .toggle {
@@ -51,6 +32,7 @@
   border-radius: var(--radius);
   padding: 7px 12px;
   background: var(--panel);
+  white-space: nowrap;
 }
 
 .canvas {
@@ -78,10 +60,6 @@ button.link {
   color: var(--accent);
 }
 
-.accent {
-  color: var(--role-explorer);
-}
-
 .side-panel {
   width: 360px;
   flex-shrink: 0;
@@ -93,6 +71,7 @@ button.link {
 .side-panel h2 {
   margin: 8px 0 4px;
   font-size: 22px;
+  overflow-wrap: anywhere;
 }
 
 .side-panel .label {
@@ -117,29 +96,6 @@ button.link {
 
 .stat strong {
   font-size: 26px;
-}
-
-.rows {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.rows li {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.issue {
-  margin: 10px 0 0;
-  padding: 8px 12px;
-  border: 1px solid var(--cycle);
-  border-radius: var(--radius);
-  background: var(--cycle-bg);
-  color: var(--cycle);
 }
 
 .actions {
@@ -187,9 +143,11 @@ button.link {
 
 .search {
   position: relative;
+  flex: 0 1 320px;
+  min-width: 200px;
 }
 .search input {
-  width: 320px;
+  width: 100%;
 }
 .search-results {
   position: absolute;
@@ -197,6 +155,8 @@ button.link {
   top: 110%;
   left: 0;
   width: 460px;
+  max-width: calc(100vw - 342px); /* sidebar 270px + content padding 2 × 36px */
+  min-width: 100%;
   max-height: 360px;
   overflow: auto;
   margin: 0;
@@ -232,14 +192,33 @@ button.link {
 
 .graph-tools {
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
 }
-.minimap {
+.canvas-wrap {
   position: relative;
-  width: 240px;
-  height: 150px;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 480px;
+}
+/* min-width 0: Cytoscape's own canvas keeps its last width, and as a flex item's content it would stop the
+   graph from shrinking back when the window narrows or full screen ends */
+.canvas-wrap .canvas {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+/* over the bottom right corner of the canvas, so the graph gets the height */
+.minimap {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  width: 200px;
+  height: 125px;
+  opacity: 0.9;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;

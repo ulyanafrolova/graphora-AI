@@ -5,12 +5,12 @@ import "./insights.css";
 import { useFiles, useHotspots } from "@/api/queries";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import type { RouteState } from "@/state/route";
+import { snapshotOf, type RouteState } from "@/state/route";
 import { useGo } from "@/state/useRoute";
 
 export function HotspotsPage({ route }: { route: RouteState }) {
   const go = useGo();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const snapshot = snapshotOf(route);
   const hotspots = useHotspots(snapshot);
   const files = useFiles(snapshot);
   if (hotspots.error) return <ErrorState error={hotspots.error} onRetry={() => void hotspots.refetch()} />;

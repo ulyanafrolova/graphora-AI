@@ -10,7 +10,7 @@ import { useInfo } from "@/api/queries";
 import { streamAsk } from "@/api/sse";
 import type { AskResult, TraceEvent } from "@/api/types";
 import { ErrorState } from "@/shell/ErrorState";
-import { DEFAULT, toPath, type RouteState } from "@/state/route";
+import { DEFAULT, snapshotOf, toPath, type RouteState } from "@/state/route";
 
 const SUGGESTED = [
   "Which files depend on the most-used file?",
@@ -69,7 +69,7 @@ export function AskPage({ route }: { route: RouteState }) {
     setSteps([]);
     try {
       const answer = await streamAsk(
-        { repository: route.repository, snapshot: route.snapshot, question: text },
+        { ...snapshotOf(route), question: text },
         { onStep: (s) => setSteps((all) => [...all, s]), signal: abort.current.signal },
       );
       setResult(answer);
@@ -141,10 +141,7 @@ export function AskPage({ route }: { route: RouteState }) {
           <ul className="rows">
             {cited.map((p) => (
               <li key={p}>
-                <Link
-                  className="mono"
-                  to={toPath({ ...DEFAULT, repository: route.repository, snapshot: route.snapshot, node: `file:${p}` })}
-                >
+                <Link className="mono" to={toPath({ ...DEFAULT, ...snapshotOf(route), node: `file:${p}` })}>
                   {p}
                 </Link>
               </li>

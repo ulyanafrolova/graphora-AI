@@ -1,12 +1,17 @@
 .mcp-page,
 .not-available {
-  padding: 32px 40px;
+  padding: 0;
 }
 .mcp-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
   margin-bottom: 24px;
+}
+.mcp-head > .pill {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .mcp-head h1,
 .not-available h1 {
@@ -14,13 +19,15 @@
 }
 .mcp-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
   gap: 20px;
+  align-items: start;
 }
 .mcp-left {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 .snippet {
   margin-top: 14px;
@@ -33,6 +40,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+.snippet-head span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.snippet-head button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .snippet pre {
   margin: 8px 0 0;
@@ -42,6 +58,7 @@
 }
 .mcp-tools {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin-top: 10px;
 }
@@ -49,6 +66,14 @@
   padding: 10px 8px;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.mcp-tools td:first-child {
+  width: clamp(120px, 30%, 180px);
+}
+.mcp-tools td:first-child code {
+  overflow-wrap: normal;
+  word-break: normal;
 }
 .mcp-tools code {
   color: var(--accent);
@@ -58,6 +83,7 @@
   border-radius: var(--radius);
   background: #05070a;
   font-family: var(--mono);
+  min-width: 0;
 }
 .terminal-head {
   display: flex;
@@ -67,7 +93,12 @@
   border-bottom: 1px solid var(--border);
   color: var(--muted);
 }
+.terminal-head span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .terminal-head i {
+  flex-shrink: 0;
   width: 12px;
   height: 12px;
   border-radius: 50%;

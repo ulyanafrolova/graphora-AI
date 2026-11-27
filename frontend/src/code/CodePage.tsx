@@ -6,11 +6,12 @@ import { ProvenancePanel } from "./ProvenancePanel";
 import "./code.css";
 
 import { useDependencies, useDependents, useFileLines, useGraph } from "@/api/queries";
-import type { Answer, Item } from "@/api/types";
+import type { Answer } from "@/api/types";
+import { ItemLinks } from "@/graph/ItemLinks";
 import { nodeName } from "@/graph/names";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import type { RouteState } from "@/state/route";
+import { snapshotOf, type RouteState } from "@/state/route";
 import { useGo } from "@/state/useRoute";
 
 function Links({
@@ -22,35 +23,19 @@ function Links({
   answer: Answer | undefined;
   onOpen: (path: string) => void;
 }) {
-  const items: Item[] = answer?.items ?? [];
   return (
     <section className="panel">
       <div className="label">
         {title} · {answer?.total ?? 0}
       </div>
-      <ul className="rows">
-        {items.map((i) => (
-          <li key={i.node}>
-            {i.node.startsWith("file:") ? (
-              <button type="button" className="link mono" onClick={() => onOpen(nodeName(i.node))}>
-                {nodeName(i.node)}
-              </button>
-            ) : (
-              <span className="mono">{nodeName(i.node)}</span>
-            )}
-            <span className={`pill ${i.kind === "external" ? "" : i.confidence}`}>
-              {i.kind === "external" ? "external" : i.confidence}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <ItemLinks items={answer && (answer.items ?? [])} onOpen={(node) => onOpen(nodeName(node))} />
     </section>
   );
 }
 
 export function CodePage({ route }: { route: RouteState }) {
   const go = useGo();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const snapshot = snapshotOf(route);
   const graph = useGraph(snapshot);
   const lines = useFileLines(snapshot, route.path);
   const target = route.path === null ? null : `file:${route.path}`;

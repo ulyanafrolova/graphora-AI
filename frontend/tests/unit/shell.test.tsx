@@ -1,10 +1,12 @@
-import { render, screen, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 
 import type { CoverageFile } from "@/api/graph.gen";
 import { Header, languageBadges, modelBadge, shortSnapshot } from "@/shell/Header";
 import { Sidebar } from "@/shell/Sidebar";
+import { SnapshotPicker } from "@/shell/SnapshotPicker";
 import { DEFAULT } from "@/state/route";
 
 const SHA = "3f1c2b4a5d6e7f8091a2b3c4d5e6f708192a3b4c";
@@ -102,4 +104,24 @@ test("without a snapshot only import is a link", () => {
   );
   expect(screen.getByText("Import").closest("a")).toHaveAttribute("href", "/import");
   expect(screen.getByText("Cycles").closest("a")).toBeNull();
+});
+
+test("the snapshot list closes on a click outside it or on Escape", () => {
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <p>outside</p>
+        <SnapshotPicker route={null} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  const toggle = screen.getByRole("button", { name: "choose a snapshot" });
+  fireEvent.click(toggle);
+  fireEvent.pointerDown(screen.getByRole("listbox"));
+  expect(screen.getByRole("listbox")).toBeInTheDocument();
+  fireEvent.pointerDown(screen.getByText("outside"));
+  expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  fireEvent.click(toggle);
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
 });

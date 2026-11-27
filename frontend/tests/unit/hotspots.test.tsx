@@ -2,8 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 
 import type { Answer, History, Item } from "@/api/types";
+import { splitPath } from "@/graph/names";
 import { TopRisks } from "@/insights/TopRisks";
-import { historyLine, riskColor, tiles } from "@/insights/Treemap";
+import { historyLine, mapHeight, riskColor, tileLabels, tiles, Treemap } from "@/insights/Treemap";
 
 const item = (node: string, score: number, commits: number, authors: number, transitive: number): Item =>
   ({
@@ -83,4 +84,46 @@ test("top risks: numbers only, bus factor colours", () => {
   expect(rows).toEqual(["a.py1041", "b.py542", "c.py223"]);
   expect(screen.getByText("1")).toHaveClass("cycle");
   expect(screen.getByText("2", { selector: ".pill" })).toHaveClass("heuristic");
+});
+
+test("splitPath: file name and the folder it is in", () => {
+  expect(splitPath("a.py")).toEqual({ name: "a.py", dir: "" });
+  expect(splitPath("src/a/__init__.py")).toEqual({ name: "__init__.py", dir: "src/a" });
+  expect(splitPath("src/a/")).toEqual({ name: "", dir: "src/a" });
+});
+
+test("top risks: a nested file shows its name over its folder, named by the full path", () => {
+  const nested = [item("file:src/a/__init__.py", 9, 3, 1, 3), item("file:src/b/__init__.py", 8, 2, 2, 4)];
+  render(<TopRisks answer={{ items: nested } as unknown as Answer} />);
+  const first = screen.getByRole("button", { name: "src/a/__init__.py" });
+  expect(first.querySelector(".path-name")).toHaveTextContent(/^__init__\.py$/);
+  expect(first).toHaveAttribute("title", "src/a/__init__.py");
+  expect(screen.getByRole("button", { name: "src/b/__init__.py" })).toBeInTheDocument();
+  expect(screen.getByText("src/a")).toHaveClass("path-dir");
+  expect(screen.getByText("src/b")).toHaveClass("path-dir");
+});
+
+test("treemap: a tile shows the file name and is named by the full path and score", () => {
+  render(
+    <Treemap
+      items={[item("file:src/a/__init__.py", 9, 3, 1, 3)]}
+      lines={new Map([["src/a/__init__.py", 10]])}
+      onOpen={() => {}}
+    />,
+  );
+  const tile = screen.getByRole("button", { name: "src/a/__init__.py, score 9" });
+  expect(tile.querySelector(".name")).toHaveTextContent(/^__init__\.py$/);
+});
+
+test("treemap: a tile shows only the labels that fit, never a few cut letters", () => {
+  expect(tileLabels(200, 80)).toEqual({ name: true, score: true });
+  expect(tileLabels(60, 30)).toEqual({ name: true, score: false });
+  expect(tileLabels(40, 80)).toEqual({ name: false, score: false });
+  expect(tileLabels(200, 20)).toEqual({ name: false, score: false });
+});
+
+test("treemap: the map height follows the width within bounds", () => {
+  expect(mapHeight(300)).toBe(280);
+  expect(mapHeight(800)).toBe(496);
+  expect(mapHeight(2000)).toBe(560);
 });

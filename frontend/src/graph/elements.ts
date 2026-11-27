@@ -6,7 +6,6 @@ import { componentLabel } from "./names";
 import type { Answer, Component, GraphDocument } from "@/api/types";
 import type { Hidden, Level } from "@/state/route";
 
-
 export interface ElementsInput {
   level: Level;
   component: string | null;
@@ -76,7 +75,8 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
         cls,
         selected && "selected",
         impacted && "impacted",
-        input.impact !== null && !selected && !impacted && !cls.includes("expanded") && "dimmed",
+        // a parent's opacity fades its children too, so groups are never dimmed
+        input.impact !== null && !selected && !impacted && !/expanded|cluster/.test(cls) && "dimmed",
       ),
     });
   };
@@ -172,6 +172,8 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
     return els;
   }
 
+  // File level: every file is a dot in a cluster of its component, sized by the files that import it; only the
+  // most-imported files, hotspots and the selection are labelled until the view is zoomed in
   const files = input.graph.nodes
     .filter((n) => n.kind === "file")
     .map((n) => n.id)
@@ -181,19 +183,53 @@ export function toElements(input: ElementsInput): ElementDefinition[] {
   const pairs = filePairs(input.graph).filter(
     (p) => shown.has(p.source) && (shown.has(p.target) || (p.target.startsWith("ext:") && !hideExternal)),
   );
-  for (const f of files)
+  const importers = new Map<string, number>();
+  for (const p of pairs) if (p.source !== p.target) importers.set(p.target, (importers.get(p.target) ?? 0) + 1);
+  const most = Math.max(1, ...importers.values());
+  const ranked = [...files].sort((a, b) => (importers.get(b) ?? 0) - (importers.get(a) ?? 0) || cmp(a, b));
+  const major = new Set(ranked.slice(0, Math.max(4, Math.ceil(files.length * 0.08))).filter((f) => importers.has(f)));
+  const size = (id: string) => Math.round(8 + 18 * Math.sqrt((importers.get(id) ?? 0) / most));
+  const group = (id: string) => (where.has(id) ? String(where.get(id)) : "~");
+  comps.forEach((c, i) => {
+    const count = c.files.filter((f) => shown.has(f)).length;
+    if (count === 0) return;
+    node(
+      `cluster:${c.id}`,
+      { label: `${componentLabel(c.name)} (${count})`, color: i + 1, kind: "cluster", component: c.id },
+      "cluster",
+    );
+  });
+  for (const f of files) {
+    const i = where.get(f);
     node(
       f,
-      { label: label(f), color: (where.get(f) ?? -1) + 1, kind: "file" },
+      {
+        label: label(f),
+        color: (i ?? -1) + 1,
+        kind: "file",
+        size: size(f),
+        group: group(f),
+        major: major.has(f), // hotspots are marked by their glow, not by a label
+        ...(i === undefined ? {} : { parent: `cluster:${comps[i]?.id ?? ""}` }),
+      },
       classes("file", input.hot?.has(f) === true && "hotspot"),
     );
+  }
   const externals = [...new Set(pairs.filter((p) => p.target.startsWith("ext:")).map((p) => p.target))].sort(cmp);
-  for (const x of externals) node(x, { label: label(x), kind: "external" }, "external");
+  if (externals.length)
+    node("cluster:external", { label: `external (${externals.length})`, kind: "cluster" }, "cluster external-cluster");
+  for (const x of externals)
+    node(x, { label: label(x), kind: "external", size: size(x), group: "~", parent: "cluster:external" }, "external");
   for (const p of pairs) {
     edge(
       p.source,
       p.target,
-      { imports: p.imports },
+      {
+        imports: p.imports,
+        fine: true,
+        color: (where.get(p.source) ?? -1) + 1,
+        cross: group(p.source) !== group(p.target),
+      },
       classes(
         "link",
         !p.resolved && "heuristic",

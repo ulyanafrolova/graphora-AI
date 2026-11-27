@@ -8,12 +8,12 @@ import "./graph.css";
 import { useComponents, useCycles, useGraph, useHotspots, useImpact } from "@/api/queries";
 import { ErrorState } from "@/shell/ErrorState";
 import { Loading } from "@/shell/Loading";
-import type { RouteState } from "@/state/route";
+import { snapshotOf, type RouteState } from "@/state/route";
 import { useGo } from "@/state/useRoute";
 
 export function GraphPage({ route }: { route: RouteState }) {
   const go = useGo();
-  const snapshot = { repository: route.repository, snapshot: route.snapshot };
+  const snapshot = snapshotOf(route);
   const graph = useGraph(snapshot);
   const components = useComponents(snapshot);
   const cycles = useCycles(snapshot);

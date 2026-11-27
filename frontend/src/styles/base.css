@@ -110,3 +110,71 @@ textarea {
   color: var(--accent);
   border-color: var(--accent);
 }
+
+.path-name,
+.path-dir {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.path-dir {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* shared by several screens */
+.tabs {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.tabs button {
+  border: 0;
+  border-radius: 0;
+  background: var(--panel);
+  padding: 8px 18px;
+  white-space: nowrap;
+}
+
+.tabs button[aria-selected="true"] {
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.tabs button:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.accent {
+  color: var(--role-explorer);
+}
+
+.rows {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.issue {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--cycle);
+  border-radius: var(--radius);
+  background: var(--cycle-bg);
+  color: var(--cycle);
+}
